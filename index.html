@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PTE 每日 50 單字抽考</title>
+    <title>PTE 每日跨日鎖定抽考系統</title>
     <style>
         :root {
             --primary: #2563eb;
             --success: #16a34a;
             --warning: #ca8a04;
-            --background: #f8fafc;
+            --background: #f1f5f9;
             --card-bg: #ffffff;
         }
         body {
@@ -25,20 +25,27 @@
         }
         header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
-        h1 { margin-bottom: 5px; color: #0f172a; }
+        h1 { margin-bottom: 5px; color: #0f172a; font-size: 1.8rem; }
         .date-badge {
             background-color: #e2e8f0;
-            padding: 4px 12px;
+            padding: 5px 14px;
             border-radius: 20px;
             font-size: 0.9rem;
             color: #475569;
+            font-weight: bold;
+        }
+        .hint-text {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 5px;
         }
         .progress-bar {
             background-color: #e2e8f0;
-            height: 8px;
-            border-radius: 4px;
+            height: 10px;
+            border-radius: 5px;
             margin-bottom: 20px;
             overflow: hidden;
         }
@@ -51,13 +58,13 @@
         .stats {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             font-weight: bold;
         }
-        /* 翻牌卡片設計 */
+        /* 翻牌卡片 */
         .quiz-container {
             perspective: 1000px;
-            height: 250px;
+            height: 260px;
             margin-bottom: 25px;
         }
         .card {
@@ -65,7 +72,7 @@
             height: 100%;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.6s;
+            transition: transform 0.4s ease;
             cursor: pointer;
         }
         .card.flipped {
@@ -81,63 +88,70 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 25px;
             box-sizing: border-box;
             background: var(--card-bg);
             border: 1px solid #e2e8f0;
         }
         .card-front h2 {
-            font-size: 2.2rem;
+            font-size: 2.4rem;
             color: var(--primary);
             margin: 0;
+            letter-spacing: 0.5px;
         }
-        .card-front p, .card-back p {
+        .card-front p {
             color: #94a3b8;
             font-size: 0.9rem;
-            margin-top: 10px;
+            margin-top: 15px;
         }
         .card-back {
             transform: rotateY(180deg);
-            background-color: #f1f5f9;
+            background-color: #f8fafc;
         }
         .card-back h3 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: #0f172a;
-            margin: 0 0 10px 0;
+            margin: 0 0 12px 0;
         }
         .example {
             font-style: italic;
             color: #475569;
             text-align: center;
             font-size: 0.95rem;
+            line-height: 1.4;
+            background: #edd;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f1f5f9;
         }
-        /* 按鈕樣式 */
+        /* 按鈕 */
         .btn-group {
             display: flex;
             gap: 15px;
         }
         button {
             flex: 1;
-            padding: 14px;
+            padding: 15px;
             border: none;
             border-radius: 12px;
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
+            transition: transform 0.1s, background-color 0.2s;
         }
         button:active { transform: scale(0.98); }
         .btn-wrong { background-color: #fee2e2; color: #dc2626; }
+        .btn-wrong:hover { background-color: #fecaca; }
         .btn-right { background-color: #dcfce7; color: var(--success); }
-        .btn-reset { background-color: #e2e8f0; color: #475569; width: 100%; margin-top: 15px; }
+        .btn-right:hover { background-color: #bbf7d0; }
         
         .result-screen {
             text-align: center;
             background: var(--card-bg);
-            padding: 30px;
+            padding: 40px 30px;
             border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
     </style>
 </head>
@@ -145,13 +159,14 @@
 
 <div class="container">
     <header>
-        <h1>PTE 每日單字抽考</h1>
-        <span class="date-badge" id="today-date">2026-06-23</span>
+        <h1>PTE 每日 50 單字盲抽考</h1>
+        <span class="date-badge" id="today-date">-----</span>
+        <div class="hint-text">💡 一天之內重開網頁單字不會變，但出場順序會打亂喔！</div>
     </header>
 
     <div id="quiz-box">
         <div class="stats">
-            <span id="card-index">進度: 1 / 50</span>
+            <span id="card-index">進度: -- / 50</span>
             <span style="color: var(--success);" id="score-count">已掌握: 0</span>
         </div>
         <div class="progress-bar">
@@ -161,12 +176,12 @@
         <div class="quiz-container">
             <div class="card" id="word-card" onclick="this.classList.toggle('flipped')">
                 <div class="card-face card-front">
-                    <h2 id="word-target">Loading...</h2>
-                    <p>💡 點擊卡片看中文翻譯</p>
+                    <h2 id="word-target">讀取字庫中...</h2>
+                    <p>點擊卡片翻面看翻譯與例句</p>
                 </div>
                 <div class="card-face card-back">
                     <h3 id="word-meaning">翻譯</h3>
-                    <p class="example" id="word-example">例句</p>
+                    <p class="example" id="word-example">例句載入中...</p>
                 </div>
             </div>
         </div>
@@ -178,119 +193,71 @@
     </div>
 
     <div id="result-box" class="result-screen" style="display: none;">
-        <h2>🎉 今日完成！</h2>
-        <p style="font-size: 1.2rem;">你的答對率：<strong id="final-accuracy" style="color:var(--success)">0%</strong></p>
-        <p id="final-comment">太棒了，明天也要繼續堅持！</p>
-        <button class="btn-reset" onclick="forceNewQuiz()">重新抽一組（練習用）</button>
+        <h2>🎉 今日抽考完成！</h2>
+        <p style="font-size: 1.2rem; margin: 20px 0;">你的掌握度：<strong id="final-accuracy" style="color:var(--success); font-size: 2rem;">0%</strong></p>
+        <p style="color: #64748b;">這 50 個單字今天已被鎖定。隨時重新整理網頁可以重新排序複習！</p>
     </div>
 </div>
 
 <script>
-// 內建 PTE 高頻單字庫 (此處先放部分範例，可自行無限擴充)
-const pteVocabulary = [
-    { w: "analyze", m: "v. 分析", e: "We need to analyze the data before making a decision." },
-    { w: "approach", m: "n./v. 方法；接近", e: "The school is adopting a new approach to teaching languages." },
-    { w: "assess", m: "v. 評估；評定", e: "The damage to the building was assessed at £20,000." },
-    { w: "assume", m: "v. 假設；假定", e: "Don't assume that because he's small he's weak." },
-    { w: "authority", m: "n. 權威；當局", e: "She is an authority on 17th-century English literature." },
-    { w: "available", m: "adj. 可得到的；可利用的", e: "The room is available for meetings." },
-    { w: "benefit", m: "n./v. 利益；得益", e: "The new system should be of great benefit to the company." },
-    { w: "concept", m: "n. 概念；觀念", e: "It is very difficult to define the concept of beauty." },
-    { w: "consistent", m: "adj. 始終如一的；前後一致的", e: "His performance in the exam was consistent with his teacher's expectations." },
-    { w: "constitutional", m: "adj. 憲法的；章程的", e: "They are fighting for constitutional reform." },
-    { w: "context", m: "n. 上下文；背景", e: "This quotation has been taken out of context." },
-    { w: "create", m: "v. 創造；創作", e: "The government plans to create more jobs for young people." },
-    { w: "data", m: "n. 數據；資料", e: "The data is stored on a hard disk." },
-    { w: "definition", m: "n. 定義", e: "What is your definition of happiness?" },
-    { w: "derive", m: "v. 起源於；導出", e: "Many English words are derived from Latin." },
-    { w: "distribution", m: "n. 分配；分發", e: "The variable distribution of wealth within the country." },
-    { w: "economic", m: "adj. 經濟的", e: "The government's economic policy is under attack." },
-    { w: "environment", m: "n. 環境", e: "We must do more to protect the environment." },
-    { w: "establish", m: "v. 建立；設立", e: "The company was established in 1860." },
-    { w: "estimate", m: "n./v. 估計；估價", e: "It is difficult to estimate the cost of the project." },
-    { w: "evidence", m: "n. 證據；證物", e: "There is clear evidence that the climate is changing." },
-    { w: "export", m: "n./v. 出口", e: "The islands export sugar and fruit." },
-    { w: "factor", m: "n. 因素；要素", e: "Economic factors are useful in explaining some behavior." },
-    { w: "financial", m: "adj. 財務的；金融的", e: "The company is heading for financial ruin." },
-    { w: "formula", m: "n. 公式；配方", e: "This is a simple formula for success." },
-    { w: "function", m: "n./v. 功能；運作", e: "The main function of the investment banks." },
-    { w: "identified", m: "adj./v. 認出的；識別出的", e: "Scientists have identified the gene responsible for the disease." },
-    { w: "income", m: "n. 收入；收益", e: "More people on low incomes will be drawn into the tax net." },
-    { w: "indicate", m: "v. 指出；指示", e: "Our research indicates that over 81% of users prefer this layout." },
-    { w: "individual", m: "adj./n. 個人的；個體", e: "We must respect the rights of the individual." },
-    { w: "interpretation", m: "n. 解釋；闡明", e: "What is your interpretation of this poem?" },
-    { w: "involved", m: "adj. 牽涉在內的", e: "We need to examine the risks involved." },
-    { w: "issue", m: "n./v. 議題；發行", e: "This is a big issue for the education department." },
-    { w: "labor", m: "n. 勞工；勞動", e: "The price of service includes both labor and parts." },
-    { w: "legal", m: "adj. 法律的；合法的", e: "What is the legal age for driving in your country?" },
-    { w: "legislation", m: "n. 立法；法律", e: "The government has promised to introduce new legislation." },
-    { w: "major", m: "adj. 主要的；重大的", e: "Sugar is a major cause of tooth decay." },
-    { w: "method", m: "n. 方法", e: "Which method is most effective for learning vocabulary?" },
-    { w: "occur", m: "v. 發生；出現", e: "When exactly did the incident occur?" },
-    { w: "percent", m: "n. 百分之...", e: "More than 40 percent of the students failed." },
-    { w: "period", m: "n. 時期；期間", e: "This was a period of great economic growth." },
-    { w: "policy", m: "n. 政策；方針", e: "The company has a strict no-smoking policy." },
-    { w: "principle", m: "n. 原則；原理", e: "He refuses to compromise his principles." },
-    { w: "procedure", m: "n. 程序；步驟", e: "What is the standard procedure for applying for a visa?" },
-    { w: "process", m: "n./v. 過程；處理", e: "Learning a language is a slow process." },
-    { w: "required", m: "adj. 必須的；需要的", e: "This course is required for all freshman students." },
-    { w: "research", m: "n./v. 研究；調查", e: "He is doing research into skin cancer." },
-    { w: "response", m: "n. 回應；答覆", e: "She made no response to my question." },
-    { w: "role", m: "n. 角色", e: "Technology plays a major role in modern life." },
-    { w: "section", m: "n. 部分；區塊", e: "The reading section of the PTE test is challenging." },
-    { w: "sector", m: "n. 部門；領域", e: "The service sector is crucial to the economy." },
-    { w: "significant", m: "adj. 顯著的；重要的", e: "There has been a significant increase in prices." },
-    { w: "similar", m: "adj. 相似的", e: "My teaching style is similar to yours." },
-    { w: "source", m: "n. 來源；水源", e: "Beans are a very good source of protein." },
-    { w: "specific", m: "adj. 特定的；具體的", e: "Could you be more specific about the problem?" },
-    { w: "structure", m: "n./v. 結構；組織", e: "The grammatical structure of a sentence." },
-    { w: "theory", m: "n. 理論；學說", e: "In theory, the plan should work perfectly." },
-    { w: "variable", m: "adj./n. 易變的；變數", e: "The weather here is highly variable." }
-];
-
 let dailyWords = [];
 let currentIndex = 0;
 let score = 0;
 
+// 取得今天日期的字串 (格式: YYYY-MM-DD)
 function getTodayString() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function shuffle(array) {
-    return array.sort(() => Math.random() - 0.5);
-}
-
-function initQuiz() {
-    const today = getTodayString();
-    document.getElementById('today-date').innerText = today;
-    
-    const savedDate = localStorage.getItem('pte_quiz_date');
-    const savedWords = localStorage.getItem('pte_quiz_words');
-
-    if (savedDate === today && savedWords) {
-        dailyWords = JSON.parse(savedWords);
-    } else {
-        // 如果跨天或無紀錄，重新抽取 50 個
-        let pool = [...pteVocabulary];
-        shuffle(pool);
-        dailyWords = pool.slice(0, 50);
-        
-        localStorage.setItem('pte_quiz_date', today);
-        localStorage.setItem('pte_quiz_words', JSON.stringify(dailyWords));
+// 偽隨機演算法 (使用日期字串作為 Seed，確保同一天產生的隨機序列完全固定)
+function seededRandom(seedString) {
+    let hash = 0;
+    for (let i = 0; i < seedString.length; i++) {
+        hash = seedString.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
-    currentIndex = 0;
-    score = 0;
-    showWord();
+    return function() {
+        let x = Math.sin(hash++) * 10000;
+        return x - Math.floor(x);
+    };
 }
 
-function forceNewQuiz() {
-    localStorage.removeItem('pte_quiz_date');
-    localStorage.removeItem('pte_quiz_words');
-    document.getElementById('quiz-box').style.display = 'block';
-    document.getElementById('result-box').style.display = 'none';
-    initQuiz();
+// 讀取外部 json 字庫並初始化
+async function loadAndInitQuiz() {
+    const todayStr = getTodayString();
+    document.getElementById('today-date').innerText = `今天日期：${todayStr}`;
+
+    try {
+        // 讀取同資料夾下的 pte_vocab_2000.json
+        const response = await fetch('pte_vocab_2000.json');
+        if (!response.ok) throw new Error('找不到 json 檔案');
+        const allVocab = await response.json();
+
+        // 1. 使用「當天日期」作為種子，從 2000 個字中挑出固定的 50 個字
+        const myRandom = seededRandom(todayStr);
+        let pool = [...allVocab];
+        
+        // 用日期種子打亂大水庫
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(myRandom() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        // 取得當天專屬的固定 50 個字
+        let locked50Words = pool.slice(0, 50);
+
+        // 2. 對這固定的 50 個字，進行一般的「純隨機打亂」
+        // 這樣每次使用者「重新整理/重開網頁」，都是這50個字，但順序都會完全不同
+        dailyWords = locked50Words.sort(() => Math.random() - 0.5);
+
+        currentIndex = 0;
+        score = 0;
+        showWord();
+
+    } catch (error) {
+        document.getElementById('word-target').innerText = "錯誤";
+        document.getElementById('word-example').innerText = "請確保 pte_vocab_2000.json 與網頁放在同一個資料夾內！";
+        console.error(error);
+    }
 }
 
 function showWord() {
@@ -304,14 +271,14 @@ function showWord() {
     
     const current = dailyWords[currentIndex];
     
-    // 延遲更新文字，避免翻轉時露餡
+    // 延遲更新文字，避免翻轉時提前露餡
     setTimeout(() => {
         document.getElementById('word-target').innerText = current.w;
         document.getElementById('word-meaning').innerText = current.m;
         document.getElementById('word-example').innerText = current.e;
     }, 150);
 
-    // 更新進度條
+    // 更新介面進度條
     document.getElementById('card-index').innerText = `進度: ${currentIndex + 1} / ${dailyWords.length}`;
     document.getElementById('score-count').innerText = `已掌握: ${score}`;
     const progressPercent = (currentIndex / dailyWords.length) * 100;
@@ -332,8 +299,8 @@ function showResult() {
     document.getElementById('final-accuracy').innerText = `${accuracy}%`;
 }
 
-// 啟動
-initQuiz();
+// 開啟網頁自動執行
+window.onload = loadAndInitQuiz;
 </script>
 
 </body>
