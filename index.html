@@ -153,6 +153,62 @@
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
+        .review-list-section {
+            margin-top: 24px;
+            background: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .review-list-section h2 {
+            margin: 0 0 12px;
+            font-size: 1.1rem;
+            color: #0f172a;
+        }
+        .review-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+        }
+        .review-list button {
+            width: 100%;
+            min-height: 40px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: left;
+        }
+        .review-list button:hover,
+        .review-list button.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #eff6ff;
+        }
+        .review-list button.review-right {
+            background: #dcfce7;
+            border-color: #86efac;
+            color: #166534;
+        }
+        .review-list button.review-wrong {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+        .review-list button.review-right.active,
+        .review-list button.review-wrong.active {
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+        .review-list-empty {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
     </style>
 </head>
 <body>
@@ -190,7 +246,15 @@
             <button class="btn-wrong" onclick="nextWord(false)">❌ 再想想</button>
             <button class="btn-right" onclick="nextWord(true)"> Hades 掌握</button>
         </div>
+
     </div>
+
+    <section class="review-list-section" aria-labelledby="review-list-title">
+        <h2 id="review-list-title">已瀏覽單字</h2>
+        <ul id="review-list" class="review-list">
+            <li class="review-list-empty">尚無已瀏覽單字</li>
+        </ul>
+    </section>
 
     <div id="result-box" class="result-screen" style="display: none;">
         <h2>🎉 今日抽考完成！</h2>
@@ -203,6 +267,7 @@
 let dailyWords = [];
 let currentIndex = 0;
 let score = 0;
+let reviewedWords = [];
 
 // 取得今天日期的字串 (格式: YYYY-MM-DD)
 function getTodayString() {
@@ -251,6 +316,8 @@ async function loadAndInitQuiz() {
 
         currentIndex = 0;
         score = 0;
+        reviewedWords = [];
+        renderReviewList();
         showWord();
 
     } catch (error) {
@@ -283,11 +350,61 @@ function showWord() {
     document.getElementById('score-count').innerText = `已掌握: ${score}`;
     const progressPercent = (currentIndex / dailyWords.length) * 100;
     document.getElementById('progress').style.width = `${progressPercent}%`;
+    renderReviewList();
 }
 
 function nextWord(isRight) {
+    markCurrentWordReviewed(isRight);
     if (isRight) score++;
     currentIndex++;
+    showWord();
+}
+
+function markCurrentWordReviewed(isRight) {
+    const reviewedWord = reviewedWords.find((word) => word.index === currentIndex);
+
+    if (reviewedWord) {
+        reviewedWord.isRight = isRight;
+    } else {
+        reviewedWords.push({
+            index: currentIndex,
+            isRight,
+        });
+    }
+}
+
+function renderReviewList() {
+    const list = document.getElementById('review-list');
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    if (reviewedWords.length === 0) {
+        const emptyItem = document.createElement('li');
+        emptyItem.className = 'review-list-empty';
+        emptyItem.innerText = '尚無已瀏覽單字';
+        list.appendChild(emptyItem);
+        return;
+    }
+
+    reviewedWords.forEach((reviewedWord) => {
+        const word = dailyWords[reviewedWord.index];
+        if (!word) return;
+
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.innerText = word.w;
+        button.onclick = () => jumpToWord(reviewedWord.index);
+        button.classList.toggle('active', reviewedWord.index === currentIndex);
+        button.classList.add(reviewedWord.isRight ? 'review-right' : 'review-wrong');
+        item.appendChild(button);
+        list.appendChild(item);
+    });
+}
+
+function jumpToWord(wordIndex) {
+    currentIndex = wordIndex;
     showWord();
 }
 
