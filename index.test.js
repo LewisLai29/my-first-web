@@ -5,13 +5,33 @@ describe('PTE daily vocabulary page (index.html)', () => {
     let mockVocab;
     let mockVoices;
 
+    const flushLookup = async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+    };
+
     const loadPage = async (date = '2026-06-23T12:00:00+08:00') => {
         jest.useFakeTimers();
         jest.setSystemTime(new Date(date));
 
-        window.fetch = jest.fn().mockResolvedValue({
-            ok: true,
-            json: jest.fn().mockResolvedValue(mockVocab),
+        window.fetch = jest.fn((url) => {
+            if (url === 'pte_vocab_2000.json') {
+                return Promise.resolve({
+                    ok: true,
+                    json: jest.fn().mockResolvedValue(mockVocab),
+                });
+            }
+
+            return Promise.resolve({
+                ok: true,
+                json: jest.fn().mockResolvedValue({
+                    responseData: {
+                        translatedText: '線上翻譯',
+                    },
+                }),
+            });
         });
         window.speechSynthesis = {
             cancel: jest.fn(),
@@ -31,7 +51,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
 window.__getDailyWords = () => dailyWords;
 window.__getCurrentIndex = () => currentIndex;
 window.__nextWord = nextWord;
-window.__speakCurrentWord = speakCurrentWord;`);
+window.__speakCurrentWord = speakCurrentWord;
+window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
         });
 
         await window.onload();
@@ -66,6 +87,7 @@ window.__speakCurrentWord = speakCurrentWord;`);
     afterEach(() => {
         jest.clearAllMocks();
         jest.useRealTimers();
+        window.sessionStorage.clear();
         document.documentElement.innerHTML = '';
     });
 
@@ -87,8 +109,170 @@ window.__speakCurrentWord = speakCurrentWord;`);
         const boldExampleWord = document.querySelector('#word-example strong');
 
         expect(boldExampleWord).not.toBeNull();
-        expect(boldExampleWord.innerText).toBe(currentWord.w);
+        expect(boldExampleWord.textContent).toBe(currentWord.w);
         expect(document.getElementById('word-example').textContent).not.toContain('**');
+    });
+
+    test('renders example words as clickable lookup targets and keeps bold target word', async () => {
+        await loadPage();
+
+        const currentWord = window.__getDailyWords()[0];
+        const lookupWords = [...document.querySelectorAll('#word-example .example-word')];
+        const boldExampleWord = document.querySelector('#word-example strong .example-word');
+
+        expect(lookupWords.map((button) => button.innerText)).toEqual([
+            'This',
+            'is',
+            currentWord.w,
+            'in',
+            'an',
+            'example',
+        ]);
+        expect(boldExampleWord).not.toBeNull();
+        expect(boldExampleWord.textContent).toBe(currentWord.w);
+        expect(document.getElementById('word-example').textContent).not.toContain('**');
+    });
+
+    test('looks up an example word in a popup without changing the local meaning', async () => {
+        await loadPage();
+
+        const originalMeaning = document.getElementById('word-meaning').innerText;
+        const lookupWord = document.querySelector('#word-example .example-word');
+        lookupWord.click();
+        await flushLookup();
+
+        const lookupUrl = window.fetch.mock.calls.find(([url]) => String(url).startsWith('https://api.mymemory.translated.net/get'))[0];
+        const popup = document.getElementById('lookup-popup');
+
+        expect(lookupUrl).toContain('q=This');
+        expect(lookupUrl).toContain('langpair=en|zh-TW');
+        expect(popup.hidden).toBe(false);
+        expect(popup.textContent).toContain('This：線上翻譯');
+        expect(document.getElementById('word-meaning').innerText).toBe(originalMeaning);
+    });
+
+    test('prefers Traditional Chinese lookup matches over non-Chinese API response text', async () => {
+        await loadPage();
+        window.fetch.mockImplementation((url) => {
+            if (url === 'pte_vocab_2000.json') {
+                return Promise.resolve({
+                    ok: true,
+                    json: jest.fn().mockResolvedValue(mockVocab),
+                });
+            }
+
+            return Promise.resolve({
+                ok: true,
+                json: jest.fn().mockResolvedValue({
+                    responseData: {
+                        translatedText: 'บ่อยครั้ง',
+                    },
+                    matches: [
+                        { translation: 'บ่อยครั้ง', target: 'zh-TW' },
+                        { translation: '經常', target: 'zh-TW' },
+                    ],
+                }),
+            });
+        });
+
+        await window.__lookupExampleWordMeaning(
+            'often',
+            document.querySelector('#word-example .example-word')
+        );
+
+        expect(document.getElementById('lookup-popup').textContent).toContain('often：經常');
+        expect(document.getElementById('lookup-popup').textContent).not.toContain('บ่อยครั้ง');
+    });
+
+    test('uses local vocabulary meanings before calling the online lookup API', async () => {
+        await loadPage();
+
+        const fetchCountAfterLoad = window.fetch.mock.calls.length;
+        await window.__lookupExampleWordMeaning(
+            'word1',
+            document.querySelector('#word-example .example-word')
+        );
+
+        expect(window.fetch).toHaveBeenCalledTimes(fetchCountAfterLoad);
+        expect(document.getElementById('lookup-popup').textContent).toContain('word1：meaning1');
+    });
+
+    test('shows a quota-specific message when the lookup API limit is reached', async () => {
+        await loadPage();
+        window.fetch.mockImplementation((url) => {
+            if (url === 'pte_vocab_2000.json') {
+                return Promise.resolve({
+                    ok: true,
+                    json: jest.fn().mockResolvedValue(mockVocab),
+                });
+            }
+
+            return Promise.resolve({
+                ok: true,
+                json: jest.fn().mockResolvedValue({
+                    quotaFinished: true,
+                    responseStatus: 429,
+                    responseDetails: 'MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS FOR TODAY',
+                }),
+            });
+        });
+
+        await window.__lookupExampleWordMeaning(
+            'often',
+            document.querySelector('#word-example .example-word')
+        );
+
+        expect(document.getElementById('lookup-popup').textContent).toContain('線上查詢已達今日上限，請稍後再試');
+    });
+
+    test('shows a lookup error when the online translation request fails', async () => {
+        await loadPage();
+        window.fetch.mockImplementation((url) => {
+            if (url === 'pte_vocab_2000.json') {
+                return Promise.resolve({
+                    ok: true,
+                    json: jest.fn().mockResolvedValue(mockVocab),
+                });
+            }
+
+            return Promise.resolve({
+                ok: false,
+                json: jest.fn(),
+            });
+        });
+
+        document.querySelector('#word-example .example-word').click();
+        await flushLookup();
+
+        expect(document.getElementById('lookup-popup').textContent).toContain('查詢失敗，請稍後再試');
+    });
+
+    test('reuses cached lookup results for the same example word', async () => {
+        await loadPage();
+
+        const lookupWord = document.querySelector('#word-example .example-word');
+        lookupWord.click();
+        await flushLookup();
+
+        const fetchCountAfterFirstLookup = window.fetch.mock.calls.length;
+        document.body.click();
+        lookupWord.click();
+        await flushLookup();
+
+        expect(window.fetch).toHaveBeenCalledTimes(fetchCountAfterFirstLookup);
+        expect(document.getElementById('lookup-popup').textContent).toContain('This：線上翻譯');
+    });
+
+    test('closes the lookup popup when moving to the next word', async () => {
+        await loadPage();
+
+        document.querySelector('#word-example .example-word').click();
+        await flushLookup();
+        expect(document.getElementById('lookup-popup').hidden).toBe(false);
+
+        window.__nextWord(false);
+
+        expect(document.getElementById('lookup-popup').hidden).toBe(true);
     });
 
     test('speaks the current word from the audio button', async () => {
