@@ -105,6 +105,53 @@
             font-size: 0.9rem;
             margin-top: 15px;
         }
+        .speak-button {
+            flex: 0 0 auto;
+            margin-top: 16px;
+            width: 52px;
+            height: 52px;
+            padding: 0;
+            border-radius: 50%;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: var(--primary);
+            font-size: 1.35rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .speak-button:hover {
+            background: #dbeafe;
+        }
+        .speak-button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .voice-controls {
+            width: min(100%, 360px);
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .voice-controls .speak-button {
+            margin-top: 0;
+        }
+        .voice-select {
+            flex: 1;
+            min-width: 0;
+            height: 42px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #1e293b;
+            padding: 0 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .voice-select:disabled {
+            opacity: 0.55;
+        }
         .card-back {
             transform: rotateY(180deg);
             background-color: #f8fafc;
@@ -234,6 +281,10 @@
                 <div class="card-face card-front">
                     <h2 id="word-target">讀取字庫中...</h2>
                     <p>點擊卡片翻面看翻譯與例句</p>
+                    <div class="voice-controls">
+                        <button id="speak-word" class="speak-button" type="button" onclick="speakCurrentWord(event)" title="播放單字發音" aria-label="播放單字發音">🔊</button>
+                        <select id="voice-select" class="voice-select" onchange="setSelectedVoice(this.value, event)" onclick="event.stopPropagation()" aria-label="選擇發音聲音"></select>
+                    </div>
                 </div>
                 <div class="card-face card-back">
                     <h3 id="word-meaning">翻譯</h3>
@@ -268,6 +319,9 @@ let dailyWords = [];
 let currentIndex = 0;
 let score = 0;
 let reviewedWords = [];
+let availableVoices = [];
+let selectedVoiceName = '';
+let voiceLoadRetryCount = 0;
 
 // 取得今天日期的字串 (格式: YYYY-MM-DD)
 function getTodayString() {
@@ -311,6 +365,117 @@ function renderExampleText(element, exampleText) {
     });
 }
 
+function canSpeak() {
+    return 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+}
+
+function updateSpeakButton() {
+    const speakButton = document.getElementById('speak-word');
+    if (!speakButton) return;
+
+    speakButton.disabled = !canSpeak() || !dailyWords[currentIndex];
+}
+
+function loadAvailableVoices() {
+    if (!canSpeak()) return [];
+
+    availableVoices = window.speechSynthesis
+        .getVoices()
+        .filter((voice) => voice.lang && voice.lang.startsWith('en'));
+
+    return availableVoices;
+}
+
+function getPreferredVoice() {
+    if (!canSpeak()) return null;
+
+    const voices = availableVoices.length ? availableVoices : loadAvailableVoices();
+    const selectedVoice = voices.find((voice) => voice.name === selectedVoiceName);
+    if (selectedVoice) return selectedVoice;
+
+    const preferredVoiceNames = [
+        'Google US English',
+        'Microsoft Aria Online',
+        'Microsoft Jenny Online',
+        'Microsoft Guy Online',
+        'Samantha',
+    ];
+
+    return preferredVoiceNames
+        .map((voiceName) => voices.find((voice) => voice.name.includes(voiceName)))
+        .find(Boolean)
+        || voices.find((voice) => voice.lang === 'en-US')
+        || voices.find((voice) => voice.lang && voice.lang.startsWith('en'))
+        || null;
+}
+
+function renderVoiceSelect() {
+    const voiceSelect = document.getElementById('voice-select');
+    if (!voiceSelect) return;
+
+    const voices = loadAvailableVoices();
+    voiceSelect.innerHTML = '';
+
+    if (voices.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.innerText = canSpeak() ? '使用瀏覽器預設聲音' : '瀏覽器不支援語音';
+        voiceSelect.appendChild(option);
+        voiceSelect.disabled = true;
+        return;
+    }
+
+    const preferredVoice = getPreferredVoice();
+    selectedVoiceName = selectedVoiceName || (preferredVoice ? preferredVoice.name : voices[0].name);
+
+    voices.forEach((voice) => {
+        const option = document.createElement('option');
+        option.value = voice.name;
+        option.innerText = `${voice.name} (${voice.lang})`;
+        option.selected = voice.name === selectedVoiceName;
+        voiceSelect.appendChild(option);
+    });
+
+    voiceSelect.disabled = false;
+}
+
+function retryLoadVoices() {
+    if (!canSpeak()) return;
+
+    renderVoiceSelect();
+    if (availableVoices.length > 0 || voiceLoadRetryCount >= 20) return;
+
+    voiceLoadRetryCount++;
+    setTimeout(retryLoadVoices, 250);
+}
+
+function setSelectedVoice(voiceName, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+
+    selectedVoiceName = voiceName;
+}
+
+function speakCurrentWord(event) {
+    if (event) {
+        event.stopPropagation();
+    }
+
+    if (!canSpeak() || !dailyWords[currentIndex]) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(dailyWords[currentIndex].w);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.85;
+    const preferredVoice = getPreferredVoice();
+    if (preferredVoice) {
+        utterance.voice = preferredVoice;
+        utterance.lang = preferredVoice.lang;
+    }
+    window.speechSynthesis.speak(utterance);
+}
+
 // 讀取外部 json 字庫並初始化
 async function loadAndInitQuiz() {
     const todayStr = getTodayString();
@@ -342,6 +507,7 @@ async function loadAndInitQuiz() {
         currentIndex = 0;
         score = 0;
         reviewedWords = [];
+        retryLoadVoices();
         renderReviewList();
         showWord();
 
@@ -368,6 +534,7 @@ function showWord() {
         document.getElementById('word-target').innerText = current.w;
         document.getElementById('word-meaning').innerText = current.m;
         renderExampleText(document.getElementById('word-example'), current.e);
+        updateSpeakButton();
     }, 150);
 
     // 更新介面進度條
@@ -376,6 +543,7 @@ function showWord() {
     const progressPercent = (currentIndex / dailyWords.length) * 100;
     document.getElementById('progress').style.width = `${progressPercent}%`;
     renderReviewList();
+    updateSpeakButton();
 }
 
 function nextWord(isRight) {
@@ -443,6 +611,9 @@ function showResult() {
 
 // 開啟網頁自動執行
 window.onload = loadAndInitQuiz;
+if (canSpeak()) {
+    window.speechSynthesis.onvoiceschanged = retryLoadVoices;
+}
 </script>
 
 </body>

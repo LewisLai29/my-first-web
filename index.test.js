@@ -3,6 +3,7 @@ const path = require('path');
 
 describe('PTE daily vocabulary page (index.html)', () => {
     let mockVocab;
+    let mockVoices;
 
     const loadPage = async (date = '2026-06-23T12:00:00+08:00') => {
         jest.useFakeTimers();
@@ -12,6 +13,14 @@ describe('PTE daily vocabulary page (index.html)', () => {
             ok: true,
             json: jest.fn().mockResolvedValue(mockVocab),
         });
+        window.speechSynthesis = {
+            cancel: jest.fn(),
+            getVoices: jest.fn(() => mockVoices),
+            speak: jest.fn(),
+        };
+        window.SpeechSynthesisUtterance = function SpeechSynthesisUtterance(text) {
+            this.text = text;
+        };
 
         const html = fs.readFileSync(path.resolve(__dirname, './index.html'), 'utf8');
         document.documentElement.innerHTML = html;
@@ -21,7 +30,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
             window.eval(`${scriptText}
 window.__getDailyWords = () => dailyWords;
 window.__getCurrentIndex = () => currentIndex;
-window.__nextWord = nextWord;`);
+window.__nextWord = nextWord;
+window.__speakCurrentWord = speakCurrentWord;`);
         });
 
         await window.onload();
@@ -30,6 +40,10 @@ window.__nextWord = nextWord;`);
     };
 
     beforeEach(() => {
+        mockVoices = [
+            { name: 'Microsoft David Desktop', lang: 'en-US' },
+            { name: 'Google US English', lang: 'en-US' },
+        ];
         mockVocab = {
             metadata: {
                 counts: {
@@ -75,6 +89,53 @@ window.__nextWord = nextWord;`);
         expect(boldExampleWord).not.toBeNull();
         expect(boldExampleWord.innerText).toBe(currentWord.w);
         expect(document.getElementById('word-example').textContent).not.toContain('**');
+    });
+
+    test('speaks the current word from the audio button', async () => {
+        await loadPage();
+
+        const currentWord = window.__getDailyWords()[0];
+        document.getElementById('speak-word').click();
+
+        expect(window.speechSynthesis.cancel).toHaveBeenCalled();
+        expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(1);
+        expect(window.speechSynthesis.speak.mock.calls[0][0].text).toBe(currentWord.w);
+        expect(window.speechSynthesis.speak.mock.calls[0][0].lang).toBe('en-US');
+        expect(window.speechSynthesis.speak.mock.calls[0][0].voice.name).toBe('Google US English');
+    });
+
+    test('lets the user choose a voice from the selector', async () => {
+        await loadPage();
+
+        const voiceSelect = document.getElementById('voice-select');
+        expect([...voiceSelect.options].map((option) => option.value)).toEqual([
+            'Microsoft David Desktop',
+            'Google US English',
+        ]);
+        expect(voiceSelect.value).toBe('Google US English');
+
+        voiceSelect.value = 'Microsoft David Desktop';
+        voiceSelect.dispatchEvent(new Event('change'));
+        document.getElementById('speak-word').click();
+
+        expect(window.speechSynthesis.speak.mock.calls[0][0].voice.name).toBe('Microsoft David Desktop');
+    });
+
+    test('updates the voice selector after voices load late', async () => {
+        mockVoices = [];
+        await loadPage();
+
+        const voiceSelect = document.getElementById('voice-select');
+        expect(voiceSelect.value).toBe('');
+        expect(voiceSelect.options[0].innerText).toBe('使用瀏覽器預設聲音');
+
+        mockVoices = [{ name: 'Google US English', lang: 'en-US' }];
+        window.speechSynthesis.onvoiceschanged();
+        jest.advanceTimersByTime(250);
+        await Promise.resolve();
+
+        expect(voiceSelect.value).toBe('Google US English');
+        expect(voiceSelect.disabled).toBe(false);
     });
 
     test('keeps the same 50 daily words when opened repeatedly on the same day', async () => {
