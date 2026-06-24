@@ -30,12 +30,23 @@ window.__nextWord = nextWord;`);
     };
 
     beforeEach(() => {
-        mockVocab = Array.from({ length: 2000 }, (_, i) => ({
-            id: i + 1,
-            w: `word${i + 1}`,
-            m: `meaning${i + 1}`,
-            e: `example${i + 1}`,
-        }));
+        mockVocab = {
+            metadata: {
+                counts: {
+                    total: 2000,
+                },
+            },
+            items: Array.from({ length: 2000 }, (_, i) => ({
+                id: i + 1,
+                w: `word${i + 1}`,
+                m: `meaning${i + 1}`,
+                e: `This is **word${i + 1}** in an example.`,
+                source_basis: ['test_source'],
+                meaning_status: 'ready_zh_reviewed',
+                example_status: 'ready_bolded',
+                confidence: 'high',
+            })),
+        };
     });
 
     afterEach(() => {
@@ -48,10 +59,22 @@ window.__nextWord = nextWord;`);
         await loadPage();
 
         expect(window.__getDailyWords()).toHaveLength(50);
+        expect(Object.keys(window.__getDailyWords()[0])).toEqual(['id', 'w', 'm', 'e']);
         expect(window.fetch).toHaveBeenCalledWith('pte_vocab_2000.json');
 
         expect(document.getElementById('word-target').innerText).toMatch(/^word\d+$/);
         expect(document.getElementById('card-index').innerText).toContain('1 / 50');
+    });
+
+    test('renders bold markers in examples as strong text', async () => {
+        await loadPage();
+
+        const currentWord = window.__getDailyWords()[0];
+        const boldExampleWord = document.querySelector('#word-example strong');
+
+        expect(boldExampleWord).not.toBeNull();
+        expect(boldExampleWord.innerText).toBe(currentWord.w);
+        expect(document.getElementById('word-example').textContent).not.toContain('**');
     });
 
     test('keeps the same 50 daily words when opened repeatedly on the same day', async () => {
@@ -126,5 +149,30 @@ window.__nextWord = nextWord;`);
         expect(reviewButtons).toHaveLength(1);
         expect(reviewButtons[0].classList.contains('review-right')).toBe(true);
         expect(reviewButtons[0].classList.contains('review-wrong')).toBe(false);
+    });
+
+    test('real vocabulary json can load with metadata and items', async () => {
+        const jsonText = fs.readFileSync(path.resolve(__dirname, './pte_vocab_2000.json'), 'utf8');
+        const data = JSON.parse(jsonText);
+
+        expect(Array.isArray(data.items)).toBe(true);
+        expect(data.items).toHaveLength(2000);
+        expect(Object.keys(data.items[0])).toEqual([
+            'id',
+            'w',
+            'm',
+            'e',
+            'source_basis',
+            'meaning_status',
+            'example_status',
+            'confidence',
+        ]);
+
+        mockVocab = data;
+        await loadPage();
+
+        expect(window.__getDailyWords()).toHaveLength(50);
+        expect(Object.keys(window.__getDailyWords()[0])).toEqual(['id', 'w', 'm', 'e']);
+        expect(document.getElementById('word-target').innerText).not.toBe('錯誤');
     });
 });

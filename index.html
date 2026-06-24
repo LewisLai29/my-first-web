@@ -287,6 +287,30 @@ function seededRandom(seedString) {
     };
 }
 
+function normalizeVocabItems(vocabData) {
+    const items = Array.isArray(vocabData) ? vocabData : vocabData.items;
+    if (!Array.isArray(items)) {
+        throw new Error('json 格式錯誤：找不到單字陣列');
+    }
+
+    return items.map(({ id, w, m, e }) => ({ id, w, m, e }));
+}
+
+function renderExampleText(element, exampleText) {
+    element.innerHTML = '';
+
+    const parts = String(exampleText).split(/(\*\*[^*]+\*\*)/g);
+    parts.forEach((part) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            const strong = document.createElement('strong');
+            strong.innerText = part.slice(2, -2);
+            element.appendChild(strong);
+        } else if (part) {
+            element.appendChild(document.createTextNode(part));
+        }
+    });
+}
+
 // 讀取外部 json 字庫並初始化
 async function loadAndInitQuiz() {
     const todayStr = getTodayString();
@@ -296,7 +320,8 @@ async function loadAndInitQuiz() {
         // 讀取同資料夾下的 pte_vocab_2000.json
         const response = await fetch('pte_vocab_2000.json');
         if (!response.ok) throw new Error('找不到 json 檔案');
-        const allVocab = await response.json();
+        const vocabData = await response.json();
+        const allVocab = normalizeVocabItems(vocabData);
 
         // 1. 使用「當天日期」作為種子，從 2000 個字中挑出固定的 50 個字
         const myRandom = seededRandom(todayStr);
@@ -342,7 +367,7 @@ function showWord() {
     setTimeout(() => {
         document.getElementById('word-target').innerText = current.w;
         document.getElementById('word-meaning').innerText = current.m;
-        document.getElementById('word-example').innerText = current.e;
+        renderExampleText(document.getElementById('word-example'), current.e);
     }, 150);
 
     // 更新介面進度條
