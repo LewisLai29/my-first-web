@@ -64,7 +64,7 @@
         /* 翻牌卡片 */
         .quiz-container {
             perspective: 1000px;
-            height: 260px;
+            height: 460px;
             margin-bottom: 25px;
         }
         .card {
@@ -99,6 +99,16 @@
             color: var(--primary);
             margin: 0;
             letter-spacing: 0.5px;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .pos-tag {
+            color: #0f172a;
+            font-size: calc(2.4rem - 10px);
+            font-weight: 700;
         }
         .card-front p {
             color: #94a3b8;
@@ -155,11 +165,15 @@
         .card-back {
             transform: rotateY(180deg);
             background-color: #f8fafc;
+            justify-content: flex-start;
+            align-items: stretch;
+            overflow-y: auto;
         }
         .card-back h3 {
             font-size: 1.6rem;
             color: #0f172a;
             margin: 0 0 12px 0;
+            text-align: center;
         }
         .example {
             font-style: italic;
@@ -171,6 +185,34 @@
             padding: 10px;
             border-radius: 8px;
             background-color: #f1f5f9;
+        }
+        .detail-section {
+            margin-top: 14px;
+            text-align: left;
+        }
+        .detail-section h4 {
+            margin: 0 0 8px;
+            color: #0f172a;
+            font-size: 0.95rem;
+        }
+        .detail-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 6px;
+        }
+        .detail-list li {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: #334155;
+            font-size: 0.9rem;
+            line-height: 1.35;
+        }
+        .detail-list strong {
+            color: #0f172a;
         }
         .example-word {
             appearance: none;
@@ -307,14 +349,14 @@
 
 <div class="container">
     <header>
-        <h1>PTE 每日 50 單字盲抽考</h1>
+        <h1>PTE 每日 15 單字盲抽考</h1>
         <span class="date-badge" id="today-date">-----</span>
         <div class="hint-text">💡 一天之內重開網頁單字不會變，但出場順序會打亂喔！</div>
     </header>
 
     <div id="quiz-box">
         <div class="stats">
-            <span id="card-index">進度: -- / 50</span>
+            <span id="card-index">進度: -- / 15</span>
             <span style="color: var(--success);" id="score-count">已掌握: 0</span>
         </div>
         <div class="progress-bar">
@@ -324,7 +366,10 @@
         <div class="quiz-container">
             <div class="card" id="word-card" onclick="this.classList.toggle('flipped')">
                 <div class="card-face card-front">
-                    <h2 id="word-target">讀取字庫中...</h2>
+                    <h2>
+                        <span class="pos-tag" id="word-pos"></span>
+                        <span id="word-target">讀取字庫中...</span>
+                    </h2>
                     <p>點擊卡片翻面看翻譯與例句</p>
                     <div class="voice-controls">
                         <button id="speak-word" class="speak-button" type="button" onclick="speakCurrentWord(event)" title="播放單字發音" aria-label="播放單字發音">🔊</button>
@@ -334,6 +379,14 @@
                 <div class="card-face card-back">
                     <h3 id="word-meaning">翻譯</h3>
                     <p class="example" id="word-example">例句載入中...</p>
+                    <section class="detail-section" aria-labelledby="word-family-title">
+                        <h4 id="word-family-title">單字家族</h4>
+                        <ul class="detail-list" id="word-family"></ul>
+                    </section>
+                    <section class="detail-section" aria-labelledby="word-collocations-title">
+                        <h4 id="word-collocations-title">核心搭配詞</h4>
+                        <ul class="detail-list" id="word-collocations"></ul>
+                    </section>
                 </div>
             </div>
         </div>
@@ -355,7 +408,7 @@
     <div id="result-box" class="result-screen" style="display: none;">
         <h2>🎉 今日抽考完成！</h2>
         <p style="font-size: 1.2rem; margin: 20px 0;">你的掌握度：<strong id="final-accuracy" style="color:var(--success); font-size: 2rem;">0%</strong></p>
-        <p style="color: #64748b;">這 50 個單字今天已被鎖定。隨時重新整理網頁可以重新排序複習！</p>
+        <p style="color: #64748b;">這 15 個單字今天已被鎖定。隨時重新整理網頁可以重新排序複習！</p>
     </div>
 </div>
 <div id="lookup-popup" class="lookup-popup" hidden role="status" aria-live="polite"></div>
@@ -369,6 +422,7 @@ let availableVoices = [];
 let selectedVoiceName = '';
 let voiceLoadRetryCount = 0;
 let vocabMeaningMap = new Map();
+const DAILY_WORD_COUNT = 15;
 
 // 取得今天日期的字串 (格式: YYYY-MM-DD)
 function getTodayString() {
@@ -394,7 +448,15 @@ function normalizeVocabItems(vocabData) {
         throw new Error('json 格式錯誤：找不到單字陣列');
     }
 
-    return items.map(({ id, w, m, e }) => ({ id, w, m, e }));
+    return items.map((item) => ({
+        id: item.id,
+        w: item.word || item.w,
+        pos: item.partOfSpeech || item.pos || '',
+        m: item.definition || item.m,
+        e: item.example || item.e,
+        wordFamily: Array.isArray(item.wordFamily) ? item.wordFamily : [],
+        collocations: Array.isArray(item.collocations) ? item.collocations : [],
+    }));
 }
 
 function normalizeLookupWord(word) {
@@ -429,6 +491,36 @@ function renderExampleText(element, exampleText) {
         } else if (part) {
             appendInteractiveExampleText(element, part);
         }
+    });
+}
+
+function renderTermList(element, entries) {
+    element.innerHTML = '';
+
+    const validEntries = Array.isArray(entries)
+        ? entries.filter((entry) => entry && (entry.term || entry.text))
+        : [];
+
+    if (validEntries.length === 0 || validEntries.every((entry) => entry.text === '無')) {
+        const item = document.createElement('li');
+        item.innerText = '無';
+        element.appendChild(item);
+        return;
+    }
+
+    validEntries.forEach((entry) => {
+        const item = document.createElement('li');
+        if (entry.term) {
+            const term = document.createElement('strong');
+            term.innerText = entry.term;
+            item.appendChild(term);
+            if (entry.explanation) {
+                item.appendChild(document.createTextNode(`：${entry.explanation}`));
+            }
+        } else {
+            item.innerText = entry.text;
+        }
+        element.appendChild(item);
     });
 }
 
@@ -719,14 +811,14 @@ async function loadAndInitQuiz() {
     document.getElementById('today-date').innerText = `今天日期：${todayStr}`;
 
     try {
-        // 讀取同資料夾下的 pte_vocab_2000.json
-        const response = await fetch('pte_vocab_2000.json');
+        // 讀取同資料夾下的 pte_vocab.json
+        const response = await fetch('pte_vocab.json');
         if (!response.ok) throw new Error('找不到 json 檔案');
         const vocabData = await response.json();
         const allVocab = normalizeVocabItems(vocabData);
         vocabMeaningMap = buildVocabMeaningMap(allVocab);
 
-        // 1. 使用「當天日期」作為種子，從 2000 個字中挑出固定的 50 個字
+        // 1. 使用「當天日期」作為種子，挑出固定的每日單字
         const myRandom = seededRandom(todayStr);
         let pool = [...allVocab];
         
@@ -735,12 +827,12 @@ async function loadAndInitQuiz() {
             const j = Math.floor(myRandom() * (i + 1));
             [pool[i], pool[j]] = [pool[j], pool[i]];
         }
-        // 取得當天專屬的固定 50 個字
-        let locked50Words = pool.slice(0, 50);
+        // 取得當天專屬的固定單字
+        let lockedDailyWords = pool.slice(0, DAILY_WORD_COUNT);
 
-        // 2. 對這固定的 50 個字，進行一般的「純隨機打亂」
-        // 這樣每次使用者「重新整理/重開網頁」，都是這50個字，但順序都會完全不同
-        dailyWords = locked50Words.sort(() => Math.random() - 0.5);
+        // 2. 對這固定的每日單字，進行一般的「純隨機打亂」
+        // 這樣每次使用者「重新整理/重開網頁」，都是同一組單字，但順序都會完全不同
+        dailyWords = lockedDailyWords.sort(() => Math.random() - 0.5);
 
         currentIndex = 0;
         score = 0;
@@ -751,7 +843,7 @@ async function loadAndInitQuiz() {
 
     } catch (error) {
         document.getElementById('word-target').innerText = "錯誤";
-        document.getElementById('word-example').innerText = "請確保 pte_vocab_2000.json 與網頁放在同一個資料夾內！";
+        document.getElementById('word-example').innerText = "請確保 pte_vocab.json 與網頁放在同一個資料夾內！";
         console.error(error);
     }
 }
@@ -771,8 +863,11 @@ function showWord() {
     // 延遲更新文字，避免翻轉時提前露餡
     setTimeout(() => {
         document.getElementById('word-target').innerText = current.w;
+        document.getElementById('word-pos').innerText = current.pos ? `(${current.pos})` : '';
         document.getElementById('word-meaning').innerText = current.m;
         renderExampleText(document.getElementById('word-example'), current.e);
+        renderTermList(document.getElementById('word-family'), current.wordFamily);
+        renderTermList(document.getElementById('word-collocations'), current.collocations);
         updateSpeakButton();
     }, 150);
 

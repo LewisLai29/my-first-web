@@ -1,0 +1,1769 @@
+[
+    {
+        "id":  1,
+        "word":  "analyse",
+        "partOfSpeech":  "v.",
+        "definition":  "分析、解析、研究",
+        "example":  "\"Researchers **analysed** the results in detail.\"（研究人員詳細分析了結果。）",
+        "wordFamily":  [
+                           {
+                               "term":  "analysis",
+                               "explanation":  "名詞：分析"
+                           },
+                           {
+                               "term":  "analyst",
+                               "explanation":  "名詞：分析師/分析人員"
+                           },
+                           {
+                               "term":  "analytical",
+                               "explanation":  "形容詞：分析的、具分析能力的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "conduct an analysis",
+                                 "explanation":  "進行分析"
+                             },
+                             {
+                                 "term":  "critical analysis",
+                                 "explanation":  "批判性分析"
+                             },
+                             {
+                                 "term":  "statistical analysis",
+                                 "explanation":  "統計分析"
+                             }
+                         ]
+    },
+    {
+        "id":  2,
+        "word":  "approach",
+        "partOfSpeech":  "v./n.",
+        "definition":  "方法、途徑；接近、處理",
+        "example":  "\"We need a new **approach** to tackle this problem.\"（我們需要一種新方法來處理這個問題。）",
+        "wordFamily":  [
+                           {
+                               "term":  "approachable",
+                               "explanation":  "形容詞：可接近的、友善的"
+                           },
+                           {
+                               "term":  "approaching",
+                               "explanation":  "形容詞/分詞：即將到來的、接近中的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "adopt an approach",
+                                 "explanation":  "採用一種方法"
+                             },
+                             {
+                                 "term":  "pragmatic approach",
+                                 "explanation":  "務實的方法"
+                             },
+                             {
+                                 "term":  "approach the limit",
+                                 "explanation":  "接近極限"
+                             }
+                         ]
+    },
+    {
+        "id":  3,
+        "word":  "area",
+        "partOfSpeech":  "n.",
+        "definition":  "區域、地區、領域、面積",
+        "example":  "\"There is heavy traffic in the downtown **area**.\"（市中心地區交通非常壅塞。）",
+        "wordFamily":  [
+                           {
+                               "term":  "areas",
+                               "explanation":  "複數名詞：區域、領域"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "rural/urban area",
+                                 "explanation":  "鄉村/都市地區"
+                             },
+                             {
+                                 "term":  "area of expertise",
+                                 "explanation":  "專業領域"
+                             },
+                             {
+                                 "term":  "residential area",
+                                 "explanation":  "住宅區"
+                             }
+                         ]
+    },
+    {
+        "id":  4,
+        "word":  "assess",
+        "partOfSpeech":  "v.",
+        "definition":  "評估、評定、判定",
+        "example":  "\"The insurance company will **assess** the damage.\"（保險公司將評估損害情況。）",
+        "wordFamily":  [
+                           {
+                               "term":  "assessment",
+                               "explanation":  "名詞：評估"
+                           },
+                           {
+                               "term":  "reassess",
+                               "explanation":  "動詞：重新評估"
+                           },
+                           {
+                               "term":  "assessable",
+                               "explanation":  "形容詞：可評估的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "assess the impact",
+                                 "explanation":  "評估影響"
+                             },
+                             {
+                                 "term":  "risk assessment",
+                                 "explanation":  "風險評估"
+                             },
+                             {
+                                 "term":  "assess the value",
+                                 "explanation":  "評估價值"
+                             }
+                         ]
+    },
+    {
+        "id":  5,
+        "word":  "assume",
+        "partOfSpeech":  "v.",
+        "definition":  "假設、認為；承擔、擔任",
+        "example":  "\"I **assumed** you knew the rules.\"（我以為你知道規則。）",
+        "wordFamily":  [
+                           {
+                               "term":  "assumption",
+                               "explanation":  "名詞：假設"
+                           },
+                           {
+                               "term":  "assumed",
+                               "explanation":  "形容詞：假定的、被認為的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "make an assumption",
+                                 "explanation":  "做出假設"
+                             },
+                             {
+                                 "term":  "assume responsibility",
+                                 "explanation":  "承擔責任"
+                             },
+                             {
+                                 "term":  "assume control",
+                                 "explanation":  "取得控制權"
+                             }
+                         ]
+    },
+    {
+        "id":  6,
+        "word":  "authority",
+        "partOfSpeech":  "n.",
+        "definition":  "權威、權力、官方機構",
+        "example":  "\"She is an **authority** on medieval history.\"（她是中古史方面的權威。）",
+        "wordFamily":  [
+                           {
+                               "term":  "authoritative",
+                               "explanation":  "形容詞：權威的、可信的"
+                           },
+                           {
+                               "term":  "authorize",
+                               "explanation":  "動詞：授權"
+                           },
+                           {
+                               "term":  "authorities",
+                               "explanation":  "名詞：當局、主管機關"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "have authority",
+                                 "explanation":  "有權力/權威"
+                             },
+                             {
+                                 "term":  "local authorities",
+                                 "explanation":  "地方當局"
+                             },
+                             {
+                                 "term":  "question authority",
+                                 "explanation":  "質疑權威"
+                             }
+                         ]
+    },
+    {
+        "id":  7,
+        "word":  "available",
+        "partOfSpeech":  "adj.",
+        "definition":  "可取得的、可用的、有空的",
+        "example":  "\"No comments are **available** at this time.\"（目前沒有可用的評論。）",
+        "wordFamily":  [
+                           {
+                               "term":  "availability",
+                               "explanation":  "名詞：可用性、供應情況"
+                           },
+                           {
+                               "term":  "unavailable",
+                               "explanation":  "形容詞：不可用的、沒空的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "readily available",
+                                 "explanation":  "容易取得的"
+                             },
+                             {
+                                 "term":  "make available",
+                                 "explanation":  "使可用、提供"
+                             },
+                             {
+                                 "term":  "widely available",
+                                 "explanation":  "廣泛可得的"
+                             }
+                         ]
+    },
+    {
+        "id":  8,
+        "word":  "benefit",
+        "partOfSpeech":  "n./v.",
+        "definition":  "好處、利益；使受益",
+        "example":  "\"The project will **benefit** the entire community.\"（這個專案將使整個社區受益。）",
+        "wordFamily":  [
+                           {
+                               "term":  "beneficial",
+                               "explanation":  "形容詞：有益的"
+                           },
+                           {
+                               "term":  "beneficiary",
+                               "explanation":  "名詞：受益人"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "mutual benefit",
+                                 "explanation":  "共同利益"
+                             },
+                             {
+                                 "term":  "derive benefit",
+                                 "explanation":  "獲得好處"
+                             },
+                             {
+                                 "term":  "for the benefit of",
+                                 "explanation":  "為了……的利益"
+                             }
+                         ]
+    },
+    {
+        "id":  9,
+        "word":  "concept",
+        "partOfSpeech":  "n.",
+        "definition":  "概念、觀念",
+        "example":  "\"The **concept** of time travel is fascinating.\"（時間旅行的概念很迷人。）",
+        "wordFamily":  [
+                           {
+                               "term":  "conception",
+                               "explanation":  "名詞：構想、概念"
+                           },
+                           {
+                               "term":  "conceptual",
+                               "explanation":  "形容詞：概念的"
+                           },
+                           {
+                               "term":  "conceptualize",
+                               "explanation":  "動詞：概念化"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "basic concept",
+                                 "explanation":  "基本概念"
+                             },
+                             {
+                                 "term":  "abstract concept",
+                                 "explanation":  "抽象概念"
+                             },
+                             {
+                                 "term":  "grasp the concept",
+                                 "explanation":  "理解概念"
+                             }
+                         ]
+    },
+    {
+        "id":  10,
+        "word":  "consist",
+        "partOfSpeech":  "v.",
+        "definition":  "由……組成、在於",
+        "example":  "\"The exam **consists** of two parts.\"（考試由兩個部分組成。）",
+        "wordFamily":  [
+                           {
+                               "term":  "consistency",
+                               "explanation":  "名詞：一致性、連貫性"
+                           },
+                           {
+                               "term":  "consistent",
+                               "explanation":  "形容詞：一致的、穩定的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "consist of",
+                                 "explanation":  "由……組成"
+                             },
+                             {
+                                 "term":  "consist in",
+                                 "explanation":  "在於"
+                             }
+                         ]
+    },
+    {
+        "id":  11,
+        "word":  "constitute",
+        "partOfSpeech":  "v.",
+        "definition":  "構成、組成、等同於",
+        "example":  "\"Women **constitute** 70% of the student population.\"（女性占學生總數的 70%。）",
+        "wordFamily":  [
+                           {
+                               "term":  "constitution",
+                               "explanation":  "名詞：憲法；組成、體質"
+                           },
+                           {
+                               "term":  "constitutional",
+                               "explanation":  "形容詞：憲法的、體制的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "constitute a threat",
+                                 "explanation":  "構成威脅"
+                             },
+                             {
+                                 "term":  "constitute a crime",
+                                 "explanation":  "構成犯罪"
+                             },
+                             {
+                                 "term":  "constitute the majority",
+                                 "explanation":  "占多數"
+                             }
+                         ]
+    },
+    {
+        "id":  12,
+        "word":  "context",
+        "partOfSpeech":  "n.",
+        "definition":  "上下文、背景、情境",
+        "example":  "\"The words meant something different in that **context**.\"（這些字在那個語境中有不同的意思。）",
+        "wordFamily":  [
+                           {
+                               "term":  "contextual",
+                               "explanation":  "形容詞：情境的、上下文的"
+                           },
+                           {
+                               "term":  "contextualize",
+                               "explanation":  "動詞：放入背景中理解"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "social context",
+                                 "explanation":  "社會背景"
+                             },
+                             {
+                                 "term":  "in this context",
+                                 "explanation":  "在此情境下"
+                             },
+                             {
+                                 "term":  "out of context",
+                                 "explanation":  "脫離上下文"
+                             }
+                         ]
+    },
+    {
+        "id":  13,
+        "word":  "contract",
+        "partOfSpeech":  "n./v.",
+        "definition":  "合約；收縮、感染",
+        "example":  "\"They signed a three-year **contract**.\"（他們簽了一份三年合約。）",
+        "wordFamily":  [
+                           {
+                               "term":  "contractor",
+                               "explanation":  "名詞：承包商"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "sign a contract",
+                                 "explanation":  "簽合約"
+                             },
+                             {
+                                 "term":  "breach of contract",
+                                 "explanation":  "違約"
+                             },
+                             {
+                                 "term":  "contract a disease",
+                                 "explanation":  "感染疾病"
+                             }
+                         ]
+    },
+    {
+        "id":  14,
+        "word":  "create",
+        "partOfSpeech":  "v.",
+        "definition":  "創造、建立、造成",
+        "example":  "\"The goal is to **create** a safe environment.\"（目標是創造一個安全的環境。）",
+        "wordFamily":  [
+                           {
+                               "term":  "creation",
+                               "explanation":  "名詞：創造、創作"
+                           },
+                           {
+                               "term":  "creative",
+                               "explanation":  "形容詞：有創造力的"
+                           },
+                           {
+                               "term":  "creativity",
+                               "explanation":  "名詞：創造力"
+                           },
+                           {
+                               "term":  "creator",
+                               "explanation":  "名詞：創作者"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "create jobs",
+                                 "explanation":  "創造就業機會"
+                             },
+                             {
+                                 "term":  "create an impression",
+                                 "explanation":  "留下印象"
+                             },
+                             {
+                                 "term":  "create problems",
+                                 "explanation":  "造成問題"
+                             }
+                         ]
+    },
+    {
+        "id":  15,
+        "word":  "data",
+        "partOfSpeech":  "n.",
+        "definition":  "資料、數據",
+        "example":  "\"We need more **data** before making a decision.\"（在做決定之前，我們需要更多資料。）",
+        "wordFamily":  [
+                           {
+                               "term":  "database",
+                               "explanation":  "名詞：資料庫"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "collect data",
+                                 "explanation":  "收集資料"
+                             },
+                             {
+                                 "term":  "analyze data",
+                                 "explanation":  "分析資料"
+                             },
+                             {
+                                 "term":  "raw data",
+                                 "explanation":  "原始資料"
+                             }
+                         ]
+    },
+    {
+        "id":  16,
+        "word":  "define",
+        "partOfSpeech":  "v.",
+        "definition":  "定義、界定、說明",
+        "example":  "\"Terms should be **defined** clearly in the contract.\"（條款應在合約中清楚定義。）",
+        "wordFamily":  [
+                           {
+                               "term":  "definition",
+                               "explanation":  "名詞：定義"
+                           },
+                           {
+                               "term":  "definitive",
+                               "explanation":  "形容詞：明確的、最終的"
+                           },
+                           {
+                               "term":  "undefined",
+                               "explanation":  "形容詞：未定義的、不明確的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "clearly defined",
+                                 "explanation":  "清楚定義的"
+                             },
+                             {
+                                 "term":  "define a problem",
+                                 "explanation":  "界定問題"
+                             },
+                             {
+                                 "term":  "define boundaries",
+                                 "explanation":  "劃定界線"
+                             }
+                         ]
+    },
+    {
+        "id":  17,
+        "word":  "derive",
+        "partOfSpeech":  "v.",
+        "definition":  "源自、取得、推導出",
+        "example":  "\"He **derives** great pleasure from painting.\"（他從繪畫中獲得極大的樂趣。）",
+        "wordFamily":  [
+                           {
+                               "term":  "derivation",
+                               "explanation":  "名詞：衍生、推導"
+                           },
+                           {
+                               "term":  "derivative",
+                               "explanation":  "名詞/形容詞：衍生物；衍生的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "derive from",
+                                 "explanation":  "源自於"
+                             },
+                             {
+                                 "term":  "derive benefit",
+                                 "explanation":  "獲得利益"
+                             },
+                             {
+                                 "term":  "derive satisfaction",
+                                 "explanation":  "獲得滿足"
+                             }
+                         ]
+    },
+    {
+        "id":  18,
+        "word":  "distribute",
+        "partOfSpeech":  "v.",
+        "definition":  "分配、分發、散布",
+        "example":  "\"The funds were **distributed** equally among the schools.\"（資金被平均分配給各學校。）",
+        "wordFamily":  [
+                           {
+                               "term":  "distribution",
+                               "explanation":  "名詞：分配、分布"
+                           },
+                           {
+                               "term":  "distributor",
+                               "explanation":  "名詞：經銷商、分銷者"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "distribute resources",
+                                 "explanation":  "分配資源"
+                             },
+                             {
+                                 "term":  "widely distributed",
+                                 "explanation":  "廣泛分布的"
+                             },
+                             {
+                                 "term":  "equal distribution",
+                                 "explanation":  "平均分配"
+                             }
+                         ]
+    },
+    {
+        "id":  19,
+        "word":  "economy",
+        "partOfSpeech":  "n.",
+        "definition":  "經濟、節約",
+        "example":  "\"The war devastated the country\u0027s **economy**.\"（戰爭摧毀了該國的經濟。）",
+        "wordFamily":  [
+                           {
+                               "term":  "economic",
+                               "explanation":  "形容詞：經濟的"
+                           },
+                           {
+                               "term":  "economical",
+                               "explanation":  "形容詞：節省的、經濟實惠的"
+                           },
+                           {
+                               "term":  "economist",
+                               "explanation":  "名詞：經濟學家"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "global economy",
+                                 "explanation":  "全球經濟"
+                             },
+                             {
+                                 "term":  "market economy",
+                                 "explanation":  "市場經濟"
+                             },
+                             {
+                                 "term":  "boost the economy",
+                                 "explanation":  "刺激經濟"
+                             }
+                         ]
+    },
+    {
+        "id":  20,
+        "word":  "environment",
+        "partOfSpeech":  "n.",
+        "definition":  "環境、周遭狀況",
+        "example":  "\"A noisy **environment** makes it hard to study.\"（吵雜的環境讓人難以讀書。）",
+        "wordFamily":  [
+                           {
+                               "term":  "environmental",
+                               "explanation":  "形容詞：環境的"
+                           },
+                           {
+                               "term":  "environmentalist",
+                               "explanation":  "名詞：環保人士"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "protect the environment",
+                                 "explanation":  "保護環境"
+                             },
+                             {
+                                 "term":  "hostile environment",
+                                 "explanation":  "敵對/惡劣環境"
+                             },
+                             {
+                                 "term":  "work environment",
+                                 "explanation":  "工作環境"
+                             }
+                         ]
+    },
+    {
+        "id":  21,
+        "word":  "establish",
+        "partOfSpeech":  "v.",
+        "definition":  "建立、設立、確立",
+        "example":  "\"They want to **establish** a new trade route.\"（他們想建立一條新的貿易路線。）",
+        "wordFamily":  [
+                           {
+                               "term":  "establishment",
+                               "explanation":  "名詞：建立；機構"
+                           },
+                           {
+                               "term":  "established",
+                               "explanation":  "形容詞：已確立的、知名的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "establish a link",
+                                 "explanation":  "建立連結"
+                             },
+                             {
+                                 "term":  "establish facts",
+                                 "explanation":  "查明事實"
+                             },
+                             {
+                                 "term":  "establish a reputation",
+                                 "explanation":  "建立聲譽"
+                             }
+                         ]
+    },
+    {
+        "id":  22,
+        "word":  "estimate",
+        "partOfSpeech":  "v./n.",
+        "definition":  "估計、估算；估計值",
+        "example":  "\"We **estimate** the cost to be around $500.\"（我們估計費用約為 500 美元。）",
+        "wordFamily":  [
+                           {
+                               "term":  "estimation",
+                               "explanation":  "名詞：估計、判斷"
+                           },
+                           {
+                               "term":  "overestimated",
+                               "explanation":  "形容詞：被高估的"
+                           },
+                           {
+                               "term":  "underestimated",
+                               "explanation":  "形容詞：被低估的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "rough estimate",
+                                 "explanation":  "粗略估計"
+                             },
+                             {
+                                 "term":  "conservative estimate",
+                                 "explanation":  "保守估計"
+                             },
+                             {
+                                 "term":  "estimate the value",
+                                 "explanation":  "估算價值"
+                             }
+                         ]
+    },
+    {
+        "id":  23,
+        "word":  "evident",
+        "partOfSpeech":  "adj.",
+        "definition":  "明顯的、顯然的",
+        "example":  "\"Her disappointment was **evident** to everyone.\"（每個人都看得出她很失望。）",
+        "wordFamily":  [
+                           {
+                               "term":  "evidence",
+                               "explanation":  "名詞：證據"
+                           },
+                           {
+                               "term":  "evidently",
+                               "explanation":  "副詞：顯然地"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "become evident",
+                                 "explanation":  "變得明顯"
+                             },
+                             {
+                                 "term":  "clearly evident",
+                                 "explanation":  "清楚可見的"
+                             },
+                             {
+                                 "term":  "no evidence",
+                                 "explanation":  "沒有證據"
+                             }
+                         ]
+    },
+    {
+        "id":  24,
+        "word":  "export",
+        "partOfSpeech":  "v./n.",
+        "definition":  "出口、輸出；出口品",
+        "example":  "\"Brazil **exports** coffee to the world.\"（巴西向世界出口咖啡。）",
+        "wordFamily":  [
+                           {
+                               "term":  "exporter",
+                               "explanation":  "名詞：出口商"
+                           },
+                           {
+                               "term":  "exportation",
+                               "explanation":  "名詞：出口、輸出"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "export market",
+                                 "explanation":  "出口市場"
+                             },
+                             {
+                                 "term":  "export goods",
+                                 "explanation":  "出口商品"
+                             },
+                             {
+                                 "term":  "major export",
+                                 "explanation":  "主要出口品"
+                             }
+                         ]
+    },
+    {
+        "id":  25,
+        "word":  "factor",
+        "partOfSpeech":  "n.",
+        "definition":  "因素、要素",
+        "example":  "\"Stress is a major **factor** in heart disease.\"（壓力是心臟病的一個主要因素。）",
+        "wordFamily":  [
+                           {
+                               "term":  "factor in",
+                               "explanation":  "動詞片語：把……納入考量"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "key factor",
+                                 "explanation":  "關鍵因素"
+                             },
+                             {
+                                 "term":  "deciding factor",
+                                 "explanation":  "決定性因素"
+                             },
+                             {
+                                 "term":  "risk factor",
+                                 "explanation":  "風險因素"
+                             }
+                         ]
+    },
+    {
+        "id":  26,
+        "word":  "finance",
+        "partOfSpeech":  "n./v.",
+        "definition":  "財務、金融；資助、融資",
+        "example":  "\"He works in the world of high **finance**.\"（他在高階金融領域工作。）",
+        "wordFamily":  [
+                           {
+                               "term":  "financial",
+                               "explanation":  "形容詞：財務的、金融的"
+                           },
+                           {
+                               "term":  "financially",
+                               "explanation":  "副詞：財務上"
+                           },
+                           {
+                               "term":  "financier",
+                               "explanation":  "名詞：金融家、投資人"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "personal finance",
+                                 "explanation":  "個人理財"
+                             },
+                             {
+                                 "term":  "finance a project",
+                                 "explanation":  "資助專案"
+                             },
+                             {
+                                 "term":  "financial support",
+                                 "explanation":  "財務支援"
+                             }
+                         ]
+    },
+    {
+        "id":  27,
+        "word":  "formula",
+        "partOfSpeech":  "n.",
+        "definition":  "公式、方案、配方",
+        "example":  "\"There is no magic **formula** for success.\"（成功沒有神奇公式。）",
+        "wordFamily":  [
+                           {
+                               "term":  "formulate",
+                               "explanation":  "動詞：制定、闡述"
+                           },
+                           {
+                               "term":  "formulation",
+                               "explanation":  "名詞：制定、表述"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "mathematical formula",
+                                 "explanation":  "數學公式"
+                             },
+                             {
+                                 "term":  "peace formula",
+                                 "explanation":  "和平方案"
+                             },
+                             {
+                                 "term":  "infant formula",
+                                 "explanation":  "嬰兒配方奶"
+                             }
+                         ]
+    },
+    {
+        "id":  28,
+        "word":  "function",
+        "partOfSpeech":  "n./v.",
+        "definition":  "功能、作用；運作、發揮功能",
+        "example":  "\"The main **function** of the heart is to pump blood.\"（心臟的主要功能是泵送血液。）",
+        "wordFamily":  [
+                           {
+                               "term":  "functional",
+                               "explanation":  "形容詞：功能性的、可運作的"
+                           },
+                           {
+                               "term":  "functionally",
+                               "explanation":  "副詞：功能上"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "perform a function",
+                                 "explanation":  "執行功能"
+                             },
+                             {
+                                 "term":  "fulfill a function",
+                                 "explanation":  "發揮作用"
+                             },
+                             {
+                                 "term":  "bodily functions",
+                                 "explanation":  "身體機能"
+                             }
+                         ]
+    },
+    {
+        "id":  29,
+        "word":  "identify",
+        "partOfSpeech":  "v.",
+        "definition":  "辨認、識別、確認",
+        "example":  "\"Can you **identify** the man in the photo?\"（你能辨認照片中的那名男子嗎？）",
+        "wordFamily":  [
+                           {
+                               "term":  "identification",
+                               "explanation":  "名詞：識別、身分證明"
+                           },
+                           {
+                               "term":  "identity",
+                               "explanation":  "名詞：身分、特性"
+                           },
+                           {
+                               "term":  "identifiable",
+                               "explanation":  "形容詞：可辨認的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "identify a problem",
+                                 "explanation":  "找出問題"
+                             },
+                             {
+                                 "term":  "identify needs",
+                                 "explanation":  "確認需求"
+                             },
+                             {
+                                 "term":  "correctly identified",
+                                 "explanation":  "正確辨認"
+                             }
+                         ]
+    },
+    {
+        "id":  30,
+        "word":  "income",
+        "partOfSpeech":  "n.",
+        "definition":  "收入、所得",
+        "example":  "\"Low **income** families struggle to pay rent.\"（低收入家庭難以支付房租。）",
+        "wordFamily":  [
+                           {
+                               "text":  "無"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "annual income",
+                                 "explanation":  "年收入"
+                             },
+                             {
+                                 "term":  "source of income",
+                                 "explanation":  "收入來源"
+                             },
+                             {
+                                 "term":  "disposable income",
+                                 "explanation":  "可支配所得"
+                             }
+                         ]
+    },
+    {
+        "id":  31,
+        "word":  "indicate",
+        "partOfSpeech":  "v.",
+        "definition":  "指出、顯示、表明",
+        "example":  "\"Research **indicates** that eating habits are changing.\"（研究顯示飲食習慣正在改變。）",
+        "wordFamily":  [
+                           {
+                               "term":  "indication",
+                               "explanation":  "名詞：跡象、指示"
+                           },
+                           {
+                               "term":  "indicator",
+                               "explanation":  "名詞：指標"
+                           },
+                           {
+                               "term":  "indicative",
+                               "explanation":  "形容詞：顯示的、指示性的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "clearly indicate",
+                                 "explanation":  "清楚顯示"
+                             },
+                             {
+                                 "term":  "results indicate",
+                                 "explanation":  "結果顯示"
+                             },
+                             {
+                                 "term":  "indicate a change",
+                                 "explanation":  "顯示變化"
+                             }
+                         ]
+    },
+    {
+        "id":  32,
+        "word":  "individual",
+        "partOfSpeech":  "n./adj.",
+        "definition":  "個人、個體；個別的",
+        "example":  "\"Every **individual** has the right to free speech.\"（每個人都有言論自由的權利。）",
+        "wordFamily":  [
+                           {
+                               "term":  "individuality",
+                               "explanation":  "名詞：個性、個體性"
+                           },
+                           {
+                               "term":  "individually",
+                               "explanation":  "副詞：個別地"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "individual rights",
+                                 "explanation":  "個人權利"
+                             },
+                             {
+                                 "term":  "individual needs",
+                                 "explanation":  "個人需求"
+                             },
+                             {
+                                 "term":  "treat as an individual",
+                                 "explanation":  "把……當作個體對待"
+                             }
+                         ]
+    },
+    {
+        "id":  33,
+        "word":  "interpret",
+        "partOfSpeech":  "v.",
+        "definition":  "解釋、詮釋、口譯",
+        "example":  "\"How do you **interpret** this poem?\"（你如何詮釋這首詩？）",
+        "wordFamily":  [
+                           {
+                               "term":  "interpretation",
+                               "explanation":  "名詞：解釋、詮釋"
+                           },
+                           {
+                               "term":  "interpreter",
+                               "explanation":  "名詞：口譯員"
+                           },
+                           {
+                               "term":  "misinterpret",
+                               "explanation":  "動詞：誤解、錯誤詮釋"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "interpret data",
+                                 "explanation":  "解讀資料"
+                             },
+                             {
+                                 "term":  "interpret the law",
+                                 "explanation":  "解釋法律"
+                             },
+                             {
+                                 "term":  "freely interpreted",
+                                 "explanation":  "自由詮釋的"
+                             }
+                         ]
+    },
+    {
+        "id":  34,
+        "word":  "involve",
+        "partOfSpeech":  "v.",
+        "definition":  "包含、涉及、使參與",
+        "example":  "\"The job **involves** a lot of travel.\"（這份工作需要大量出差。）",
+        "wordFamily":  [
+                           {
+                               "term":  "involvement",
+                               "explanation":  "名詞：參與、牽涉"
+                           },
+                           {
+                               "term":  "involved",
+                               "explanation":  "形容詞：涉及的、參與的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "get involved",
+                                 "explanation":  "參與"
+                             },
+                             {
+                                 "term":  "involve risk",
+                                 "explanation":  "涉及風險"
+                             },
+                             {
+                                 "term":  "deeply involved",
+                                 "explanation":  "深度參與/深陷其中"
+                             }
+                         ]
+    },
+    {
+        "id":  35,
+        "word":  "issue",
+        "partOfSpeech":  "n./v.",
+        "definition":  "議題、問題；發布、發行",
+        "example":  "\"Environmental pollution is a global **issue**.\"（環境污染是一個全球性議題。）",
+        "wordFamily":  [
+                           {
+                               "text":  "無"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "raise an issue",
+                                 "explanation":  "提出議題"
+                             },
+                             {
+                                 "term":  "address an issue",
+                                 "explanation":  "處理問題"
+                             },
+                             {
+                                 "term":  "key issue",
+                                 "explanation":  "關鍵議題"
+                             }
+                         ]
+    },
+    {
+        "id":  36,
+        "word":  "labour",
+        "partOfSpeech":  "n./v.",
+        "definition":  "勞動、勞工；努力工作",
+        "example":  "\"Manual **labour** is physically demanding.\"（體力勞動對身體要求很高。）",
+        "wordFamily":  [
+                           {
+                               "term":  "laborer",
+                               "explanation":  "名詞：勞工、工人"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "child labour",
+                                 "explanation":  "童工"
+                             },
+                             {
+                                 "term":  "labour market",
+                                 "explanation":  "勞動市場"
+                             },
+                             {
+                                 "term":  "skilled labour",
+                                 "explanation":  "熟練勞工"
+                             }
+                         ]
+    },
+    {
+        "id":  37,
+        "word":  "legal",
+        "partOfSpeech":  "adj.",
+        "definition":  "法律的、合法的",
+        "example":  "\"Seek **legal** advice before signing.\"（簽署前請尋求法律建議。）",
+        "wordFamily":  [
+                           {
+                               "term":  "illegal",
+                               "explanation":  "形容詞：非法的"
+                           },
+                           {
+                               "term":  "legality",
+                               "explanation":  "名詞：合法性"
+                           },
+                           {
+                               "term":  "legalize",
+                               "explanation":  "動詞：使合法化"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "legal system",
+                                 "explanation":  "法律制度"
+                             },
+                             {
+                                 "term":  "legal action",
+                                 "explanation":  "法律行動、訴訟"
+                             },
+                             {
+                                 "term":  "legal right",
+                                 "explanation":  "合法權利"
+                             }
+                         ]
+    },
+    {
+        "id":  38,
+        "word":  "legislate",
+        "partOfSpeech":  "v.",
+        "definition":  "立法、制定法律",
+        "example":  "\"The government promised to **legislate** against discrimination.\"（政府承諾立法反對歧視。）",
+        "wordFamily":  [
+                           {
+                               "term":  "legislation",
+                               "explanation":  "名詞：立法、法規"
+                           },
+                           {
+                               "term":  "legislative",
+                               "explanation":  "形容詞：立法的"
+                           },
+                           {
+                               "term":  "legislator",
+                               "explanation":  "名詞：立法者"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "introduce legislation",
+                                 "explanation":  "提出法案"
+                             },
+                             {
+                                 "term":  "legislate for/against",
+                                 "explanation":  "為/反對……立法"
+                             }
+                         ]
+    },
+    {
+        "id":  39,
+        "word":  "major",
+        "partOfSpeech":  "adj.",
+        "definition":  "主要的、重大的、重要的",
+        "example":  "\"Unemployment is a **major** problem.\"（失業是一個重大問題。）",
+        "wordFamily":  [
+                           {
+                               "term":  "majority",
+                               "explanation":  "名詞：多數、大多數"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "major role",
+                                 "explanation":  "主要角色"
+                             },
+                             {
+                                 "term":  "major change",
+                                 "explanation":  "重大變化"
+                             },
+                             {
+                                 "term":  "major challenge",
+                                 "explanation":  "重大挑戰"
+                             }
+                         ]
+    },
+    {
+        "id":  40,
+        "word":  "method",
+        "partOfSpeech":  "n.",
+        "definition":  "方法、方式",
+        "example":  "\"They used a new **method** of teaching.\"（他們使用了一種新的教學方法。）",
+        "wordFamily":  [
+                           {
+                               "term":  "methodical",
+                               "explanation":  "形容詞：有條理的"
+                           },
+                           {
+                               "term":  "methodology",
+                               "explanation":  "名詞：方法論"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "scientific method",
+                                 "explanation":  "科學方法"
+                             },
+                             {
+                                 "term":  "teaching method",
+                                 "explanation":  "教學方法"
+                             },
+                             {
+                                 "term":  "alternative method",
+                                 "explanation":  "替代方法"
+                             }
+                         ]
+    },
+    {
+        "id":  41,
+        "word":  "occur",
+        "partOfSpeech":  "v.",
+        "definition":  "發生、出現",
+        "example":  "\"The accident **occurred** at night.\"（事故發生在夜間。）",
+        "wordFamily":  [
+                           {
+                               "term":  "occurrence",
+                               "explanation":  "名詞：事件、發生"
+                           },
+                           {
+                               "term":  "reoccur",
+                               "explanation":  "動詞：再次發生"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "occur frequently",
+                                 "explanation":  "經常發生"
+                             },
+                             {
+                                 "term":  "naturally occurring",
+                                 "explanation":  "自然發生的"
+                             },
+                             {
+                                 "term":  "it occurred to me that...",
+                                 "explanation":  "我突然想到……"
+                             }
+                         ]
+    },
+    {
+        "id":  42,
+        "word":  "percent",
+        "partOfSpeech":  "n.",
+        "definition":  "百分比、百分之……",
+        "example":  "\"Prices rose by five **percent**.\"（價格上漲了百分之五。）",
+        "wordFamily":  [
+                           {
+                               "term":  "percentage",
+                               "explanation":  "名詞：百分比、比例"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "high percentage",
+                                 "explanation":  "高比例"
+                             },
+                             {
+                                 "term":  "small percent",
+                                 "explanation":  "小百分比"
+                             },
+                             {
+                                 "term":  "percent increase",
+                                 "explanation":  "百分比增加"
+                             }
+                         ]
+    },
+    {
+        "id":  43,
+        "word":  "period",
+        "partOfSpeech":  "n.",
+        "definition":  "期間、時期、句點",
+        "example":  "\"The offer is available for a limited **period**.\"（此優惠只在有限期間內有效。）",
+        "wordFamily":  [
+                           {
+                               "term":  "periodic",
+                               "explanation":  "形容詞：週期性的"
+                           },
+                           {
+                               "term":  "periodically",
+                               "explanation":  "副詞：定期地"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "short period",
+                                 "explanation":  "短期間"
+                             },
+                             {
+                                 "term":  "over a period of",
+                                 "explanation":  "在一段……期間內"
+                             },
+                             {
+                                 "term":  "transition period",
+                                 "explanation":  "過渡期"
+                             }
+                         ]
+    },
+    {
+        "id":  44,
+        "word":  "policy",
+        "partOfSpeech":  "n.",
+        "definition":  "政策、方針、原則",
+        "example":  "\"The company has a strict no-smoking **policy**.\"（公司有嚴格的禁菸政策。）",
+        "wordFamily":  [
+                           {
+                               "term":  "policies",
+                               "explanation":  "複數名詞：政策"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "foreign policy",
+                                 "explanation":  "外交政策"
+                             },
+                             {
+                                 "term":  "implement a policy",
+                                 "explanation":  "執行政策"
+                             },
+                             {
+                                 "term":  "public policy",
+                                 "explanation":  "公共政策"
+                             }
+                         ]
+    },
+    {
+        "id":  45,
+        "word":  "principle",
+        "partOfSpeech":  "n.",
+        "definition":  "原則、準則、信念",
+        "example":  "\"He refuses to lie as a matter of **principle**.\"（他基於原則拒絕說謊。）",
+        "wordFamily":  [
+                           {
+                               "term":  "principled",
+                               "explanation":  "形容詞：有原則的"
+                           },
+                           {
+                               "term":  "unprincipled",
+                               "explanation":  "形容詞：無原則的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "basic principle",
+                                 "explanation":  "基本原則"
+                             },
+                             {
+                                 "term":  "guiding principle",
+                                 "explanation":  "指導原則"
+                             },
+                             {
+                                 "term":  "in principle",
+                                 "explanation":  "原則上"
+                             }
+                         ]
+    },
+    {
+        "id":  46,
+        "word":  "proceed",
+        "partOfSpeech":  "v.",
+        "definition":  "繼續進行、前進、著手",
+        "example":  "\"Please **proceed** with your presentation.\"（請繼續你的簡報。）",
+        "wordFamily":  [
+                           {
+                               "term":  "proceedings",
+                               "explanation":  "名詞：會議記錄；法律程序"
+                           },
+                           {
+                               "term":  "procedure",
+                               "explanation":  "名詞：程序、流程"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "proceed with caution",
+                                 "explanation":  "謹慎進行"
+                             },
+                             {
+                                 "term":  "proceed to the gate",
+                                 "explanation":  "前往登機門"
+                             },
+                             {
+                                 "term":  "proceed against",
+                                 "explanation":  "對……提起訴訟"
+                             }
+                         ]
+    },
+    {
+        "id":  47,
+        "word":  "process",
+        "partOfSpeech":  "n./v.",
+        "definition":  "過程、流程；處理、加工",
+        "example":  "\"Learning a language is a slow **process**.\"（學習語言是一個緩慢的過程。）",
+        "wordFamily":  [
+                           {
+                               "term":  "processed",
+                               "explanation":  "形容詞：加工過的"
+                           },
+                           {
+                               "term":  "processing",
+                               "explanation":  "名詞：處理、加工"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "decision-making process",
+                                 "explanation":  "決策過程"
+                             },
+                             {
+                                 "term":  "peace process",
+                                 "explanation":  "和平進程"
+                             },
+                             {
+                                 "term":  "process information",
+                                 "explanation":  "處理資訊"
+                             }
+                         ]
+    },
+    {
+        "id":  48,
+        "word":  "require",
+        "partOfSpeech":  "v.",
+        "definition":  "需要、要求、必須",
+        "example":  "\"This job **requires** patience.\"（這份工作需要耐心。）",
+        "wordFamily":  [
+                           {
+                               "term":  "requirement",
+                               "explanation":  "名詞：需求、要求"
+                           },
+                           {
+                               "term":  "required",
+                               "explanation":  "形容詞：必要的、被要求的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "require attention",
+                                 "explanation":  "需要注意"
+                             },
+                             {
+                                 "term":  "legally required",
+                                 "explanation":  "法律要求的"
+                             },
+                             {
+                                 "term":  "meet the requirements",
+                                 "explanation":  "符合要求"
+                             }
+                         ]
+    },
+    {
+        "id":  49,
+        "word":  "research",
+        "partOfSpeech":  "n./v.",
+        "definition":  "研究、調查；研究",
+        "example":  "\"Further **research** is needed.\"（需要進一步研究。）",
+        "wordFamily":  [
+                           {
+                               "term":  "researcher",
+                               "explanation":  "名詞：研究人員"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "conduct research",
+                                 "explanation":  "進行研究"
+                             },
+                             {
+                                 "term":  "market research",
+                                 "explanation":  "市場研究"
+                             },
+                             {
+                                 "term":  "scientific research",
+                                 "explanation":  "科學研究"
+                             }
+                         ]
+    },
+    {
+        "id":  50,
+        "word":  "respond",
+        "partOfSpeech":  "v.",
+        "definition":  "回應、回答、反應",
+        "example":  "\"The patient is **responding** well to treatment.\"（病人對治療反應良好。）",
+        "wordFamily":  [
+                           {
+                               "term":  "response",
+                               "explanation":  "名詞：回應、反應"
+                           },
+                           {
+                               "term":  "respondent",
+                               "explanation":  "名詞：受訪者、答覆者"
+                           },
+                           {
+                               "term":  "responsive",
+                               "explanation":  "形容詞：反應快的、積極回應的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "respond quickly",
+                                 "explanation":  "迅速回應"
+                             },
+                             {
+                                 "term":  "respond to a demand",
+                                 "explanation":  "回應需求"
+                             },
+                             {
+                                 "term":  "emotional response",
+                                 "explanation":  "情緒反應"
+                             }
+                         ]
+    },
+    {
+        "id":  51,
+        "word":  "role",
+        "partOfSpeech":  "n.",
+        "definition":  "角色、作用、職責",
+        "example":  "\"Parents play a key **role** in a child\u0027s education.\"（父母在孩子的教育中扮演關鍵角色。）",
+        "wordFamily":  [
+                           {
+                               "text":  "無"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "play a role",
+                                 "explanation":  "扮演角色"
+                             },
+                             {
+                                 "term":  "leading role",
+                                 "explanation":  "主導角色、主角"
+                             },
+                             {
+                                 "term":  "crucial role",
+                                 "explanation":  "關鍵作用"
+                             }
+                         ]
+    },
+    {
+        "id":  52,
+        "word":  "section",
+        "partOfSpeech":  "n.",
+        "definition":  "部分、章節、區段",
+        "example":  "\"Read the first **section** of the report.\"（請閱讀報告的第一部分。）",
+        "wordFamily":  [
+                           {
+                               "term":  "sectional",
+                               "explanation":  "形容詞：部分的、區域的"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "cross section",
+                                 "explanation":  "橫截面；代表性樣本"
+                             },
+                             {
+                                 "term":  "section of society",
+                                 "explanation":  "社會階層/群體"
+                             },
+                             {
+                                 "term":  "business section",
+                                 "explanation":  "商業版/商業部門"
+                             }
+                         ]
+    },
+    {
+        "id":  53,
+        "word":  "sector",
+        "partOfSpeech":  "n.",
+        "definition":  "部門、領域、產業",
+        "example":  "\"Jobs in the service **sector** are increasing.\"（服務業的工作機會正在增加。）",
+        "wordFamily":  [
+                           {
+                               "text":  "無"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "private/public sector",
+                                 "explanation":  "私營/公共部門"
+                             },
+                             {
+                                 "term":  "financial sector",
+                                 "explanation":  "金融部門"
+                             },
+                             {
+                                 "term":  "manufacturing sector",
+                                 "explanation":  "製造業"
+                             }
+                         ]
+    },
+    {
+        "id":  54,
+        "word":  "significant",
+        "partOfSpeech":  "adj.",
+        "definition":  "重要的、顯著的、有意義的",
+        "example":  "\"There has been a **significant** increase in sales.\"（銷售額有顯著增加。）",
+        "wordFamily":  [
+                           {
+                               "term":  "significance",
+                               "explanation":  "名詞：重要性、意義"
+                           },
+                           {
+                               "term":  "significantly",
+                               "explanation":  "副詞：顯著地、大幅地"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "statistically significant",
+                                 "explanation":  "統計上顯著的"
+                             },
+                             {
+                                 "term":  "significant impact",
+                                 "explanation":  "重大影響"
+                             },
+                             {
+                                 "term":  "significant difference",
+                                 "explanation":  "顯著差異"
+                             }
+                         ]
+    },
+    {
+        "id":  55,
+        "word":  "similar",
+        "partOfSpeech":  "adj.",
+        "definition":  "相似的、類似的",
+        "example":  "\"My problem is **similar** to yours.\"（我的問題和你的問題相似。）",
+        "wordFamily":  [
+                           {
+                               "term":  "similarity",
+                               "explanation":  "名詞：相似性"
+                           },
+                           {
+                               "term":  "similarly",
+                               "explanation":  "副詞：同樣地、類似地"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "remarkably similar",
+                                 "explanation":  "非常相似"
+                             },
+                             {
+                                 "term":  "similar in nature",
+                                 "explanation":  "本質上相似"
+                             },
+                             {
+                                 "term":  "look similar",
+                                 "explanation":  "看起來相似"
+                             }
+                         ]
+    },
+    {
+        "id":  56,
+        "word":  "source",
+        "partOfSpeech":  "n.",
+        "definition":  "來源、出處、資源",
+        "example":  "\"Beans are a good **source** of protein.\"（豆類是蛋白質的良好來源。）",
+        "wordFamily":  [
+                           {
+                               "term":  "outsource",
+                               "explanation":  "動詞：外包"
+                           },
+                           {
+                               "term":  "resource",
+                               "explanation":  "名詞：資源"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "source of income",
+                                 "explanation":  "收入來源"
+                             },
+                             {
+                                 "term":  "reliable source",
+                                 "explanation":  "可靠來源"
+                             },
+                             {
+                                 "term":  "energy source",
+                                 "explanation":  "能源來源"
+                             }
+                         ]
+    },
+    {
+        "id":  57,
+        "word":  "specific",
+        "partOfSpeech":  "adj.",
+        "definition":  "具體的、特定的、明確的",
+        "example":  "\"Is there anything **specific** you want for dinner?\"（晚餐你有什麼特別想吃的嗎？）",
+        "wordFamily":  [
+                           {
+                               "term":  "specifics",
+                               "explanation":  "名詞：細節、具體事項"
+                           },
+                           {
+                               "term":  "specifically",
+                               "explanation":  "副詞：特別地、具體地"
+                           },
+                           {
+                               "term":  "specification",
+                               "explanation":  "名詞：規格、明細"
+                           }
+                       ],
+        "collocations":  [
+                             {
+                                 "term":  "specific purpose",
+                                 "explanation":  "特定目的"
+                             },
+                             {
+                                 "term":  "be specific",
+                                 "explanation":  "講具體一點"
+                             },
+                             {
+                                 "term":  "specific example",
+                                 "explanation":  "具體例子"
+                             }
+                         ]
+    }
+]
