@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.html",
   "scripts": {
-    "test": "jest --env=jsdom"
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --env=jsdom"
   },
   "repository": {
     "type": "git",

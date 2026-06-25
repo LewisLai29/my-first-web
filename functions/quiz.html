@@ -1,0 +1,48 @@
+<section id="quiz-box" aria-labelledby="quiz-title">
+    <h2 id="quiz-title" class="visually-hidden">Daily quiz</h2>
+
+    <div class="stats">
+        <span id="card-index">Card: -- / 15</span>
+        <span class="score-count" id="score-count">Correct: 0</span>
+    </div>
+
+    <div class="progress-bar" aria-hidden="true">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <div class="quiz-container">
+        <div class="card" id="word-card" role="button" tabindex="0" aria-label="Flip vocabulary card">
+            <div class="card-face card-front">
+                <h2>
+                    <span class="pos-tag" id="word-pos"></span>
+                    <span id="word-target">Loading...</span>
+                </h2>
+                <p>Tap to reveal the meaning and example.</p>
+                <div class="voice-controls">
+                    <button id="speak-word" class="speak-button" type="button" title="Speak word" aria-label="Speak word">🔊</button>
+                    <select id="voice-select" class="voice-select" aria-label="Voice"></select>
+                </div>
+            </div>
+
+            <div class="card-face card-back">
+                <h3 id="word-meaning">Meaning</h3>
+                <p class="example" id="word-example">Loading example...</p>
+
+                <section class="detail-section" aria-labelledby="word-family-title">
+                    <h4 id="word-family-title">Word family</h4>
+                    <ul class="detail-list" id="word-family"></ul>
+                </section>
+
+                <section class="detail-section" aria-labelledby="word-collocations-title">
+                    <h4 id="word-collocations-title">Collocations</h4>
+                    <ul class="detail-list" id="word-collocations"></ul>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-wrong" type="button" id="mark-wrong">Forgot</button>
+        <button class="btn-right" type="button" id="mark-right">Remembered</button>
+    </div>
+</section>

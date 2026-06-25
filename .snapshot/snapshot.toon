@@ -1,0 +1,55 @@
+proj: my-first-web
+desc: Static PTE vocab daily review app
+v: 1.0
+ts: 2026-06-25T08:35:00Z
+split: none
+tech:
+  lang: JavaScript|HTML|CSS|Python|PowerShell
+  fw: Browser ES modules|Jest jsdom
+  db: JSON file
+entry: index.html
+r[4]{route,handler,tables,tpl}:
+  GET /,js/app.js,pte_vocab.json,index.html|functions/*.html
+  GET functions/*.html,loadHtmlFunctions,,header|quiz|review-list|result|lookup-popup
+  GET pte_vocab.json,loadAndInitQuiz,pte_vocab.json,
+  GET https://api.mymemory.translated.net/get,fetchOnlineMeaning,,lookup-popup
+m.ctrl[1]{name,path,desc,deps}:
+  PteVocabApp,js/app.js,boot and quiz state,config|date-utils|html-functions|lookup|review-list|speech|terms|vocab
+m.svc[8]{name,path,desc,deps}:
+  loadAndInitQuiz,js/app.js,fetch vocab and seed daily words,vocab|date-utils|config
+  showWord,js/app.js,render current card and progress,lookup|terms|speech|review-list
+  nextWord,js/app.js,mark answer and advance,showWord
+  createLookupController,js/lookup.js,example word popup lookup,vocab|sessionStorage|MyMemory API
+  createSpeechController,js/speech.js,browser speech synthesis,Web Speech API
+  normalizeVocabItems,js/vocab.js,normalize vocab schema,date-utils
+  pickDailyWords,js/vocab.js,seeded daily word selection,date-utils
+  loadHtmlFunctions,js/html-functions.js,fetch and mount HTML fragments,config
+m.cmp[8]{name,path,desc,deps}:
+  AppRoot,index.html,main container and app script,css/app.css|js/app.js
+  Header,functions/header.html,title date and hint,app.js
+  QuizCard,functions/quiz.html,flip card answer controls voice selector,app.js|speech.js|lookup.js|terms.js
+  ReviewList,functions/review-list.html,browsed words list,review-list.js
+  ResultScreen,functions/result.html,final accuracy result,app.js
+  LookupPopup,functions/lookup-popup.html,word meaning popup,lookup.js
+  renderReviewList,js/review-list.js,reviewed word buttons,app.js
+  renderTermList,js/terms.js,word family and collocations,app.js
+m.data[3]{name,path,desc,deps}:
+  pte_vocab,pte_vocab.json,570 vocab items with word pos meaning example family collocations,
+  awl,awl/,AWL source markdown and zh variants,tools
+  testFixtures,test/index.test.js,mocked 2000 item vocab and real json checks,jest
+m.tool[4]{name,path,desc,deps}:
+  Jest tests,test/package.json,jsdom test command,index.test.js
+  run-tests,test/run-tests.bat,Windows test runner,test/package.json
+  add_awl_step2_to_vocab,tools/add_awl_step2_to_vocab.py,upsert AWL entries into pte_vocab.json,awl/*.md
+  translate_awl_zh,tools/translate_awl_zh.py|tools/translate_awl_zh.ps1,translate AWL markdown helpers,awl/*.md
+api[1]{name,url,method,desc}:
+  MyMemory,https://api.mymemory.translated.net/get,GET,en to zh-TW fallback lookup for example words
+cfg[6]: index.html,css/app.css,js/config.js,pte_vocab.json,test/package.json,.gitignore
+patterns[6]: StaticApp,ESModules,DynamicFragments,SeededDailySelection,SessionLookupCache,WebSpeech
+tests[1]{cmd,path,desc}:
+  npm test,test/,Jest jsdom app behavior and real vocab JSON load
+notes[4]:
+  dirty_worktree_existing_deletes_not_touched
+  no_AGENTS_or_CLAUDE_file_found_for_snapshot_link
+  TTS_Main+Emotion.html_present_as_untracked_legacy_or_reference_page
+  tool_python_files_show_encoding_artifacts_in_current_checkout

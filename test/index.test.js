@@ -1,5 +1,8 @@
 const fs = require('fs');
 const path = require('path');
+const { pathToFileURL } = require('url');
+
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 describe('PTE daily vocabulary page (index.html)', () => {
     let mockVocab;
@@ -17,7 +20,16 @@ describe('PTE daily vocabulary page (index.html)', () => {
         jest.setSystemTime(new Date(date));
 
         window.fetch = jest.fn((url) => {
-            if (url === 'pte_vocab_2000.json') {
+            if (String(url).startsWith('functions/')) {
+                return Promise.resolve({
+                    ok: true,
+                    text: jest.fn().mockResolvedValue(
+                        fs.readFileSync(path.resolve(PROJECT_ROOT, String(url)), 'utf8')
+                    ),
+                });
+            }
+
+            if (url === 'pte_vocab.json') {
                 return Promise.resolve({
                     ok: true,
                     json: jest.fn().mockResolvedValue(mockVocab),
@@ -42,22 +54,22 @@ describe('PTE daily vocabulary page (index.html)', () => {
             this.text = text;
         };
 
-        const html = fs.readFileSync(path.resolve(__dirname, './index.html'), 'utf8');
+        const html = fs.readFileSync(path.resolve(PROJECT_ROOT, 'index.html'), 'utf8');
         document.documentElement.innerHTML = html;
 
-        const scripts = [...document.querySelectorAll('script')].map((script) => script.textContent);
-        scripts.forEach((scriptText) => {
-            window.eval(`${scriptText}
-window.__getDailyWords = () => dailyWords;
-window.__getCurrentIndex = () => currentIndex;
-window.__nextWord = nextWord;
-window.__speakCurrentWord = speakCurrentWord;
-window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
-        });
+        const appScript = document.querySelector('script[src="js/app.js"]');
+        const appScriptUrl = pathToFileURL(path.resolve(PROJECT_ROOT, appScript.getAttribute('src'))).href;
+        await import(`${appScriptUrl}?testRun=${Date.now()}-${Math.random()}`);
 
-        await window.onload();
+        await window.PteVocabApp.boot();
         jest.advanceTimersByTime(200);
         await Promise.resolve();
+
+        window.__getDailyWords = window.PteVocabApp.getDailyWords;
+        window.__getCurrentIndex = window.PteVocabApp.getCurrentIndex;
+        window.__nextWord = window.PteVocabApp.nextWord;
+        window.__speakCurrentWord = window.PteVocabApp.speakCurrentWord;
+        window.__lookupExampleWordMeaning = window.PteVocabApp.lookupExampleWordMeaning;
     };
 
     beforeEach(() => {
@@ -91,15 +103,20 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
         document.documentElement.innerHTML = '';
     });
 
-    test('loads vocabulary and renders exactly 50 daily words', async () => {
+    test('loads split HTML functions and renders exactly 15 daily words', async () => {
         await loadPage();
 
-        expect(window.__getDailyWords()).toHaveLength(50);
-        expect(Object.keys(window.__getDailyWords()[0])).toEqual(['id', 'w', 'm', 'e']);
-        expect(window.fetch).toHaveBeenCalledWith('pte_vocab_2000.json');
+        expect(window.__getDailyWords()).toHaveLength(15);
+        expect(Object.keys(window.__getDailyWords()[0])).toEqual(['id', 'w', 'pos', 'm', 'e', 'wordFamily', 'collocations']);
+        expect(window.fetch).toHaveBeenCalledWith('functions/header.html');
+        expect(window.fetch).toHaveBeenCalledWith('functions/quiz.html');
+        expect(window.fetch).toHaveBeenCalledWith('functions/review-list.html');
+        expect(window.fetch).toHaveBeenCalledWith('functions/result.html');
+        expect(window.fetch).toHaveBeenCalledWith('functions/lookup-popup.html');
+        expect(window.fetch).toHaveBeenCalledWith('pte_vocab.json');
 
         expect(document.getElementById('word-target').innerText).toMatch(/^word\d+$/);
-        expect(document.getElementById('card-index').innerText).toContain('1 / 50');
+        expect(document.getElementById('card-index').innerText).toContain('1 / 15');
     });
 
     test('renders bold markers in examples as strong text', async () => {
@@ -147,14 +164,14 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
         expect(lookupUrl).toContain('q=This');
         expect(lookupUrl).toContain('langpair=en|zh-TW');
         expect(popup.hidden).toBe(false);
-        expect(popup.textContent).toContain('This：線上翻譯');
+        expect(popup.textContent).toContain('This: 線上翻譯');
         expect(document.getElementById('word-meaning').innerText).toBe(originalMeaning);
     });
 
     test('prefers Traditional Chinese lookup matches over non-Chinese API response text', async () => {
         await loadPage();
         window.fetch.mockImplementation((url) => {
-            if (url === 'pte_vocab_2000.json') {
+            if (url === 'pte_vocab.json') {
                 return Promise.resolve({
                     ok: true,
                     json: jest.fn().mockResolvedValue(mockVocab),
@@ -180,7 +197,7 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
             document.querySelector('#word-example .example-word')
         );
 
-        expect(document.getElementById('lookup-popup').textContent).toContain('often：經常');
+        expect(document.getElementById('lookup-popup').textContent).toContain('often: 經常');
         expect(document.getElementById('lookup-popup').textContent).not.toContain('บ่อยครั้ง');
     });
 
@@ -194,13 +211,13 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
         );
 
         expect(window.fetch).toHaveBeenCalledTimes(fetchCountAfterLoad);
-        expect(document.getElementById('lookup-popup').textContent).toContain('word1：meaning1');
+        expect(document.getElementById('lookup-popup').textContent).toContain('word1: meaning1');
     });
 
     test('shows a quota-specific message when the lookup API limit is reached', async () => {
         await loadPage();
         window.fetch.mockImplementation((url) => {
-            if (url === 'pte_vocab_2000.json') {
+            if (url === 'pte_vocab.json') {
                 return Promise.resolve({
                     ok: true,
                     json: jest.fn().mockResolvedValue(mockVocab),
@@ -222,13 +239,13 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
             document.querySelector('#word-example .example-word')
         );
 
-        expect(document.getElementById('lookup-popup').textContent).toContain('線上查詢已達今日上限，請稍後再試');
+        expect(document.getElementById('lookup-popup').textContent).toContain('Lookup quota reached. Please try again later.');
     });
 
     test('shows a lookup error when the online translation request fails', async () => {
         await loadPage();
         window.fetch.mockImplementation((url) => {
-            if (url === 'pte_vocab_2000.json') {
+            if (url === 'pte_vocab.json') {
                 return Promise.resolve({
                     ok: true,
                     json: jest.fn().mockResolvedValue(mockVocab),
@@ -244,7 +261,7 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
         document.querySelector('#word-example .example-word').click();
         await flushLookup();
 
-        expect(document.getElementById('lookup-popup').textContent).toContain('查詢失敗，請稍後再試');
+        expect(document.getElementById('lookup-popup').textContent).toContain('Lookup failed. Please try again later.');
     });
 
     test('reuses cached lookup results for the same example word', async () => {
@@ -260,7 +277,7 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
         await flushLookup();
 
         expect(window.fetch).toHaveBeenCalledTimes(fetchCountAfterFirstLookup);
-        expect(document.getElementById('lookup-popup').textContent).toContain('This：線上翻譯');
+        expect(document.getElementById('lookup-popup').textContent).toContain('This: 線上翻譯');
     });
 
     test('closes the lookup popup when moving to the next word', async () => {
@@ -311,7 +328,7 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
 
         const voiceSelect = document.getElementById('voice-select');
         expect(voiceSelect.value).toBe('');
-        expect(voiceSelect.options[0].innerText).toBe('使用瀏覽器預設聲音');
+        expect(voiceSelect.options[0].innerText).toBe('Use browser default voice');
 
         mockVoices = [{ name: 'Google US English', lang: 'en-US' }];
         window.speechSynthesis.onvoiceschanged();
@@ -322,7 +339,7 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
         expect(voiceSelect.disabled).toBe(false);
     });
 
-    test('keeps the same 50 daily words when opened repeatedly on the same day', async () => {
+    test('keeps the same 15 daily words when opened repeatedly on the same day', async () => {
         await loadPage('2026-06-23T12:00:00+08:00');
         const firstOpenWordIds = window.__getDailyWords()
             .map((word) => word.id)
@@ -368,7 +385,7 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
 
         expect(window.__getCurrentIndex()).toBe(0);
         expect(document.getElementById('word-target').innerText).toBe(firstWord.w);
-        expect(document.getElementById('card-index').innerText).toContain('1 / 50');
+        expect(document.getElementById('card-index').innerText).toContain('1 / 15');
     });
 
     test('updates a browsed word color when the user answers it again', async () => {
@@ -396,28 +413,27 @@ window.__lookupExampleWordMeaning = lookupExampleWordMeaning;`);
         expect(reviewButtons[0].classList.contains('review-wrong')).toBe(false);
     });
 
-    test('real vocabulary json can load with metadata and items', async () => {
-        const jsonText = fs.readFileSync(path.resolve(__dirname, './pte_vocab_2000.json'), 'utf8');
+    test('real vocabulary json can load with array items', async () => {
+        const jsonText = fs.readFileSync(path.resolve(PROJECT_ROOT, 'pte_vocab.json'), 'utf8');
         const data = JSON.parse(jsonText);
 
-        expect(Array.isArray(data.items)).toBe(true);
-        expect(data.items).toHaveLength(2000);
-        expect(Object.keys(data.items[0])).toEqual([
+        expect(Array.isArray(data)).toBe(true);
+        expect(data).toHaveLength(570);
+        expect(Object.keys(data[0])).toEqual([
             'id',
-            'w',
-            'm',
-            'e',
-            'source_basis',
-            'meaning_status',
-            'example_status',
-            'confidence',
+            'word',
+            'partOfSpeech',
+            'definition',
+            'example',
+            'wordFamily',
+            'collocations',
         ]);
 
         mockVocab = data;
         await loadPage();
 
-        expect(window.__getDailyWords()).toHaveLength(50);
-        expect(Object.keys(window.__getDailyWords()[0])).toEqual(['id', 'w', 'm', 'e']);
-        expect(document.getElementById('word-target').innerText).not.toBe('錯誤');
+        expect(window.__getDailyWords()).toHaveLength(15);
+        expect(Object.keys(window.__getDailyWords()[0])).toEqual(['id', 'w', 'pos', 'm', 'e', 'wordFamily', 'collocations']);
+        expect(document.getElementById('word-target').innerText).not.toBe('Error');
     });
 });
