@@ -21,6 +21,31 @@ export function normalizeLookupWord(word) {
     return String(word).trim().toLowerCase();
 }
 
+export const POS_ABBREVIATIONS = {
+    '名詞': 'n.',
+    '形容詞': 'adj.',
+    '動詞': 'v.',
+    '副詞': 'adv.',
+    '介系詞': 'prep.',
+    '連接詞': 'conj.',
+    '連詞': 'conj.',
+    '代名詞': 'pron.',
+    '助動詞': 'aux.',
+    '分詞': 'part.',
+    '動詞片語': 'phrasal verb',
+};
+
+export function getPosAbbreviation(posText) {
+    if (!posText) return '';
+
+    return posText
+        .split('/')
+        .map((text) => text.trim())
+        .filter(Boolean)
+        .map((pos) => POS_ABBREVIATIONS[pos] || pos)
+        .join('/');
+}
+
 export function buildVocabMeaningMap(items) {
     const map = new Map();
     items.forEach((item) => {
