@@ -37,6 +37,12 @@ function renderCurrentReviewList() {
     renderReviewList(reviewedWords, dailyWords, currentIndex, jumpToWord);
 }
 
+function recomputeScore() {
+    score = reviewedWords.reduce((count, reviewedWord) => (
+        reviewedWord.isRight ? count + 1 : count
+    ), 0);
+}
+
 function createDeckSession(dailyWordsForDeck) {
     return {
         dailyWords: dailyWordsForDeck,
@@ -49,6 +55,7 @@ function createDeckSession(dailyWordsForDeck) {
 function persistActiveSession() {
     if (!activeSession) return;
 
+    recomputeScore();
     activeSession.dailyWords = dailyWords;
     activeSession.currentIndex = currentIndex;
     activeSession.score = score;
@@ -63,8 +70,10 @@ function activateSession(session, deckKey, deckOffset) {
     activeDeckDateString = deckKey;
     dailyWords = session.dailyWords;
     currentIndex = session.currentIndex;
-    score = session.score;
     reviewedWords = session.reviewedWords;
+    score = session.score;
+    recomputeScore();
+    session.score = score;
 }
 
 function getDeckLabel(offsetDays) {
@@ -108,6 +117,8 @@ function showWord() {
         return;
     }
 
+    document.getElementById('quiz-box').hidden = false;
+    document.getElementById('result-box').hidden = true;
     hideLookupPopup();
     document.getElementById('word-card').classList.remove('flipped');
     clearPendingWordRender();
@@ -147,7 +158,7 @@ function markCurrentWordReviewed(isRight) {
 
 function nextWord(isRight) {
     markCurrentWordReviewed(isRight);
-    if (isRight) score++;
+    recomputeScore();
     currentIndex++;
     persistActiveSession();
     showWord();
@@ -162,12 +173,30 @@ function jumpToWord(wordIndex) {
 function showResult() {
     hideLookupPopup();
     clearPendingWordRender();
+    renderCurrentReviewList();
     document.getElementById('quiz-box').hidden = true;
     document.getElementById('result-box').hidden = false;
 
+    recomputeScore();
     const accuracy = dailyWords.length > 0 ? Math.round((score / dailyWords.length) * 100) : 0;
     document.getElementById('final-accuracy').innerText = `${accuracy}%`;
     updateDeckLabels();
+}
+
+function restartActiveDeck() {
+    if (!activeSession) return;
+
+    activeSession.currentIndex = 0;
+    activeSession.score = 0;
+    activeSession.reviewedWords = [];
+    activateSession(activeSession, activeDeckKey, activeDeckOffset);
+    document.getElementById('quiz-box').hidden = false;
+    document.getElementById('result-box').hidden = true;
+    updateDeckSwitcher();
+    updateDeckLabels();
+    clearPendingWordRender();
+    renderCurrentReviewList();
+    showWord();
 }
 
 function wireEvents() {
@@ -189,6 +218,7 @@ function wireEvents() {
     document.getElementById('mark-right').addEventListener('click', () => nextWord(true));
     document.getElementById('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
     document.getElementById('deck-yesterday').addEventListener('click', () => loadAndInitQuiz(-1));
+    document.getElementById('review-again').addEventListener('click', restartActiveDeck);
 
     document.addEventListener('click', (event) => {
         const popup = document.getElementById('lookup-popup');
@@ -262,6 +292,7 @@ window.PteVocabApp = {
     lookupExampleWordMeaning: lookupController.lookupExampleWordMeaning,
     speakCurrentWord: speechController.speakCurrentWord,
     nextWord,
+    restartActiveDeck,
     getDailyWords: () => dailyWords,
     getCurrentIndex: () => currentIndex,
     getActiveDeckOffset: () => activeDeckOffset,

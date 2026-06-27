@@ -400,6 +400,21 @@ button:active {
     color: #64748b;
 }
 
+.review-again-button {
+    width: auto;
+    min-width: 160px;
+    margin-top: 18px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
+}
+
+.review-again-button:hover {
+    background: #1d4ed8;
+}
+
 .review-list-section {
     margin-top: 24px;
     background: var(--card-bg);

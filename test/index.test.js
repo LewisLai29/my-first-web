@@ -69,6 +69,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         window.__getDailyWords = window.PteVocabApp.getDailyWords;
         window.__getCurrentIndex = window.PteVocabApp.getCurrentIndex;
         window.__nextWord = window.PteVocabApp.nextWord;
+        window.__restartActiveDeck = window.PteVocabApp.restartActiveDeck;
         window.__speakCurrentWord = window.PteVocabApp.speakCurrentWord;
         window.__lookupExampleWordMeaning = window.PteVocabApp.lookupExampleWordMeaning;
         window.__getActiveDeckKey = window.PteVocabApp.getActiveDeckKey;
@@ -415,6 +416,118 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.querySelectorAll('#review-list button')).toHaveLength(1);
 
         expect(yesterdayWordIds).not.toEqual(todayWordIds);
+    });
+
+    test('review again restarts the same deck without reshuffling', async () => {
+        await loadPage('2026-06-23T12:00:00+08:00');
+
+        const initialWordIds = window.__getDailyWords().map((word) => word.id);
+
+        for (let i = 0; i < initialWordIds.length; i++) {
+            window.__nextWord(i % 2 === 0);
+            jest.advanceTimersByTime(200);
+            await Promise.resolve();
+        }
+
+        expect(document.getElementById('result-box').hidden).toBe(false);
+        expect(document.getElementById('review-again')).not.toBeNull();
+        expect(window.__getCurrentIndex()).toBe(initialWordIds.length);
+
+        document.getElementById('review-again').click();
+        await Promise.resolve();
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+
+        expect(document.getElementById('result-box').hidden).toBe(true);
+        expect(window.__getCurrentIndex()).toBe(0);
+        expect(window.__getDailyWords().map((word) => word.id)).toEqual(initialWordIds);
+        expect(document.getElementById('card-index').innerText).toContain('1 / 15');
+        expect(document.querySelectorAll('#review-list button')).toHaveLength(0);
+    });
+
+    test('shows the last reviewed word on the result screen', async () => {
+        await loadPage('2026-06-23T12:00:00+08:00');
+
+        const dailyWordIds = window.__getDailyWords().map((word) => word.id);
+        const lastWord = window.__getDailyWords()[dailyWordIds.length - 1];
+
+        for (let i = 0; i < dailyWordIds.length - 1; i++) {
+            window.__nextWord(true);
+            jest.advanceTimersByTime(200);
+            await Promise.resolve();
+        }
+
+        expect(document.querySelectorAll('#review-list button')).toHaveLength(dailyWordIds.length - 1);
+
+        window.__nextWord(true);
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+
+        const reviewButtons = [...document.querySelectorAll('#review-list button')];
+        expect(reviewButtons).toHaveLength(dailyWordIds.length);
+        expect(reviewButtons.map((button) => button.innerText)).toContain(lastWord.w);
+        expect(document.getElementById('result-box').hidden).toBe(false);
+    });
+
+    test('can jump back to a reviewed word from the result screen', async () => {
+        await loadPage('2026-06-23T12:00:00+08:00');
+
+        const firstWord = window.__getDailyWords()[0];
+        const reviewCount = window.__getDailyWords().length;
+
+        for (let i = 0; i < reviewCount; i++) {
+            window.__nextWord(true);
+            jest.advanceTimersByTime(200);
+            await Promise.resolve();
+        }
+
+        const reviewButtons = [...document.querySelectorAll('#review-list button')];
+        expect(document.getElementById('result-box').hidden).toBe(false);
+        expect(reviewButtons).toHaveLength(reviewCount);
+
+        reviewButtons[0].click();
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+
+        expect(document.getElementById('result-box').hidden).toBe(true);
+        expect(window.__getCurrentIndex()).toBe(0);
+        expect(document.getElementById('word-target').innerText).toBe(firstWord.w);
+        expect(document.getElementById('card-index').innerText).toContain('1 / 15');
+    });
+
+    test('revising an answer after result updates the final accuracy correctly', async () => {
+        await loadPage('2026-06-23T12:00:00+08:00');
+
+        const totalCount = window.__getDailyWords().length;
+        const initialWord = window.__getDailyWords()[0];
+
+        for (let i = 0; i < totalCount; i++) {
+            window.__nextWord(true);
+            jest.advanceTimersByTime(200);
+            await Promise.resolve();
+        }
+
+        expect(document.getElementById('final-accuracy').innerText).toBe('100%');
+
+        const reviewButtons = [...document.querySelectorAll('#review-list button')];
+        reviewButtons[0].click();
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+
+        expect(window.__getCurrentIndex()).toBe(0);
+        window.__nextWord(false);
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+
+        for (let i = 1; i < totalCount; i++) {
+            window.__nextWord(true);
+            jest.advanceTimersByTime(200);
+            await Promise.resolve();
+        }
+
+        expect(document.getElementById('result-box').hidden).toBe(false);
+        expect(document.getElementById('final-accuracy').innerText).toBe('93%');
+        expect(document.querySelector('#review-list button').innerText).toBe(initialWord.w);
     });
 
     test('lists browsed words and lets the user jump back to one', async () => {
