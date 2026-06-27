@@ -1,5 +1,5 @@
 import { DAILY_WORD_COUNT, VOCAB_SOURCE } from './config.js';
-import { getTodayString } from './date-utils.js';
+import { getDateStringWithOffset } from './date-utils.js';
 import { loadHtmlFunctions } from './html-functions.js';
 import { createLookupController, hideLookupPopup } from './lookup.js';
 import { renderReviewList } from './review-list.js';
@@ -12,11 +12,20 @@ import {
     pickDailyWords,
 } from './vocab.js';
 
+const deckSessions = new Map();
+
+let activeSession = null;
+let activeDeckKey = '';
 let dailyWords = [];
 let currentIndex = 0;
 let score = 0;
 let reviewedWords = [];
 let vocabMeaningMap = new Map();
+let activeDeckOffset = 0;
+let activeDeckDateString = '';
+let activeDeckLabel = 'Today';
+let pendingWordRenderTimer = null;
+let activeLoadToken = 0;
 
 const lookupController = createLookupController((word) => (
     vocabMeaningMap.get(normalizeLookupWord(word)) || ''
@@ -28,6 +37,71 @@ function renderCurrentReviewList() {
     renderReviewList(reviewedWords, dailyWords, currentIndex, jumpToWord);
 }
 
+function createDeckSession(dailyWordsForDeck) {
+    return {
+        dailyWords: dailyWordsForDeck,
+        currentIndex: 0,
+        score: 0,
+        reviewedWords: [],
+    };
+}
+
+function persistActiveSession() {
+    if (!activeSession) return;
+
+    activeSession.dailyWords = dailyWords;
+    activeSession.currentIndex = currentIndex;
+    activeSession.score = score;
+    activeSession.reviewedWords = reviewedWords;
+}
+
+function activateSession(session, deckKey, deckOffset) {
+    activeSession = session;
+    activeDeckKey = deckKey;
+    activeDeckOffset = deckOffset;
+    activeDeckLabel = getDeckLabel(deckOffset);
+    activeDeckDateString = deckKey;
+    dailyWords = session.dailyWords;
+    currentIndex = session.currentIndex;
+    score = session.score;
+    reviewedWords = session.reviewedWords;
+}
+
+function getDeckLabel(offsetDays) {
+    if (offsetDays === 0) return 'Today';
+    if (offsetDays === -1) return 'Yesterday';
+    return getDateStringWithOffset(offsetDays);
+}
+
+function updateDeckSwitcher() {
+    const buttons = document.querySelectorAll('.deck-switch-button');
+    buttons.forEach((button) => {
+        const offset = Number(button.dataset.offset);
+        const isActive = offset === activeDeckOffset;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+    });
+}
+
+function updateDeckLabels() {
+    const dateBadge = document.getElementById('today-date');
+    if (dateBadge) {
+        dateBadge.innerText = `${activeDeckLabel}: ${activeDeckDateString}`;
+    }
+
+    const resultNote = document.getElementById('result-note');
+    if (resultNote) {
+        resultNote.innerText = `You are reviewing ${activeDeckLabel.toLowerCase()}'s set: ${activeDeckDateString}.`;
+    }
+}
+
+function clearPendingWordRender() {
+    if (pendingWordRenderTimer !== null) {
+        clearTimeout(pendingWordRenderTimer);
+        pendingWordRenderTimer = null;
+    }
+}
+
 function showWord() {
     if (currentIndex >= dailyWords.length) {
         showResult();
@@ -36,9 +110,12 @@ function showWord() {
 
     hideLookupPopup();
     document.getElementById('word-card').classList.remove('flipped');
+    clearPendingWordRender();
 
     const current = dailyWords[currentIndex];
-    setTimeout(() => {
+    const loadToken = activeLoadToken;
+    pendingWordRenderTimer = setTimeout(() => {
+        if (loadToken !== activeLoadToken) return;
         document.getElementById('word-target').innerText = current.w;
         document.getElementById('word-pos').innerText = current.pos ? `(${current.pos})` : '';
         document.getElementById('word-meaning').innerText = current.m;
@@ -72,21 +149,25 @@ function nextWord(isRight) {
     markCurrentWordReviewed(isRight);
     if (isRight) score++;
     currentIndex++;
+    persistActiveSession();
     showWord();
 }
 
 function jumpToWord(wordIndex) {
     currentIndex = wordIndex;
+    persistActiveSession();
     showWord();
 }
 
 function showResult() {
     hideLookupPopup();
+    clearPendingWordRender();
     document.getElementById('quiz-box').hidden = true;
     document.getElementById('result-box').hidden = false;
 
     const accuracy = dailyWords.length > 0 ? Math.round((score / dailyWords.length) * 100) : 0;
     document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+    updateDeckLabels();
 }
 
 function wireEvents() {
@@ -106,6 +187,8 @@ function wireEvents() {
     document.getElementById('voice-select').addEventListener('click', (event) => event.stopPropagation());
     document.getElementById('mark-wrong').addEventListener('click', () => nextWord(false));
     document.getElementById('mark-right').addEventListener('click', () => nextWord(true));
+    document.getElementById('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
+    document.getElementById('deck-yesterday').addEventListener('click', () => loadAndInitQuiz(-1));
 
     document.addEventListener('click', (event) => {
         const popup = document.getElementById('lookup-popup');
@@ -124,9 +207,20 @@ function wireEvents() {
     }
 }
 
-async function loadAndInitQuiz() {
-    const todayStr = getTodayString();
-    document.getElementById('today-date').innerText = `Today: ${todayStr}`;
+async function loadAndInitQuiz(deckOffset = 0) {
+    const loadToken = ++activeLoadToken;
+    persistActiveSession();
+    clearPendingWordRender();
+
+    const deckKey = getDateStringWithOffset(deckOffset);
+    activeDeckOffset = deckOffset;
+    activeDeckLabel = getDeckLabel(deckOffset);
+    activeDeckDateString = deckKey;
+
+    document.getElementById('quiz-box').hidden = false;
+    document.getElementById('result-box').hidden = true;
+    updateDeckSwitcher();
+    updateDeckLabels();
 
     try {
         const response = await fetch(VOCAB_SOURCE);
@@ -135,14 +229,21 @@ async function loadAndInitQuiz() {
         const allVocab = normalizeVocabItems(vocabData);
         vocabMeaningMap = buildVocabMeaningMap(allVocab);
 
-        dailyWords = pickDailyWords(allVocab, todayStr, DAILY_WORD_COUNT);
-        currentIndex = 0;
-        score = 0;
-        reviewedWords = [];
+        if (loadToken !== activeLoadToken) return;
+
+        let session = deckSessions.get(deckKey);
+        if (!session) {
+            session = createDeckSession(pickDailyWords(allVocab, deckKey, DAILY_WORD_COUNT));
+            deckSessions.set(deckKey, session);
+        }
+
+        activateSession(session, deckKey, deckOffset);
+        clearPendingWordRender();
         speechController.retryLoadVoices();
         renderCurrentReviewList();
         showWord();
     } catch (error) {
+        if (loadToken !== activeLoadToken) return;
         document.getElementById('word-target').innerText = 'Error';
         document.getElementById('word-example').innerText = 'Please confirm the vocabulary JSON can be loaded.';
         console.error(error);
@@ -163,6 +264,9 @@ window.PteVocabApp = {
     nextWord,
     getDailyWords: () => dailyWords,
     getCurrentIndex: () => currentIndex,
+    getActiveDeckOffset: () => activeDeckOffset,
+    getActiveDeckDateString: () => activeDeckDateString,
+    getActiveDeckKey: () => activeDeckKey,
 };
 
 document.addEventListener('DOMContentLoaded', boot);

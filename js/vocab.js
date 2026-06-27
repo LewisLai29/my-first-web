@@ -57,6 +57,17 @@ export function buildVocabMeaningMap(items) {
     return map;
 }
 
+function shuffleWords(words) {
+    const pool = [...words];
+
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
+    return pool;
+}
+
 export function pickDailyWords(allVocab, todayString, dailyWordCount) {
     const myRandom = seededRandom(todayString);
     const pool = [...allVocab];
@@ -66,5 +77,5 @@ export function pickDailyWords(allVocab, todayString, dailyWordCount) {
         [pool[i], pool[j]] = [pool[j], pool[i]];
     }
 
-    return pool.slice(0, dailyWordCount).sort(() => Math.random() - 0.5);
+    return shuffleWords(pool.slice(0, dailyWordCount));
 }

@@ -3,6 +3,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
+const sortIds = (ids) => [...ids].sort((a, b) => a - b);
 
 describe('PTE daily vocabulary page (index.html)', () => {
     let mockVocab;
@@ -70,6 +71,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         window.__nextWord = window.PteVocabApp.nextWord;
         window.__speakCurrentWord = window.PteVocabApp.speakCurrentWord;
         window.__lookupExampleWordMeaning = window.PteVocabApp.lookupExampleWordMeaning;
+        window.__getActiveDeckKey = window.PteVocabApp.getActiveDeckKey;
     };
 
     beforeEach(() => {
@@ -117,6 +119,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
 
         expect(document.getElementById('word-target').innerText).toMatch(/^word\d+$/);
         expect(document.getElementById('card-index').innerText).toContain('1 / 15');
+        expect(document.getElementById('today-date').innerText).toContain('Today: 2026-06-23');
     });
 
     test('renders bold markers in examples as strong text', async () => {
@@ -341,18 +344,77 @@ describe('PTE daily vocabulary page (index.html)', () => {
 
     test('keeps the same 15 daily words when opened repeatedly on the same day', async () => {
         await loadPage('2026-06-23T12:00:00+08:00');
-        const firstOpenWordIds = window.__getDailyWords()
-            .map((word) => word.id)
-            .sort((a, b) => a - b);
+        const firstOpenWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
 
         document.documentElement.innerHTML = '';
 
         await loadPage('2026-06-23T20:30:00+08:00');
-        const secondOpenWordIds = window.__getDailyWords()
-            .map((word) => word.id)
-            .sort((a, b) => a - b);
+        const secondOpenWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
 
         expect(secondOpenWordIds).toEqual(firstOpenWordIds);
+    });
+
+    test('switching decks preserves each deck order and progress during the same page session', async () => {
+        await loadPage('2026-06-23T12:00:00+08:00');
+
+        const todayWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
+        expect(document.getElementById('today-date').innerText).toContain('Today: 2026-06-23');
+        expect(window.__getActiveDeckKey()).toBe('2026-06-23');
+
+        document.getElementById('mark-wrong').click();
+        await Promise.resolve();
+        await Promise.resolve();
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+        expect(window.__getCurrentIndex()).toBe(1);
+        expect(document.querySelectorAll('#review-list button')).toHaveLength(1);
+
+        document.getElementById('deck-yesterday').click();
+        await Promise.resolve();
+        await Promise.resolve();
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+
+        const yesterdayWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
+
+        expect(document.getElementById('today-date').innerText).toContain('Yesterday: 2026-06-22');
+        expect(yesterdayWordIds).toHaveLength(15);
+        expect(window.__getActiveDeckKey()).toBe('2026-06-22');
+        expect(window.__getCurrentIndex()).toBe(0);
+        expect(document.querySelectorAll('#review-list button')).toHaveLength(0);
+
+        document.getElementById('mark-right').click();
+        await Promise.resolve();
+        await Promise.resolve();
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+        expect(window.__getCurrentIndex()).toBe(1);
+
+        document.getElementById('deck-today').click();
+        await Promise.resolve();
+        await Promise.resolve();
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+
+        expect(window.__getActiveDeckKey()).toBe('2026-06-23');
+        expect(sortIds(window.__getDailyWords().map((word) => word.id))).toEqual(todayWordIds);
+        expect(window.__getCurrentIndex()).toBe(1);
+        expect(document.getElementById('card-index').innerText).toContain('2 / 15');
+        expect(document.querySelectorAll('#review-list button')).toHaveLength(1);
+
+        document.getElementById('deck-yesterday').click();
+        await Promise.resolve();
+        await Promise.resolve();
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+
+        expect(window.__getActiveDeckKey()).toBe('2026-06-22');
+        expect(sortIds(window.__getDailyWords().map((word) => word.id))).toEqual(yesterdayWordIds);
+        expect(window.__getCurrentIndex()).toBe(1);
+        expect(document.getElementById('card-index').innerText).toContain('2 / 15');
+        expect(document.querySelectorAll('#review-list button')).toHaveLength(1);
+
+        expect(yesterdayWordIds).not.toEqual(todayWordIds);
     });
 
     test('lists browsed words and lets the user jump back to one', async () => {
