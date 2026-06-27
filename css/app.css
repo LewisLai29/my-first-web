@@ -386,13 +386,18 @@ button:active {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    /* Use flex so items flow inline and wrap when space runs out */
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
+    align-items: flex-start;
 }
 
 .review-list button {
-    width: 100%;
+    /* let the button width follow its content */
+    width: -webkit-fit-content;
+    width: -moz-fit-content;
+    width: fit-content;
     min-height: 35px;
     padding: 4px 10px;
     border-radius: 6px;
@@ -406,6 +411,7 @@ button:active {
     align-items: center;
     gap: 10px;
     justify-content: flex-start;
+    white-space: nowrap; /* prevent wrapping so button grows horizontally */
 }
 
 .review-list button::before {
@@ -456,3 +462,4 @@ button:active {
     color: #64748b;
     font-size: 0.95rem;
 }
+
