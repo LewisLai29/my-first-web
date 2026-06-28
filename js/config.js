@@ -1,5 +1,6 @@
 export const HTML_FUNCTIONS = [
     'functions/header.html',
+    'functions/auth-modal.html',
     'functions/quiz.html',
     'functions/review-list.html',
     'functions/result.html',

@@ -1,0 +1,37 @@
+<dialog id="auth-dialog" class="auth-dialog" aria-label="Sign in">
+    <div class="auth-dialog-card">
+        <button id="auth-dialog-close" class="auth-dialog-close" type="button" aria-label="Close sign in dialog">x</button>
+
+        <label class="auth-field">
+            <span>Email</span>
+            <input id="auth-email" class="auth-input" type="email" autocomplete="email" placeholder="Email">
+        </label>
+
+        <label class="auth-field">
+            <span>Password</span>
+            <input id="auth-password" class="auth-input" type="password" autocomplete="current-password" placeholder="Password">
+        </label>
+
+        <p id="auth-dialog-status" class="auth-status" aria-live="polite">Loading sign-in...</p>
+
+        <div class="auth-actions">
+            <button id="auth-sign-in" class="auth-button" type="button">Sign in</button>
+            <button id="auth-sign-up" class="auth-button auth-button-secondary" type="button">Create account</button>
+        </div>
+
+        <div class="auth-divider" aria-hidden="true">
+            <span>or</span>
+        </div>
+
+        <button id="auth-google-sign-in" class="auth-google-button" type="button">
+            <svg class="auth-google-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.2-.9 2.3-1.9 3l3 2.3c1.7-1.6 2.7-4 2.7-6.8 0-.7-.1-1.4-.2-2.1H12z"/>
+                <path fill="#34A853" d="M5.7 14.3l-.7.5-2.4 1.9C4.1 19.6 7.7 22 12 22c2.9 0 5.3-1 7.1-2.8l-3-2.3c-.8.6-1.9 1-4.1 1-3.1 0-5.8-2.1-6.7-4.9z"/>
+                <path fill="#4A90E2" d="M22 12.2c0-.7-.1-1.4-.2-2.1H12v3.9h5.5c-.3 1.5-1.2 2.7-2.4 3.5v2.9h3.9c2.3-2.1 3.6-5.2 3.6-8.2z"/>
+                <path fill="#FBBC05" d="M5.7 9.7c.9-2.8 3.6-4.9 6.3-4.9 1.6 0 3 .6 4.1 1.6l3-3C16.9 1.7 14.6.7 12 .7 8.1.7 4.8 2.9 3.1 6.2l2.6 2.1z"/>
+                <path fill="#EA4335" d="M12 5.9c1.8 0 3.3.6 4.4 1.7l3.3-3.3C17.8 2.2 15.2 1 12 1 8.1 1 4.7 3.3 3.1 6.7l2.6 2.1C6.5 7.1 9 5.9 12 5.9z"/>
+            </svg>
+            Continue with Google
+        </button>
+    </div>
+</dialog>

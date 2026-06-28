@@ -32,14 +32,245 @@ body {
 }
 
 header {
-    text-align: center;
     margin-bottom: 20px;
+}
+
+.header-auth-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.header-copy {
+    text-align: center;
+}
+
+.auth-panel {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.auth-status {
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: right;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.auth-status-error {
+    color: #dc2626;
+}
+
+.auth-button {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 0.88rem;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.16);
+}
+
+.auth-button:hover {
+    background: #1d4ed8;
+}
+
+.auth-button-secondary {
+    background: #e2e8f0;
+    color: #0f172a;
+    box-shadow: none;
+}
+
+.auth-button-secondary:hover {
+    background: #cbd5e1;
+}
+
+.auth-dialog {
+    width: min(92vw, 360px);
+    padding: 0;
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+    background: #ffffff;
+    color: #0f172a;
+}
+
+.auth-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+.auth-dialog-card {
+    padding: 18px;
+    display: grid;
+    gap: 14px;
+}
+
+.auth-dialog-close {
+    justify-self: end;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #0f172a;
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    font-family: inherit;
+}
+
+.auth-dialog .auth-status {
+    text-align: left;
+}
+
+.auth-dialog-close:hover {
+    background: #f1f5f9;
+}
+
+.auth-field {
+    display: grid;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #334155;
+}
+
+.auth-field span {
+    font-weight: 700;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+.auth-input-error {
+    border-color: #dc2626;
+    background: #fef2f2;
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.18);
+}
+
+.auth-input-error:focus {
+    outline: none;
+    border-color: #b91c1c;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+}
+
+.auth-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.auth-actions .auth-button {
+    flex: 1 1 0;
+    min-width: 120px;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.auth-divider span {
+    flex: 0 0 auto;
+}
+
+.auth-google-button {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    box-shadow: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.auth-google-button:hover {
+    background: #f8fafc;
+}
+
+.auth-google-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
 }
 
 h1 {
     margin-bottom: 5px;
     color: #0f172a;
     font-size: 1.8rem;
+}
+
+@media (max-width: 720px) {
+    .header-auth-row {
+        justify-content: center;
+    }
+
+    .header-copy {
+        text-align: center;
+    }
+
+    .auth-panel {
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    .auth-status {
+        text-align: center;
+        white-space: normal;
+    }
+
+    .auth-input {
+        width: 100%;
+    }
+
+    .auth-actions {
+        justify-content: center;
+    }
+
+    .auth-button {
+        min-width: 0;
+    }
+
+    .auth-actions .auth-button {
+        flex: 1 1 100%;
+    }
 }
 
 .date-badge {

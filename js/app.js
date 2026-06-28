@@ -1,6 +1,7 @@
 import { DAILY_WORD_COUNT, VOCAB_SOURCE } from './config.js';
 import { getDateStringWithOffset } from './date-utils.js';
 import { loadHtmlFunctions } from './html-functions.js';
+import { setupAuthUI } from './auth.js';
 import { createLookupController, hideLookupPopup } from './lookup.js';
 import { renderReviewList } from './review-list.js';
 import { createSpeechController, canSpeak } from './speech.js';
@@ -282,6 +283,7 @@ async function loadAndInitQuiz(deckOffset = 0) {
 
 async function boot() {
     await loadHtmlFunctions();
+    await setupAuthUI();
     wireEvents();
     await loadAndInitQuiz();
 }
