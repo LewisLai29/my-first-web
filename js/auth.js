@@ -35,72 +35,6 @@ function getAuthErrorMessage(error) {
     }
 }
 
-function getAuthErrorDetails(error) {
-    if (!error) return null;
-
-    const details = {
-        code: error.code || 'unknown',
-        message: error.message || '',
-        name: error.name || '',
-    };
-
-    if (error.stack) {
-        details.stack = error.stack;
-    }
-
-    if (error.customData) {
-        details.customData = error.customData;
-    }
-
-    if (error.email) {
-        details.email = error.email;
-    }
-
-    if (error.credential) {
-        details.credential = error.credential;
-    }
-
-    return details;
-}
-
-function logAuthError(context, error) {
-    const details = getAuthErrorDetails(error) || error;
-    console.error(`[auth] ${context}`, details);
-
-    // Show brief error summary on the main UI if available
-    try {
-        const summary = document.getElementById('auth-summary-status');
-        if (summary) {
-            const short = details && details.message ? details.message : (details && details.code ? details.code : String(details));
-            summary.innerText = `${context}: ${short}`;
-            summary.classList.add('auth-status-error');
-        }
-
-        // Append full details to the bottom auth log if present
-        const logContainer = document.getElementById('auth-log-entries');
-        if (logContainer) {
-            const time = new Date().toLocaleTimeString();
-            const entry = document.createElement('div');
-            entry.style.padding = '6px 0';
-            entry.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
-            entry.textContent = `[${time}] ${context}: ${details && details.message ? details.message : (details && details.code ? details.code : String(details))}`;
-
-            // If stack available, add it on next line
-            if (details && details.stack) {
-                const stack = document.createElement('pre');
-                stack.style.margin = '6px 0 0 0';
-                stack.style.whiteSpace = 'pre-wrap';
-                stack.textContent = details.stack;
-                entry.appendChild(stack);
-            }
-
-            logContainer.appendChild(entry);
-        }
-    } catch (e) {
-        // ignore DOM errors in non-browser runtimes
-    }
-}
-
 function getAuthElements() {
     return {
         dialog: getElement('auth-dialog'),
@@ -262,7 +196,6 @@ export async function setupAuthUI() {
                 await auth.signInWithEmailAndPassword(email, password);
             }
         } catch (error) {
-            logAuthError('Email/password sign-in failed', error);
             setStatus(getAuthErrorMessage(error), true);
             setButtonsDisabled(authButtons, false);
         }
@@ -278,7 +211,6 @@ export async function setupAuthUI() {
                     await auth.signInWithRedirect(googleProvider);
                     return;
                 } catch (redirectError) {
-                    logAuthError('Google redirect sign-in failed', redirectError);
                     if (auth.signInWithPopup) {
                         await auth.signInWithPopup(googleProvider);
                         return;
@@ -295,22 +227,13 @@ export async function setupAuthUI() {
                     await auth.signInWithRedirect(googleProvider);
                     return;
                 } catch (redirectError) {
-                    logAuthError('Google popup fallback redirect failed', redirectError);
-                    const fallbackMsg = redirectError?.message || getAuthErrorMessage(redirectError);
-                    setStatus(fallbackMsg, true);
+                    setStatus(getAuthErrorMessage(redirectError), true);
                     setButtonsDisabled(authButtons, false);
                     return;
                 }
             }
 
-            logAuthError('Google sign-in failed', error);
-            const errMsg = error?.message || getAuthErrorMessage(error);
-            if (error?.code === 'auth/unauthorized-domain') {
-                setStatus(`${errMsg} — Ensure this app's domain is listed under Firebase Console → Authentication → Sign-in method → Authorized domains.`, true);
-            } else {
-                setStatus(errMsg, true);
-            }
-
+            setStatus(getAuthErrorMessage(error), true);
             setButtonsDisabled(authButtons, false);
         }
     };
@@ -361,14 +284,7 @@ export async function setupAuthUI() {
     try {
         await auth.getRedirectResult?.();
     } catch (error) {
-        logAuthError('getRedirectResult failed', error);
-        const errMsg = error?.message || getAuthErrorMessage(error);
-        if (error?.code === 'auth/unauthorized-domain') {
-            setStatus(`${errMsg} — Ensure this domain is added to Firebase Console → Authentication → Sign-in method → Authorized domains.`, true);
-        } else {
-            setStatus(errMsg, true);
-        }
-
+        setStatus(getAuthErrorMessage(error), true);
         setButtonsDisabled(authButtons, false);
     }
 }
