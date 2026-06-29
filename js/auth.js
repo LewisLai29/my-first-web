@@ -10,6 +10,10 @@ function getAuthErrorMessage(error) {
             return 'Sign-in cancelled.';
         case 'auth/popup-blocked':
             return 'Popup blocked by browser.';
+        case 'auth/redirect-cancelled-by-user':
+            return 'Sign-in cancelled.';
+        case 'auth/redirect-operation-pending':
+            return 'Another sign-in is already in progress.';
         case 'auth/invalid-email':
             return 'Invalid email address.';
         case 'auth/wrong-password':
@@ -37,6 +41,18 @@ function getAuthElements() {
         summaryStatus: getElement('auth-summary-status'),
         dialogStatus: getElement('auth-dialog-status'),
     };
+}
+
+function shouldUseRedirectSignIn() {
+    if (typeof navigator === 'undefined') return false;
+
+    const userAgent = navigator.userAgent || '';
+    const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const hasTouchOnlyCoarsePointer = navigator.maxTouchPoints > 0
+        && typeof window !== 'undefined'
+        && window.matchMedia?.('(pointer: coarse)')?.matches;
+
+    return Boolean(isMobileBrowser || hasTouchOnlyCoarsePointer);
 }
 
 function setButtonsDisabled(buttons, disabled) {
@@ -105,6 +121,7 @@ export async function setupAuthUI() {
 
     const { auth } = services;
     const googleProvider = new window.firebase.auth.GoogleAuthProvider();
+    googleProvider.setCustomParameters?.({ prompt: 'select_account' });
 
     const onSignedOut = () => {
         setStatus('Not signed in');
@@ -151,8 +168,24 @@ export async function setupAuthUI() {
         setStatus('Opening Google sign-in...');
 
         try {
+            if (shouldUseRedirectSignIn() && auth.signInWithRedirect) {
+                await auth.signInWithRedirect(googleProvider);
+                return;
+            }
+
             await auth.signInWithPopup(googleProvider);
         } catch (error) {
+            if (error?.code === 'auth/popup-blocked' && auth.signInWithRedirect) {
+                try {
+                    await auth.signInWithRedirect(googleProvider);
+                    return;
+                } catch (redirectError) {
+                    setStatus(getAuthErrorMessage(redirectError), true);
+                    setButtonsDisabled(authButtons, false);
+                    return;
+                }
+            }
+
             setStatus(getAuthErrorMessage(error), true);
             setButtonsDisabled(authButtons, false);
         }
@@ -200,4 +233,11 @@ export async function setupAuthUI() {
 
         onSignedOut();
     });
+
+    try {
+        await auth.getRedirectResult?.();
+    } catch (error) {
+        setStatus(getAuthErrorMessage(error), true);
+        setButtonsDisabled(authButtons, false);
+    }
 }
