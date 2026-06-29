@@ -4,10 +4,108 @@ const { fileURLToPath, pathToFileURL } = require('url');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const sortIds = (ids) => [...ids].sort((a, b) => a - b);
+let importSequence = 0;
 
 describe('PTE daily vocabulary page (index.html)', () => {
     let mockVocab;
     let mockVoices;
+    let mockFirebaseEnabled;
+    let mockAuthUser;
+    let authStateListeners;
+    let favoriteSnapshotListeners;
+    let favoriteStore;
+    let favoriteSetMock;
+    let favoriteDeleteMock;
+
+    const createFavoritesSnapshot = () => ({
+        forEach: (callback) => {
+            favoriteStore.forEach((data, id) => {
+                callback({
+                    id,
+                    data: () => data,
+                });
+            });
+        },
+    });
+
+    const emitFavoriteSnapshot = () => {
+        const snapshot = createFavoritesSnapshot();
+        favoriteSnapshotListeners.forEach((listener) => listener(snapshot));
+    };
+
+    const installMockFirebase = () => {
+        const auth = {
+            createUserWithEmailAndPassword: jest.fn(),
+            signInWithEmailAndPassword: jest.fn(),
+            signInWithPopup: jest.fn(),
+            signOut: jest.fn(),
+            onAuthStateChanged: jest.fn((listener) => {
+                authStateListeners.push(listener);
+                listener(mockAuthUser);
+                return jest.fn();
+            }),
+        };
+
+        const favoriteCollection = {
+            doc: jest.fn((favoriteId) => ({
+                set: jest.fn((data) => {
+                    favoriteSetMock(favoriteId, data);
+                    favoriteStore.set(favoriteId, data);
+                    emitFavoriteSnapshot();
+                    return Promise.resolve();
+                }),
+                delete: jest.fn(() => {
+                    favoriteDeleteMock(favoriteId);
+                    favoriteStore.delete(favoriteId);
+                    emitFavoriteSnapshot();
+                    return Promise.resolve();
+                }),
+            })),
+            onSnapshot: jest.fn((listener) => {
+                favoriteSnapshotListeners.push(listener);
+                listener(createFavoritesSnapshot());
+                return jest.fn();
+            }),
+        };
+
+        const userDocument = {
+            collection: jest.fn((name) => {
+                expect(name).toBe('favorites');
+                return favoriteCollection;
+            }),
+        };
+
+        const usersCollection = {
+            doc: jest.fn((uid) => {
+                expect(uid).toBe(mockAuthUser.uid);
+                return userDocument;
+            }),
+        };
+
+        const db = {
+            collection: jest.fn((name) => {
+                expect(name).toBe('users');
+                return usersCollection;
+            }),
+        };
+
+        const authFactory = jest.fn(() => auth);
+        authFactory.GoogleAuthProvider = function GoogleAuthProvider() {};
+
+        const firestoreFactory = jest.fn(() => db);
+        firestoreFactory.FieldValue = {
+            serverTimestamp: jest.fn(() => 'SERVER_TIME'),
+        };
+
+        window.firebase = {
+            apps: [],
+            initializeApp: jest.fn(() => {
+                window.firebase.apps.push({});
+            }),
+            auth: authFactory,
+            firestore: firestoreFactory,
+        };
+    };
 
     const flushLookup = async () => {
         await Promise.resolve();
@@ -61,6 +159,11 @@ describe('PTE daily vocabulary page (index.html)', () => {
     const loadPage = async (date = '2026-06-23T12:00:00+08:00', page = 'index.html') => {
         jest.useFakeTimers();
         jest.setSystemTime(new Date(date));
+        if (mockFirebaseEnabled) {
+            installMockFirebase();
+        } else {
+            delete window.firebase;
+        }
 
         window.fetch = jest.fn((url) => {
             const urlString = String(url);
@@ -109,12 +212,19 @@ describe('PTE daily vocabulary page (index.html)', () => {
         const appScript = document.querySelector('script[src$="js/app.js"]');
         const appScriptPath = path.resolve(PROJECT_ROOT, path.dirname(page), appScript.getAttribute('src'));
         const appScriptUrl = pathToFileURL(appScriptPath).href;
-        await import(`${appScriptUrl}?testRun=${Date.now()}-${Math.random()}`);
+        importSequence += 1;
+        await import(`${appScriptUrl}?testRun=${importSequence}`);
 
         await window.PteVocabApp.boot();
         jest.runOnlyPendingTimers();
         await Promise.resolve();
         await Promise.resolve();
+        if (mockFirebaseEnabled) {
+            authStateListeners.forEach((listener) => listener(mockAuthUser));
+            emitFavoriteSnapshot();
+            await Promise.resolve();
+            await Promise.resolve();
+        }
 
         window.__getDailyWords = window.PteVocabApp.getDailyWords;
         window.__getCurrentIndex = window.PteVocabApp.getCurrentIndex;
@@ -143,7 +253,21 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await Promise.resolve();
     };
 
+    const loadFavoritesPage = async (date) => {
+        await loadPage(date, 'pages/favorites.html');
+        jest.runOnlyPendingTimers();
+        await Promise.resolve();
+        await Promise.resolve();
+    };
+
     beforeEach(() => {
+        mockFirebaseEnabled = false;
+        mockAuthUser = { uid: 'user-123', email: 'test@example.com' };
+        authStateListeners = [];
+        favoriteSnapshotListeners = [];
+        favoriteStore = new Map();
+        favoriteSetMock = jest.fn();
+        favoriteDeleteMock = jest.fn();
         mockVoices = [
             { name: 'Microsoft David Desktop', lang: 'en-US' },
             { name: 'Google US English', lang: 'en-US' },
@@ -181,6 +305,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     };
 
     afterEach(() => {
+        window.PteVocabApp?.dispose?.();
         jest.clearAllTimers();
         jest.clearAllMocks();
         jest.useRealTimers();
@@ -188,6 +313,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         if (document.body) {
             document.body.replaceChildren();
         }
+        delete window.firebase;
     });
 
     test('loads the cover page first and waits for the user to start review', async () => {
@@ -210,6 +336,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('start-review').getAttribute('href')).toBe('pages/review.html');
         expect(document.getElementById('start-practice').textContent.trim()).toBe('Practice');
         expect(document.getElementById('start-practice').getAttribute('href')).toBe('pages/practice.html');
+        expect(document.getElementById('start-favorites').textContent.trim()).toBe('Favorites');
+        expect(document.getElementById('start-favorites').getAttribute('href')).toBe('pages/favorites.html');
         expect(document.getElementById('header-copy').hidden).toBe(true);
         expect(document.getElementById('quiz-box')).toBeNull();
         expect(document.getElementById('word-target')).toBeNull();
@@ -234,6 +362,90 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('start-review')).toBeNull();
         expect(document.getElementById('quiz-box')).not.toBeNull();
         expect(window.__getDailyWords()).toHaveLength(15);
+    });
+
+    test('hides the favorite star on review cards when the user is not signed in', async () => {
+        await loadReviewPage();
+
+        expect(document.getElementById('favorite-toggle').hidden).toBe(true);
+    });
+
+    test('toggles the current review word in Firestore without flipping the card', async () => {
+        mockFirebaseEnabled = true;
+        await loadReviewPage();
+
+        const currentWord = window.__getDailyWords()[0];
+        const favoriteButton = document.getElementById('favorite-toggle');
+        const wordCard = document.getElementById('word-card');
+
+        expect(favoriteButton.hidden).toBe(false);
+        expect(favoriteButton.innerText).toBe('☆');
+
+        favoriteButton.click();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(wordCard.classList.contains('flipped')).toBe(false);
+        expect(favoriteSetMock).toHaveBeenCalledWith(String(currentWord.id), expect.objectContaining({
+            id: currentWord.id,
+            w: currentWord.w,
+            m: currentWord.m,
+            e: currentWord.e,
+            createdAt: 'SERVER_TIME',
+        }));
+        expect(favoriteButton.innerText).toBe('★');
+        expect(document.getElementById('favorite-status').innerText).toBe('Added to favorites.');
+
+        favoriteButton.click();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(favoriteDeleteMock).toHaveBeenCalledWith(String(currentWord.id));
+        expect(favoriteButton.innerText).toBe('☆');
+        expect(document.getElementById('favorite-status').innerText).toBe('Removed from favorites.');
+    });
+
+    test('loads favorites.html and asks signed-out users to sign in', async () => {
+        mockFirebaseEnabled = true;
+        mockAuthUser = null;
+
+        await loadFavoritesPage();
+
+        expectFetchedPath('partials/favorites/favorites.html');
+        expect(document.getElementById('favorites-screen')).not.toBeNull();
+        expect(document.getElementById('favorites-status').innerText).toBe('Please sign in to view favorites.');
+        expect(document.querySelectorAll('#favorites-list .favorite-item')).toHaveLength(0);
+    });
+
+    test('lists favorite words for the signed-in user and removes one', async () => {
+        mockFirebaseEnabled = true;
+        favoriteStore.set('7', {
+            id: 7,
+            w: 'analyze',
+            pos: 'v.',
+            m: '分析',
+            e: 'We analyze the result.',
+            wordFamily: [{ term: 'analysis', explanation: '分析' }],
+            collocations: [{ term: 'analyze data', explanation: '分析資料' }],
+        });
+
+        await loadFavoritesPage();
+
+        expect(document.getElementById('favorites-status').innerText).toBe('1 favorite word.');
+        expect(document.querySelector('.favorite-item h2').innerText).toBe('analyze');
+        expect(document.querySelector('.favorite-meaning').innerText).toBe('分析');
+        expect(document.querySelector('.favorite-details-toggle').open).toBe(false);
+        expect(document.querySelector('.favorite-example').innerText).toBe('We analyze the result.');
+
+        document.querySelector('.favorite-details-toggle').open = true;
+        expect(document.querySelector('.favorite-details-toggle').open).toBe(true);
+
+        document.querySelector('.favorite-remove').click();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(favoriteDeleteMock).toHaveBeenCalledWith('7');
+        expect(document.getElementById('favorites-status').innerText).toBe('No favorite words yet.');
     });
 
     test('renders bold markers in examples as strong text', async () => {

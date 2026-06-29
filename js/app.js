@@ -1,5 +1,6 @@
 import {
     DAILY_WORD_COUNT,
+    FAVORITES_HTML_FUNCTIONS,
     FEATURE_HTML_FUNCTIONS,
     HOME_HTML_FUNCTIONS,
     REVIEW_HTML_FUNCTIONS,
@@ -8,6 +9,7 @@ import {
 import { getDateStringWithOffset } from './date-utils.js';
 import { loadHtmlFunctions } from './html-functions.js';
 import { setupAuthUI } from './auth.js';
+import { createFavoritesController } from './favorites.js';
 import { createLookupController, hideLookupPopup } from './lookup.js';
 import { renderReviewList } from './review-list.js';
 import { createSpeechController, canSpeak } from './speech.js';
@@ -37,6 +39,11 @@ let bootPromise = null;
 let wiredAppRoot = null;
 let bootedPageMode = '';
 
+const favoritesController = createFavoritesController(() => {
+    updateFavoriteButton();
+    renderFavoritesPage();
+});
+
 const lookupController = createLookupController((word) => (
     vocabMeaningMap.get(normalizeLookupWord(word)) || ''
 ));
@@ -51,7 +58,7 @@ function getPageMode() {
     const appRoot = getElement('app');
     const pageMode = appRoot?.dataset.page;
 
-    if (pageMode === 'review' || pageMode === 'feature') {
+    if (pageMode === 'review' || pageMode === 'feature' || pageMode === 'favorites') {
         return pageMode;
     }
 
@@ -108,6 +115,10 @@ function isAppShellMounted() {
         return Boolean(getElement('feature-screen') && getElement('auth-dialog'));
     }
 
+    if (pageMode === 'favorites') {
+        return Boolean(getElement('favorites-screen') && getElement('auth-dialog'));
+    }
+
     return Boolean(
         getElement('quiz-box')
         && getElement('result-box')
@@ -132,6 +143,135 @@ function showReviewView() {
 
 function renderCurrentReviewList() {
     renderReviewList(reviewedWords, dailyWords, currentIndex, jumpToWord);
+}
+
+function setFavoriteStatus(message, isError = false) {
+    const status = getElement('favorite-status');
+    if (!status) return;
+
+    status.innerText = message;
+    status.classList.toggle('favorite-status-error', isError);
+}
+
+function updateFavoriteButton() {
+    const favoriteButton = getElement('favorite-toggle');
+    if (!favoriteButton) return;
+
+    const current = dailyWords[currentIndex];
+    const isSignedIn = Boolean(favoritesController.getUser());
+    favoriteButton.hidden = !isSignedIn || !current;
+    if (!isSignedIn || !current) return;
+
+    const isFavorite = favoritesController.hasFavorite(current);
+    favoriteButton.innerText = isFavorite ? '★' : '☆';
+    favoriteButton.classList.toggle('active', isFavorite);
+    favoriteButton.setAttribute('aria-label', isFavorite ? 'Remove from favorites' : 'Add to favorites');
+    favoriteButton.setAttribute('aria-pressed', String(isFavorite));
+}
+
+function renderFavoriteTermList(list, terms) {
+    list.innerHTML = '';
+    renderTermList(list, terms);
+    if (list.children.length === 0) {
+        const emptyItem = document.createElement('li');
+        emptyItem.className = 'favorite-term-empty';
+        emptyItem.innerText = 'No entries';
+        list.appendChild(emptyItem);
+    }
+}
+
+function renderFavoritesPage() {
+    const pageMode = getPageMode();
+    if (pageMode !== 'favorites') return;
+
+    const status = getElement('favorites-status');
+    const list = getElement('favorites-list');
+    if (!status || !list) return;
+
+    const user = favoritesController.getUser();
+    const favorites = favoritesController.getFavorites();
+    list.innerHTML = '';
+
+    if (!user) {
+        status.innerText = 'Please sign in to view favorites.';
+        return;
+    }
+
+    if (favorites.length === 0) {
+        status.innerText = 'No favorite words yet.';
+        return;
+    }
+
+    status.innerText = `${favorites.length} favorite word${favorites.length === 1 ? '' : 's'}.`;
+
+    favorites.forEach((favorite) => {
+        const item = document.createElement('li');
+        item.className = 'favorite-item';
+
+        const details = document.createElement('details');
+        details.className = 'favorite-details-toggle';
+
+        const summary = document.createElement('summary');
+        summary.className = 'favorite-summary';
+
+        const heading = document.createElement('div');
+        heading.className = 'favorite-item-heading';
+
+        const title = document.createElement('h2');
+        title.innerText = favorite.w;
+
+        const pos = document.createElement('span');
+        pos.className = 'favorite-pos';
+        pos.innerText = favorite.pos ? `(${favorite.pos})` : '';
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'favorite-remove';
+        removeButton.innerText = 'Remove';
+        removeButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            removeButton.disabled = true;
+            try {
+                await favoritesController.removeFavorite(favorite);
+            } catch (error) {
+                removeButton.disabled = false;
+                console.error('Failed to remove favorite.', error);
+            }
+        });
+
+        heading.append(title, pos, removeButton);
+
+        const meaning = document.createElement('p');
+        meaning.className = 'favorite-meaning';
+        meaning.innerText = favorite.m || 'No meaning';
+
+        summary.append(heading, meaning);
+
+        const fullContent = document.createElement('div');
+        fullContent.className = 'favorite-full-content';
+
+        const example = document.createElement('p');
+        example.className = 'favorite-example';
+        example.innerText = favorite.e || 'No example';
+
+        const familyTitle = document.createElement('h3');
+        familyTitle.innerText = 'Word family';
+        const familyList = document.createElement('ul');
+        familyList.className = 'detail-list';
+        renderFavoriteTermList(familyList, favorite.wordFamily);
+
+        const collocationTitle = document.createElement('h3');
+        collocationTitle.innerText = 'Collocations';
+        const collocationList = document.createElement('ul');
+        collocationList.className = 'detail-list';
+        renderFavoriteTermList(collocationList, favorite.collocations);
+
+        fullContent.append(example, familyTitle, familyList, collocationTitle, collocationList);
+        details.append(summary, fullContent);
+        item.append(details);
+        list.appendChild(item);
+    });
 }
 
 function recomputeScore() {
@@ -226,6 +366,7 @@ function showWord() {
     hideLookupPopup();
     wordCard.classList.remove('flipped');
     clearPendingWordRender();
+    setFavoriteStatus('');
 
     const current = dailyWords[currentIndex];
     wordTarget.innerText = current.w;
@@ -244,6 +385,7 @@ function showWord() {
     getElement('score-count').innerText = `Correct: ${score}`;
     getElement('progress').style.width = `${(currentIndex / dailyWords.length) * 100}%`;
     renderCurrentReviewList();
+    updateFavoriteButton();
     speechController.updateSpeakButton();
 }
 
@@ -338,6 +480,25 @@ function wireEvents() {
     getElement('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
     getElement('deck-yesterday').addEventListener('click', () => loadAndInitQuiz(-1));
     getElement('review-again').addEventListener('click', restartActiveDeck);
+    getElement('favorite-toggle').addEventListener('click', async (event) => {
+        event.stopPropagation();
+
+        const favoriteButton = event.currentTarget;
+        const current = dailyWords[currentIndex];
+        if (!current || favoriteButton.disabled) return;
+
+        favoriteButton.disabled = true;
+        try {
+            const isFavorite = await favoritesController.toggleFavorite(current);
+            setFavoriteStatus(isFavorite ? 'Added to favorites.' : 'Removed from favorites.');
+        } catch (error) {
+            setFavoriteStatus('Favorite update failed. Please check Firebase permissions.', true);
+            console.error('Failed to update favorite.', error);
+        } finally {
+            favoriteButton.disabled = false;
+            updateFavoriteButton();
+        }
+    });
 
     document.addEventListener('click', (event) => {
         const popup = getElement('lookup-popup');
@@ -419,10 +580,14 @@ async function boot() {
             ? REVIEW_HTML_FUNCTIONS
             : pageMode === 'feature'
                 ? FEATURE_HTML_FUNCTIONS
-                : HOME_HTML_FUNCTIONS;
+                : pageMode === 'favorites'
+                    ? FAVORITES_HTML_FUNCTIONS
+                    : HOME_HTML_FUNCTIONS;
 
         await loadHtmlFunctions(functionPaths);
         await setupAuthUI();
+        await favoritesController.init();
+        renderFavoritesPage();
         if (pageMode !== 'review') {
             return;
         }
@@ -455,6 +620,10 @@ window.PteVocabApp = {
     getActiveDeckOffset: () => activeDeckOffset,
     getActiveDeckDateString: () => activeDeckDateString,
     getActiveDeckKey: () => activeDeckKey,
+    getFavorites: favoritesController.getFavorites,
+    dispose: () => {
+        favoritesController.dispose();
+    },
 };
 
 document.addEventListener('DOMContentLoaded', boot);

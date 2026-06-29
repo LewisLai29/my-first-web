@@ -8,6 +8,7 @@ const FIREBASE_SDK_URLS = [
 
 let sdkLoadPromise = null;
 let servicesPromise = null;
+let servicesFirebaseGlobal = null;
 
 function isJsdomRuntime() {
     return typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent || '');
@@ -46,8 +47,8 @@ function loadScript(src) {
 
 async function ensureFirebaseSdkLoaded() {
     if (typeof document === 'undefined' || typeof window === 'undefined') return false;
-    if (isJsdomRuntime()) return false;
     if (hasFirebaseGlobal()) return true;
+    if (isJsdomRuntime()) return false;
 
     if (!sdkLoadPromise) {
         sdkLoadPromise = (async () => {
@@ -62,7 +63,20 @@ async function ensureFirebaseSdkLoaded() {
 }
 
 export async function ensureFirebaseServices() {
-    if (servicesPromise) return servicesPromise;
+    if (servicesPromise && servicesFirebaseGlobal && servicesFirebaseGlobal !== window.firebase) {
+        servicesPromise = null;
+        servicesFirebaseGlobal = null;
+    }
+
+    if (servicesPromise) {
+        const existingServices = await servicesPromise;
+        if (existingServices && hasFirebaseGlobal()) return existingServices;
+        if (!hasFirebaseGlobal()) {
+            servicesPromise = null;
+            return null;
+        }
+        servicesPromise = null;
+    }
 
     servicesPromise = (async () => {
         const sdkLoaded = await ensureFirebaseSdkLoaded();
@@ -71,6 +85,7 @@ export async function ensureFirebaseServices() {
         if (!window.firebase.apps.length) {
             window.firebase.initializeApp(firebaseConfig);
         }
+        servicesFirebaseGlobal = window.firebase;
 
         return {
             auth: window.firebase.auth(),

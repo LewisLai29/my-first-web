@@ -11,6 +11,7 @@
     </div>
 
     <div class="quiz-container">
+        <button id="favorite-toggle" class="favorite-toggle" type="button" aria-label="Add to favorites" hidden>☆</button>
         <div class="card" id="word-card" role="button" tabindex="0" aria-label="Flip vocabulary card">
             <div class="card-face card-front">
                 <h2>
@@ -40,6 +41,7 @@
             </div>
         </div>
     </div>
+    <p id="favorite-status" class="favorite-status-message" aria-live="polite"></p>
 
     <div class="btn-group">
         <button class="btn-wrong" type="button" id="mark-wrong">Forgot</button>
