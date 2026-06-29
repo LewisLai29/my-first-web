@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { pathToFileURL } = require('url');
+const { fileURLToPath, pathToFileURL } = require('url');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const sortIds = (ids) => [...ids].sort((a, b) => a - b);
@@ -63,16 +63,22 @@ describe('PTE daily vocabulary page (index.html)', () => {
         jest.setSystemTime(new Date(date));
 
         window.fetch = jest.fn((url) => {
-            if (String(url).startsWith('functions/')) {
+            const urlString = String(url);
+            const localPath = urlString.startsWith('file:')
+                ? fileURLToPath(urlString)
+                : path.resolve(PROJECT_ROOT, urlString);
+            const relativeLocalPath = path.relative(PROJECT_ROOT, localPath).replace(/\\/g, '/');
+
+            if (relativeLocalPath.startsWith('partials/')) {
                 return Promise.resolve({
                     ok: true,
                     text: jest.fn().mockResolvedValue(
-                        fs.readFileSync(path.resolve(PROJECT_ROOT, String(url)), 'utf8')
+                        fs.readFileSync(localPath, 'utf8')
                     ),
                 });
             }
 
-            if (url === 'pte_vocab.json') {
+            if (relativeLocalPath === 'pte_vocab.json') {
                 return Promise.resolve({
                     ok: true,
                     json: jest.fn().mockResolvedValue(mockVocab),
@@ -100,8 +106,9 @@ describe('PTE daily vocabulary page (index.html)', () => {
         const html = fs.readFileSync(path.resolve(PROJECT_ROOT, page), 'utf8');
         document.documentElement.innerHTML = html;
 
-        const appScript = document.querySelector('script[src="js/app.js"]');
-        const appScriptUrl = pathToFileURL(path.resolve(PROJECT_ROOT, appScript.getAttribute('src'))).href;
+        const appScript = document.querySelector('script[src$="js/app.js"]');
+        const appScriptPath = path.resolve(PROJECT_ROOT, path.dirname(page), appScript.getAttribute('src'));
+        const appScriptUrl = pathToFileURL(appScriptPath).href;
         await import(`${appScriptUrl}?testRun=${Date.now()}-${Math.random()}`);
 
         await window.PteVocabApp.boot();
@@ -119,7 +126,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     };
 
     const loadReviewPage = async (date) => {
-        await loadPage(date, 'review.html');
+        await loadPage(date, 'pages/review.html');
         jest.runOnlyPendingTimers();
         jest.runOnlyPendingTimers();
         await Promise.resolve();
@@ -127,6 +134,13 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await Promise.resolve();
         await Promise.resolve();
         await waitForReviewUi();
+    };
+
+    const loadFeaturePage = async (date) => {
+        await loadPage(date, 'pages/practice.html');
+        jest.runOnlyPendingTimers();
+        await Promise.resolve();
+        await Promise.resolve();
     };
 
     beforeEach(() => {
@@ -153,6 +167,19 @@ describe('PTE daily vocabulary page (index.html)', () => {
         };
     });
 
+    const fetchedProjectPaths = () => window.fetch.mock.calls
+        .map(([url]) => String(url))
+        .filter((url) => url.startsWith('file:'))
+        .map((url) => path.relative(PROJECT_ROOT, fileURLToPath(url)).replace(/\\/g, '/'));
+
+    const expectFetchedPath = (relativePath) => {
+        expect(fetchedProjectPaths()).toContain(relativePath);
+    };
+
+    const expectNotFetchedPath = (relativePath) => {
+        expect(fetchedProjectPaths()).not.toContain(relativePath);
+    };
+
     afterEach(() => {
         jest.clearAllTimers();
         jest.clearAllMocks();
@@ -166,30 +193,43 @@ describe('PTE daily vocabulary page (index.html)', () => {
     test('loads the cover page first and waits for the user to start review', async () => {
         await loadPage();
 
-        expect(window.fetch).toHaveBeenCalledWith('functions/header.html');
-        expect(window.fetch).toHaveBeenCalledWith('functions/auth-modal.html');
-        expect(window.fetch).toHaveBeenCalledWith('functions/home.html');
-        expect(window.fetch).not.toHaveBeenCalledWith('functions/quiz.html');
-        expect(window.fetch).not.toHaveBeenCalledWith('functions/review-list.html');
-        expect(window.fetch).not.toHaveBeenCalledWith('functions/result.html');
-        expect(window.fetch).not.toHaveBeenCalledWith('functions/lookup-popup.html');
-        expect(window.fetch).not.toHaveBeenCalledWith('pte_vocab.json');
+        expectFetchedPath('partials/common/header.html');
+        expectFetchedPath('partials/common/auth-modal.html');
+        expectFetchedPath('partials/home/home.html');
+        expectNotFetchedPath('partials/review/quiz.html');
+        expectNotFetchedPath('partials/review/review-list.html');
+        expectNotFetchedPath('partials/review/result.html');
+        expectNotFetchedPath('partials/review/lookup-popup.html');
+        expectNotFetchedPath('pte_vocab.json');
 
         expect(window.__getDailyWords()).toHaveLength(0);
         expect(document.getElementById('home-screen').hidden).toBe(false);
         expect(document.querySelector('.home-features')).not.toBeNull();
         expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
         expect(document.getElementById('start-review').textContent.trim()).toBe('Review');
-        expect(document.getElementById('start-review').getAttribute('href')).toBe('review.html');
+        expect(document.getElementById('start-review').getAttribute('href')).toBe('pages/review.html');
+        expect(document.getElementById('start-practice').textContent.trim()).toBe('Practice');
+        expect(document.getElementById('start-practice').getAttribute('href')).toBe('pages/practice.html');
         expect(document.getElementById('header-copy').hidden).toBe(true);
         expect(document.getElementById('quiz-box')).toBeNull();
         expect(document.getElementById('word-target')).toBeNull();
     });
 
+    test('loads practice.html as a separate page with the same sign-in controls', async () => {
+        await loadFeaturePage();
+
+        expectNotFetchedPath('partials/home/home.html');
+        expectNotFetchedPath('partials/review/quiz.html');
+        expect(document.getElementById('home-screen')).toBeNull();
+        expect(document.getElementById('feature-screen')).not.toBeNull();
+        expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
+        expect(document.getElementById('auth-sign-out')).not.toBeNull();
+    });
+
     test('loads review.html as a separate page without the cover screen', async () => {
         await loadReviewPage();
 
-        expect(window.fetch).not.toHaveBeenCalledWith('functions/home.html');
+        expectNotFetchedPath('partials/home/home.html');
         expect(document.getElementById('home-screen')).toBeNull();
         expect(document.getElementById('start-review')).toBeNull();
         expect(document.getElementById('quiz-box')).not.toBeNull();
@@ -248,7 +288,11 @@ describe('PTE daily vocabulary page (index.html)', () => {
     test('prefers Traditional Chinese lookup matches over non-Chinese API response text', async () => {
         await loadReviewPage();
         window.fetch.mockImplementation((url) => {
-            if (url === 'pte_vocab.json') {
+            const urlString = String(url);
+            const relativeLocalPath = urlString.startsWith('file:')
+                ? path.relative(PROJECT_ROOT, fileURLToPath(urlString)).replace(/\\/g, '/')
+                : urlString;
+            if (relativeLocalPath === 'pte_vocab.json') {
                 return Promise.resolve({
                     ok: true,
                     json: jest.fn().mockResolvedValue(mockVocab),
@@ -294,7 +338,11 @@ describe('PTE daily vocabulary page (index.html)', () => {
     test('shows a quota-specific message when the lookup API limit is reached', async () => {
         await loadReviewPage();
         window.fetch.mockImplementation((url) => {
-            if (url === 'pte_vocab.json') {
+            const urlString = String(url);
+            const relativeLocalPath = urlString.startsWith('file:')
+                ? path.relative(PROJECT_ROOT, fileURLToPath(urlString)).replace(/\\/g, '/')
+                : urlString;
+            if (relativeLocalPath === 'pte_vocab.json') {
                 return Promise.resolve({
                     ok: true,
                     json: jest.fn().mockResolvedValue(mockVocab),

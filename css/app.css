@@ -82,11 +82,11 @@ header {
 }
 
 .home-features {
-    width: min(100%, 360px);
+    width: min(100%, 240px);
     display: grid;
-    grid-template-columns: repeat(3, 96px);
+    grid-template-columns: repeat(2, 96px);
     justify-content: center;
-    gap: 30px 24px;
+    gap: 30px 28px;
     align-self: start;
     margin-top: 36px;
 }
@@ -353,7 +353,7 @@ h1 {
     }
 
     .header-auth-row {
-        justify-content: center;
+        justify-content: flex-end;
     }
 
     .header-copy {
@@ -361,13 +361,14 @@ h1 {
     }
 
     .auth-panel {
-        justify-content: center;
+        justify-content: flex-end;
         align-items: center;
-        width: 100%;
+        width: auto;
+        max-width: 100%;
     }
 
     .auth-status {
-        text-align: center;
+        text-align: right;
         white-space: normal;
     }
 
@@ -376,7 +377,7 @@ h1 {
     }
 
     .auth-actions {
-        justify-content: center;
+        justify-content: flex-end;
     }
 
     .auth-button {
@@ -393,9 +394,9 @@ h1 {
     }
 
     .home-features {
-        width: min(100%, 276px);
-        grid-template-columns: repeat(3, 76px);
-        gap: 26px 18px;
+        width: min(100%, 170px);
+        grid-template-columns: repeat(2, 76px);
+        gap: 22px 18px;
         margin-top: 32px;
     }
 
@@ -403,6 +404,32 @@ h1 {
         width: 76px;
         height: 76px;
     }
+}
+
+.feature-screen {
+    margin-top: auto;
+    margin-bottom: auto;
+    padding-top: 0;
+    justify-content: center;
+    align-content: center;
+}
+
+.feature-note {
+    margin: 8px 0 0;
+    color: #475569;
+    font-size: 0.95rem;
+}
+
+.feature-placeholder {
+    width: min(100%, 420px);
+    margin-top: 32px;
+    padding: 22px 20px;
+    border-radius: 18px;
+    border: 1px solid #dbe4f0;
+    background: linear-gradient(180deg, #f8fafc 0%, #eef6ff 100%);
+    color: #0f172a;
+    text-align: center;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .date-badge {

@@ -1,4 +1,10 @@
-import { DAILY_WORD_COUNT, HOME_HTML_FUNCTIONS, REVIEW_HTML_FUNCTIONS, VOCAB_SOURCE } from './config.js';
+import {
+    DAILY_WORD_COUNT,
+    FEATURE_HTML_FUNCTIONS,
+    HOME_HTML_FUNCTIONS,
+    REVIEW_HTML_FUNCTIONS,
+    VOCAB_SOURCE,
+} from './config.js';
 import { getDateStringWithOffset } from './date-utils.js';
 import { loadHtmlFunctions } from './html-functions.js';
 import { setupAuthUI } from './auth.js';
@@ -43,7 +49,13 @@ function getElement(id) {
 
 function getPageMode() {
     const appRoot = getElement('app');
-    return appRoot?.dataset.page === 'review' ? 'review' : 'home';
+    const pageMode = appRoot?.dataset.page;
+
+    if (pageMode === 'review' || pageMode === 'feature') {
+        return pageMode;
+    }
+
+    return 'home';
 }
 
 function setHidden(id, hidden) {
@@ -86,8 +98,14 @@ function resetRuntimeState() {
 }
 
 function isAppShellMounted() {
-    if (getPageMode() === 'home') {
-        return Boolean(getElement('home-screen') && getElement('start-review'));
+    const pageMode = getPageMode();
+
+    if (pageMode === 'home') {
+        return Boolean(getElement('home-screen') && getElement('start-review') && getElement('start-practice'));
+    }
+
+    if (pageMode === 'feature') {
+        return Boolean(getElement('feature-screen') && getElement('auth-dialog'));
     }
 
     return Boolean(
@@ -397,9 +415,15 @@ async function boot() {
     bootedPageMode = pageMode;
 
     bootPromise = (async () => {
-        await loadHtmlFunctions(pageMode === 'review' ? REVIEW_HTML_FUNCTIONS : HOME_HTML_FUNCTIONS);
+        const functionPaths = pageMode === 'review'
+            ? REVIEW_HTML_FUNCTIONS
+            : pageMode === 'feature'
+                ? FEATURE_HTML_FUNCTIONS
+                : HOME_HTML_FUNCTIONS;
+
+        await loadHtmlFunctions(functionPaths);
         await setupAuthUI();
-        if (pageMode === 'home') {
+        if (pageMode !== 'review') {
             return;
         }
 
@@ -419,7 +443,7 @@ window.PteVocabApp = {
             return loadAndInitQuiz(0);
         }
 
-        window.location.href = 'review.html';
+        window.location.href = 'pages/review.html';
         return Promise.resolve();
     },
     lookupExampleWordMeaning: lookupController.lookupExampleWordMeaning,
