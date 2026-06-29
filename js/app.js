@@ -1,4 +1,4 @@
-import { DAILY_WORD_COUNT, VOCAB_SOURCE } from './config.js';
+import { DAILY_WORD_COUNT, HOME_HTML_FUNCTIONS, REVIEW_HTML_FUNCTIONS, VOCAB_SOURCE } from './config.js';
 import { getDateStringWithOffset } from './date-utils.js';
 import { loadHtmlFunctions } from './html-functions.js';
 import { setupAuthUI } from './auth.js';
@@ -27,12 +27,90 @@ let activeDeckDateString = '';
 let activeDeckLabel = 'Today';
 let pendingWordRenderTimer = null;
 let activeLoadToken = 0;
+let bootPromise = null;
+let wiredAppRoot = null;
+let bootedPageMode = '';
 
 const lookupController = createLookupController((word) => (
     vocabMeaningMap.get(normalizeLookupWord(word)) || ''
 ));
 
 const speechController = createSpeechController(() => dailyWords[currentIndex]);
+
+function getElement(id) {
+    return document.getElementById(id);
+}
+
+function getPageMode() {
+    const appRoot = getElement('app');
+    return appRoot?.dataset.page === 'review' ? 'review' : 'home';
+}
+
+function setHidden(id, hidden) {
+    const element = getElement(id);
+    if (element) {
+        element.hidden = hidden;
+    }
+}
+
+function setHomeVisible(visible) {
+    setHidden('home-screen', !visible);
+}
+
+function setQuizVisible(visible) {
+    setHidden('quiz-box', !visible);
+    setHidden('review-list-section', !visible);
+    setHidden('header-copy', !visible);
+}
+
+function setResultVisible(visible) {
+    setHidden('result-box', !visible);
+}
+
+function resetRuntimeState() {
+    activeSession = null;
+    activeDeckKey = '';
+    dailyWords = [];
+    currentIndex = 0;
+    score = 0;
+    reviewedWords = [];
+    vocabMeaningMap = new Map();
+    activeDeckOffset = 0;
+    activeDeckDateString = '';
+    activeDeckLabel = 'Today';
+    activeLoadToken++;
+    clearPendingWordRender();
+    hideLookupPopup();
+    wiredAppRoot = null;
+    deckSessions.clear();
+}
+
+function isAppShellMounted() {
+    if (getPageMode() === 'home') {
+        return Boolean(getElement('home-screen') && getElement('start-review'));
+    }
+
+    return Boolean(
+        getElement('quiz-box')
+        && getElement('result-box')
+        && getElement('lookup-popup')
+        && getElement('auth-dialog')
+    );
+}
+
+function showHome() {
+    clearPendingWordRender();
+    hideLookupPopup();
+    setHomeVisible(true);
+    setQuizVisible(false);
+    setResultVisible(false);
+}
+
+function showReviewView() {
+    setHomeVisible(false);
+    setQuizVisible(true);
+    setResultVisible(false);
+}
 
 function renderCurrentReviewList() {
     renderReviewList(reviewedWords, dailyWords, currentIndex, jumpToWord);
@@ -118,28 +196,35 @@ function showWord() {
         return;
     }
 
-    document.getElementById('quiz-box').hidden = false;
-    document.getElementById('result-box').hidden = true;
+    const wordCard = getElement('word-card');
+    const wordTarget = getElement('word-target');
+    const wordExample = getElement('word-example');
+    const wordMeaning = getElement('word-meaning');
+    if (!wordCard || !wordTarget || !wordExample || !wordMeaning) {
+        return;
+    }
+
+    showReviewView();
     hideLookupPopup();
-    document.getElementById('word-card').classList.remove('flipped');
+    wordCard.classList.remove('flipped');
     clearPendingWordRender();
 
     const current = dailyWords[currentIndex];
-    const loadToken = activeLoadToken;
-    pendingWordRenderTimer = setTimeout(() => {
-        if (loadToken !== activeLoadToken) return;
-        document.getElementById('word-target').innerText = current.w;
-        document.getElementById('word-pos').innerText = current.pos ? `(${current.pos})` : '';
-        document.getElementById('word-meaning').innerText = current.m;
-        lookupController.renderExampleText(document.getElementById('word-example'), current.e);
-        renderTermList(document.getElementById('word-family'), current.wordFamily);
-        renderTermList(document.getElementById('word-collocations'), current.collocations);
-        speechController.updateSpeakButton();
-    }, 150);
+    wordTarget.innerText = current.w;
 
-    document.getElementById('card-index').innerText = `Card: ${currentIndex + 1} / ${dailyWords.length}`;
-    document.getElementById('score-count').innerText = `Correct: ${score}`;
-    document.getElementById('progress').style.width = `${(currentIndex / dailyWords.length) * 100}%`;
+    const wordPos = getElement('word-pos');
+    if (wordPos) {
+        wordPos.innerText = current.pos ? `(${current.pos})` : '';
+    }
+
+    wordMeaning.innerText = current.m;
+    lookupController.renderExampleText(wordExample, current.e);
+    renderTermList(getElement('word-family'), current.wordFamily);
+    renderTermList(getElement('word-collocations'), current.collocations);
+
+    getElement('card-index').innerText = `Card: ${currentIndex + 1} / ${dailyWords.length}`;
+    getElement('score-count').innerText = `Correct: ${score}`;
+    getElement('progress').style.width = `${(currentIndex / dailyWords.length) * 100}%`;
     renderCurrentReviewList();
     speechController.updateSpeakButton();
 }
@@ -175,12 +260,18 @@ function showResult() {
     hideLookupPopup();
     clearPendingWordRender();
     renderCurrentReviewList();
-    document.getElementById('quiz-box').hidden = true;
-    document.getElementById('result-box').hidden = false;
+    setHomeVisible(false);
+    setHidden('quiz-box', true);
+    setHidden('review-list-section', false);
+    setHidden('header-copy', false);
+    setResultVisible(true);
 
     recomputeScore();
     const accuracy = dailyWords.length > 0 ? Math.round((score / dailyWords.length) * 100) : 0;
-    document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+    const finalAccuracy = getElement('final-accuracy');
+    if (finalAccuracy) {
+        finalAccuracy.innerText = `${accuracy}%`;
+    }
     updateDeckLabels();
 }
 
@@ -191,8 +282,7 @@ function restartActiveDeck() {
     activeSession.score = 0;
     activeSession.reviewedWords = [];
     activateSession(activeSession, activeDeckKey, activeDeckOffset);
-    document.getElementById('quiz-box').hidden = false;
-    document.getElementById('result-box').hidden = true;
+    showReviewView();
     updateDeckSwitcher();
     updateDeckLabels();
     clearPendingWordRender();
@@ -201,28 +291,38 @@ function restartActiveDeck() {
 }
 
 function wireEvents() {
-    document.getElementById('word-card').addEventListener('click', () => {
-        document.getElementById('word-card').classList.toggle('flipped');
+    const appRoot = getElement('app');
+    if (!appRoot || wiredAppRoot === appRoot) {
+        return;
+    }
+    wiredAppRoot = appRoot;
+
+    if (getPageMode() !== 'review') {
+        return;
+    }
+
+    getElement('word-card').addEventListener('click', () => {
+        getElement('word-card').classList.toggle('flipped');
     });
 
-    document.getElementById('word-card').addEventListener('keydown', (event) => {
+    getElement('word-card').addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
-            document.getElementById('word-card').classList.toggle('flipped');
+            getElement('word-card').classList.toggle('flipped');
         }
     });
 
-    document.getElementById('speak-word').addEventListener('click', speechController.speakCurrentWord);
-    document.getElementById('voice-select').addEventListener('change', (event) => speechController.setSelectedVoice(event.target.value, event));
-    document.getElementById('voice-select').addEventListener('click', (event) => event.stopPropagation());
-    document.getElementById('mark-wrong').addEventListener('click', () => nextWord(false));
-    document.getElementById('mark-right').addEventListener('click', () => nextWord(true));
-    document.getElementById('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
-    document.getElementById('deck-yesterday').addEventListener('click', () => loadAndInitQuiz(-1));
-    document.getElementById('review-again').addEventListener('click', restartActiveDeck);
+    getElement('speak-word').addEventListener('click', speechController.speakCurrentWord);
+    getElement('voice-select').addEventListener('change', (event) => speechController.setSelectedVoice(event.target.value, event));
+    getElement('voice-select').addEventListener('click', (event) => event.stopPropagation());
+    getElement('mark-wrong').addEventListener('click', () => nextWord(false));
+    getElement('mark-right').addEventListener('click', () => nextWord(true));
+    getElement('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
+    getElement('deck-yesterday').addEventListener('click', () => loadAndInitQuiz(-1));
+    getElement('review-again').addEventListener('click', restartActiveDeck);
 
     document.addEventListener('click', (event) => {
-        const popup = document.getElementById('lookup-popup');
+        const popup = getElement('lookup-popup');
         if (
             popup
             && !popup.hidden
@@ -239,17 +339,21 @@ function wireEvents() {
 }
 
 async function loadAndInitQuiz(deckOffset = 0) {
+    await boot();
+    return loadDeck(deckOffset);
+}
+
+async function loadDeck(deckOffset = 0) {
     const loadToken = ++activeLoadToken;
     persistActiveSession();
     clearPendingWordRender();
+    showReviewView();
 
     const deckKey = getDateStringWithOffset(deckOffset);
     activeDeckOffset = deckOffset;
     activeDeckLabel = getDeckLabel(deckOffset);
     activeDeckDateString = deckKey;
 
-    document.getElementById('quiz-box').hidden = false;
-    document.getElementById('result-box').hidden = true;
     updateDeckSwitcher();
     updateDeckLabels();
 
@@ -275,22 +379,49 @@ async function loadAndInitQuiz(deckOffset = 0) {
         showWord();
     } catch (error) {
         if (loadToken !== activeLoadToken) return;
-        document.getElementById('word-target').innerText = 'Error';
-        document.getElementById('word-example').innerText = 'Please confirm the vocabulary JSON can be loaded.';
+        const wordTarget = getElement('word-target');
+        const wordExample = getElement('word-example');
+        if (wordTarget) wordTarget.innerText = 'Error';
+        if (wordExample) wordExample.innerText = 'Please confirm the vocabulary JSON can be loaded.';
         console.error(error);
     }
 }
 
 async function boot() {
-    await loadHtmlFunctions();
-    await setupAuthUI();
-    wireEvents();
-    await loadAndInitQuiz();
+    const pageMode = getPageMode();
+    if (bootPromise && isAppShellMounted() && bootedPageMode === pageMode) return bootPromise;
+
+    if (!isAppShellMounted()) {
+        resetRuntimeState();
+    }
+    bootedPageMode = pageMode;
+
+    bootPromise = (async () => {
+        await loadHtmlFunctions(pageMode === 'review' ? REVIEW_HTML_FUNCTIONS : HOME_HTML_FUNCTIONS);
+        await setupAuthUI();
+        if (pageMode === 'home') {
+            return;
+        }
+
+        wireEvents();
+        await loadDeck(0);
+    })();
+
+    return bootPromise;
 }
 
 window.PteVocabApp = {
     boot,
     loadAndInitQuiz,
+    showHome,
+    startReview: () => {
+        if (getPageMode() === 'review') {
+            return loadAndInitQuiz(0);
+        }
+
+        window.location.href = 'review.html';
+        return Promise.resolve();
+    },
     lookupExampleWordMeaning: lookupController.lookupExampleWordMeaning,
     speakCurrentWord: speechController.speakCurrentWord,
     nextWord,

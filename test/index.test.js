@@ -16,7 +16,49 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await Promise.resolve();
     };
 
-    const loadPage = async (date = '2026-06-23T12:00:00+08:00') => {
+    const waitForReviewUi = async () => {
+        for (let i = 0; i < 100; i++) {
+            const wordExample = document.getElementById('word-example');
+            const wordMeaning = document.getElementById('word-meaning');
+            const speakWord = document.getElementById('speak-word');
+            const wordTarget = document.getElementById('word-target');
+
+            if (
+                wordExample
+                && wordMeaning
+                && speakWord
+                && wordTarget
+                && wordTarget.innerText !== 'Loading...'
+                && wordExample.innerText !== 'Loading example...'
+            ) {
+                return;
+            }
+
+            jest.advanceTimersByTime(50);
+            await Promise.resolve();
+            await Promise.resolve();
+        }
+
+        const dailyWordsLength = window.PteVocabApp.getDailyWords().length;
+        const wordExample = document.getElementById('word-example');
+        throw new Error(`Review UI did not render in time. words=${dailyWordsLength}, example=${wordExample ? wordExample.innerHTML : 'missing'}, body=${document.body ? document.body.innerHTML.slice(0, 200) : 'missing body'}`);
+    };
+
+    const waitForActiveDeckKey = async (expectedKey) => {
+        for (let i = 0; i < 40; i++) {
+            if (window.__getActiveDeckKey() === expectedKey) {
+                return;
+            }
+
+            jest.advanceTimersByTime(50);
+            await Promise.resolve();
+            await Promise.resolve();
+        }
+
+        throw new Error(`Active deck key did not become ${expectedKey}. Current value: ${window.__getActiveDeckKey()}`);
+    };
+
+    const loadPage = async (date = '2026-06-23T12:00:00+08:00', page = 'index.html') => {
         jest.useFakeTimers();
         jest.setSystemTime(new Date(date));
 
@@ -55,7 +97,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
             this.text = text;
         };
 
-        const html = fs.readFileSync(path.resolve(PROJECT_ROOT, 'index.html'), 'utf8');
+        const html = fs.readFileSync(path.resolve(PROJECT_ROOT, page), 'utf8');
         document.documentElement.innerHTML = html;
 
         const appScript = document.querySelector('script[src="js/app.js"]');
@@ -63,7 +105,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await import(`${appScriptUrl}?testRun=${Date.now()}-${Math.random()}`);
 
         await window.PteVocabApp.boot();
-        jest.advanceTimersByTime(200);
+        jest.runOnlyPendingTimers();
+        await Promise.resolve();
         await Promise.resolve();
 
         window.__getDailyWords = window.PteVocabApp.getDailyWords;
@@ -73,6 +116,17 @@ describe('PTE daily vocabulary page (index.html)', () => {
         window.__speakCurrentWord = window.PteVocabApp.speakCurrentWord;
         window.__lookupExampleWordMeaning = window.PteVocabApp.lookupExampleWordMeaning;
         window.__getActiveDeckKey = window.PteVocabApp.getActiveDeckKey;
+    };
+
+    const loadReviewPage = async (date) => {
+        await loadPage(date, 'review.html');
+        jest.runOnlyPendingTimers();
+        jest.runOnlyPendingTimers();
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+        await waitForReviewUi();
     };
 
     beforeEach(() => {
@@ -100,31 +154,50 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     afterEach(() => {
+        jest.clearAllTimers();
         jest.clearAllMocks();
         jest.useRealTimers();
         window.sessionStorage.clear();
-        document.documentElement.innerHTML = '';
+        if (document.body) {
+            document.body.replaceChildren();
+        }
     });
 
-    test('loads split HTML functions and renders exactly 15 daily words', async () => {
+    test('loads the cover page first and waits for the user to start review', async () => {
         await loadPage();
 
-        expect(window.__getDailyWords()).toHaveLength(15);
-        expect(Object.keys(window.__getDailyWords()[0])).toEqual(['id', 'w', 'pos', 'm', 'e', 'wordFamily', 'collocations']);
         expect(window.fetch).toHaveBeenCalledWith('functions/header.html');
-        expect(window.fetch).toHaveBeenCalledWith('functions/quiz.html');
-        expect(window.fetch).toHaveBeenCalledWith('functions/review-list.html');
-        expect(window.fetch).toHaveBeenCalledWith('functions/result.html');
-        expect(window.fetch).toHaveBeenCalledWith('functions/lookup-popup.html');
-        expect(window.fetch).toHaveBeenCalledWith('pte_vocab.json');
+        expect(window.fetch).toHaveBeenCalledWith('functions/auth-modal.html');
+        expect(window.fetch).toHaveBeenCalledWith('functions/home.html');
+        expect(window.fetch).not.toHaveBeenCalledWith('functions/quiz.html');
+        expect(window.fetch).not.toHaveBeenCalledWith('functions/review-list.html');
+        expect(window.fetch).not.toHaveBeenCalledWith('functions/result.html');
+        expect(window.fetch).not.toHaveBeenCalledWith('functions/lookup-popup.html');
+        expect(window.fetch).not.toHaveBeenCalledWith('pte_vocab.json');
 
-        expect(document.getElementById('word-target').innerText).toMatch(/^word\d+$/);
-        expect(document.getElementById('card-index').innerText).toContain('1 / 15');
-        expect(document.getElementById('today-date').innerText).toContain('Today: 2026-06-23');
+        expect(window.__getDailyWords()).toHaveLength(0);
+        expect(document.getElementById('home-screen').hidden).toBe(false);
+        expect(document.querySelector('.home-features')).not.toBeNull();
+        expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
+        expect(document.getElementById('start-review').textContent.trim()).toBe('Review');
+        expect(document.getElementById('start-review').getAttribute('href')).toBe('review.html');
+        expect(document.getElementById('header-copy').hidden).toBe(true);
+        expect(document.getElementById('quiz-box')).toBeNull();
+        expect(document.getElementById('word-target')).toBeNull();
+    });
+
+    test('loads review.html as a separate page without the cover screen', async () => {
+        await loadReviewPage();
+
+        expect(window.fetch).not.toHaveBeenCalledWith('functions/home.html');
+        expect(document.getElementById('home-screen')).toBeNull();
+        expect(document.getElementById('start-review')).toBeNull();
+        expect(document.getElementById('quiz-box')).not.toBeNull();
+        expect(window.__getDailyWords()).toHaveLength(15);
     });
 
     test('renders bold markers in examples as strong text', async () => {
-        await loadPage();
+        await loadReviewPage();
 
         const currentWord = window.__getDailyWords()[0];
         const boldExampleWord = document.querySelector('#word-example strong');
@@ -135,7 +208,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('renders example words as clickable lookup targets and keeps bold target word', async () => {
-        await loadPage();
+        await loadReviewPage();
 
         const currentWord = window.__getDailyWords()[0];
         const lookupWords = [...document.querySelectorAll('#word-example .example-word')];
@@ -155,7 +228,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('looks up an example word in a popup without changing the local meaning', async () => {
-        await loadPage();
+        await loadReviewPage();
 
         const originalMeaning = document.getElementById('word-meaning').innerText;
         const lookupWord = document.querySelector('#word-example .example-word');
@@ -173,7 +246,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('prefers Traditional Chinese lookup matches over non-Chinese API response text', async () => {
-        await loadPage();
+        await loadReviewPage();
         window.fetch.mockImplementation((url) => {
             if (url === 'pte_vocab.json') {
                 return Promise.resolve({
@@ -206,7 +279,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('uses local vocabulary meanings before calling the online lookup API', async () => {
-        await loadPage();
+        await loadReviewPage();
 
         const fetchCountAfterLoad = window.fetch.mock.calls.length;
         await window.__lookupExampleWordMeaning(
@@ -219,7 +292,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('shows a quota-specific message when the lookup API limit is reached', async () => {
-        await loadPage();
+        await loadReviewPage();
         window.fetch.mockImplementation((url) => {
             if (url === 'pte_vocab.json') {
                 return Promise.resolve({
@@ -247,7 +320,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('shows a lookup error when the online translation request fails', async () => {
-        await loadPage();
+        await loadReviewPage();
         window.fetch.mockImplementation((url) => {
             if (url === 'pte_vocab.json') {
                 return Promise.resolve({
@@ -269,7 +342,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('reuses cached lookup results for the same example word', async () => {
-        await loadPage();
+        await loadReviewPage();
 
         const lookupWord = document.querySelector('#word-example .example-word');
         lookupWord.click();
@@ -285,7 +358,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('closes the lookup popup when moving to the next word', async () => {
-        await loadPage();
+        await loadReviewPage();
 
         document.querySelector('#word-example .example-word').click();
         await flushLookup();
@@ -297,7 +370,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('speaks the current word from the audio button', async () => {
-        await loadPage();
+        await loadReviewPage();
 
         const currentWord = window.__getDailyWords()[0];
         document.getElementById('speak-word').click();
@@ -310,7 +383,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('lets the user choose a voice from the selector', async () => {
-        await loadPage();
+        await loadReviewPage();
 
         const voiceSelect = document.getElementById('voice-select');
         expect([...voiceSelect.options].map((option) => option.value)).toEqual([
@@ -328,7 +401,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
 
     test('updates the voice selector after voices load late', async () => {
         mockVoices = [];
-        await loadPage();
+        await loadReviewPage();
 
         const voiceSelect = document.getElementById('voice-select');
         expect(voiceSelect.value).toBe('');
@@ -344,19 +417,19 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('keeps the same 15 daily words when opened repeatedly on the same day', async () => {
-        await loadPage('2026-06-23T12:00:00+08:00');
+        await loadReviewPage('2026-06-23T12:00:00+08:00');
         const firstOpenWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
 
         document.documentElement.innerHTML = '';
 
-        await loadPage('2026-06-23T20:30:00+08:00');
+        await loadReviewPage('2026-06-23T20:30:00+08:00');
         const secondOpenWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
 
         expect(secondOpenWordIds).toEqual(firstOpenWordIds);
     });
 
     test('switching decks preserves each deck order and progress during the same page session', async () => {
-        await loadPage('2026-06-23T12:00:00+08:00');
+        await loadReviewPage('2026-06-23T12:00:00+08:00');
 
         const todayWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
         expect(document.getElementById('today-date').innerText).toContain('Today: 2026-06-23');
@@ -375,6 +448,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await Promise.resolve();
         jest.advanceTimersByTime(200);
         await Promise.resolve();
+        await waitForActiveDeckKey('2026-06-22');
 
         const yesterdayWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
 
@@ -396,6 +470,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await Promise.resolve();
         jest.advanceTimersByTime(200);
         await Promise.resolve();
+        await waitForActiveDeckKey('2026-06-23');
 
         expect(window.__getActiveDeckKey()).toBe('2026-06-23');
         expect(sortIds(window.__getDailyWords().map((word) => word.id))).toEqual(todayWordIds);
@@ -408,6 +483,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await Promise.resolve();
         jest.advanceTimersByTime(200);
         await Promise.resolve();
+        await waitForActiveDeckKey('2026-06-22');
 
         expect(window.__getActiveDeckKey()).toBe('2026-06-22');
         expect(sortIds(window.__getDailyWords().map((word) => word.id))).toEqual(yesterdayWordIds);
@@ -419,7 +495,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('review again restarts the same deck without reshuffling', async () => {
-        await loadPage('2026-06-23T12:00:00+08:00');
+        await loadReviewPage('2026-06-23T12:00:00+08:00');
 
         const initialWordIds = window.__getDailyWords().map((word) => word.id);
 
@@ -446,7 +522,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('shows the last reviewed word on the result screen', async () => {
-        await loadPage('2026-06-23T12:00:00+08:00');
+        await loadReviewPage('2026-06-23T12:00:00+08:00');
 
         const dailyWordIds = window.__getDailyWords().map((word) => word.id);
         const lastWord = window.__getDailyWords()[dailyWordIds.length - 1];
@@ -470,7 +546,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('can jump back to a reviewed word from the result screen', async () => {
-        await loadPage('2026-06-23T12:00:00+08:00');
+        await loadReviewPage('2026-06-23T12:00:00+08:00');
 
         const firstWord = window.__getDailyWords()[0];
         const reviewCount = window.__getDailyWords().length;
@@ -496,7 +572,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('revising an answer after result updates the final accuracy correctly', async () => {
-        await loadPage('2026-06-23T12:00:00+08:00');
+        await loadReviewPage('2026-06-23T12:00:00+08:00');
 
         const totalCount = window.__getDailyWords().length;
         const initialWord = window.__getDailyWords()[0];
@@ -531,7 +607,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('lists browsed words and lets the user jump back to one', async () => {
-        await loadPage();
+        await loadReviewPage();
 
         const firstWord = window.__getDailyWords()[0];
         const secondWord = window.__getDailyWords()[1];
@@ -564,7 +640,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     });
 
     test('updates a browsed word color when the user answers it again', async () => {
-        await loadPage();
+        await loadReviewPage();
 
         window.__nextWord(false);
         jest.advanceTimersByTime(200);
@@ -605,7 +681,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         ]);
 
         mockVocab = data;
-        await loadPage();
+        await loadReviewPage();
 
         expect(window.__getDailyWords()).toHaveLength(15);
         expect(Object.keys(window.__getDailyWords()[0])).toEqual(['id', 'w', 'pos', 'm', 'e', 'wordFamily', 'collocations']);

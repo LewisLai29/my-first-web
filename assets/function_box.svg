@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="340" viewBox="0 0 340 340">
+  <defs>
+    <linearGradient id="woodDark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6e3b2b"/>
+      <stop offset="1" stop-color="#4b261f"/>
+    </linearGradient>
+    <linearGradient id="woodMid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8b4f35"/>
+      <stop offset="1" stop-color="#653627"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c4cbd0"/>
+      <stop offset="0.45" stop-color="#8f989d"/>
+      <stop offset="1" stop-color="#d5dbde"/>
+    </linearGradient>
+    <style>
+      .outline{stroke:#231716;stroke-width:4;stroke-linejoin:miter;stroke-linecap:square}
+      .innerLine{stroke:#2e1a18;stroke-width:3;stroke-linecap:square}
+      .grain{stroke:#3d231d;stroke-width:3;stroke-linecap:square;opacity:.8}
+      .grain2{stroke:#a56342;stroke-width:3;stroke-linecap:square;opacity:.55}
+      .shadow{stroke:#2b1716;stroke-width:5;stroke-linecap:square;opacity:.65}
+      .screw{fill:#747d82;stroke:#4d565b;stroke-width:1.5}
+      .shine{fill:#e4edf1;opacity:.85}
+    </style>
+  </defs>
+
+  <!-- main wooden crate, transparent outside -->
+  <rect x="18" y="14" width="304" height="304" fill="url(#woodDark)" class="outline"/>
+
+  <!-- side rails -->
+  <rect x="18" y="14" width="48" height="304" fill="#5d2f27" class="outline"/>
+  <rect x="274" y="14" width="48" height="304" fill="#5d2f27" class="outline"/>
+  <rect x="18" y="14" width="304" height="45" fill="#5a2c25" class="outline"/>
+  <rect x="18" y="274" width="304" height="44" fill="#5a2c25" class="outline"/>
+
+  <!-- center panel -->
+  <rect x="61" y="58" width="218" height="221" fill="url(#woodMid)" class="outline"/>
+  <rect x="68" y="65" width="204" height="207" fill="none" stroke="#7c452f" stroke-width="3"/>
+
+  <!-- panel highlights -->
+  <path d="M82 99h32v-4h48v4h27" class="grain2"/>
+  <path d="M84 119h55m17 0h41" class="grain2"/>
+  <path d="M85 152h42m62 0h74" class="grain2"/>
+  <path d="M88 222h80m28 0h51" class="grain2"/>
+  <path d="M77 246h66m20 0h95" class="grain2"/>
+
+  <!-- center wood grain dark -->
+  <path d="M82 76h58m20 0h38" class="grain"/>
+  <path d="M184 86h38m14 0h30" class="grain"/>
+  <path d="M94 108h51m20 0h18" class="grain"/>
+  <path d="M75 137h74m19 0h52m39 0h19" class="grain"/>
+  <path d="M84 164h31m16 0h82" class="grain"/>
+  <path d="M224 175h51" class="grain"/>
+  <path d="M80 190h74m14 0h58" class="grain"/>
+  <path d="M88 207h36m15 0h76m14 0h30" class="grain"/>
+  <path d="M75 232h62m17 0h91" class="grain"/>
+  <path d="M94 259h40m19 0h52" class="grain"/>
+
+  <!-- knot/chips -->
+  <path d="M119 154h9v-4h9v6h-8v4h-12z" fill="#231716"/>
+  <path d="M123 151h8" stroke="#b56a43" stroke-width="2"/>
+  <path d="M222 287h9v-4h7v7h-10v4h-8z" fill="#231716"/>
+  <path d="M226 284h8" stroke="#a85d3d" stroke-width="2"/>
+  <path d="M222 36h9v-4h6v6h-11v3h-8z" fill="#231716"/>
+
+  <!-- border plank grain -->
+  <path d="M29 40h25m18 0h74m35 0h28" class="grain"/>
+  <path d="M91 30h54m17 0h97" class="grain"/>
+  <path d="M160 36h25" class="grain"/>
+  <path d="M35 78v35m0 16v44m0 18v54" class="grain"/>
+  <path d="M52 71v72m0 15v82" class="grain"/>
+  <path d="M303 71v55m0 18v88" class="grain"/>
+  <path d="M291 81v105m0 19v53" class="grain"/>
+  <path d="M86 292h89m39 0h39" class="grain"/>
+  <path d="M30 299h40m20 0h44m22 0h63" class="grain"/>
+  <path d="M75 25h60m20 0h50m20 0h32" class="grain2"/>
+  <path d="M77 305h70m36 0h67" class="grain2"/>
+
+  <!-- inner shadows -->
+  <path d="M61 58h218" class="shadow"/>
+  <path d="M61 58v221" class="shadow"/>
+  <path d="M279 58v221" stroke="#9e5e3e" stroke-width="3" opacity=".35"/>
+  <path d="M61 279h218" stroke="#9e5e3e" stroke-width="3" opacity=".35"/>
+
+  <!-- metal corner plates -->
+  <g>
+    <rect x="20" y="15" width="38" height="38" rx="1" fill="url(#metal)" class="outline"/>
+    <circle cx="30" cy="25" r="4" class="screw"/><circle cx="48" cy="25" r="4" class="screw"/>
+    <circle cx="30" cy="43" r="4" class="screw"/><circle cx="48" cy="43" r="4" class="screw"/>
+    <rect x="25" y="19" width="6" height="3" class="shine"/>
+  </g>
+  <g>
+    <rect x="282" y="15" width="38" height="38" rx="1" fill="url(#metal)" class="outline"/>
+    <circle cx="292" cy="25" r="4" class="screw"/><circle cx="310" cy="25" r="4" class="screw"/>
+    <circle cx="292" cy="43" r="4" class="screw"/><circle cx="310" cy="43" r="4" class="screw"/>
+    <rect x="287" y="19" width="6" height="3" class="shine"/>
+  </g>
+  <g>
+    <rect x="20" y="280" width="38" height="38" rx="1" fill="url(#metal)" class="outline"/>
+    <circle cx="30" cy="290" r="4" class="screw"/><circle cx="48" cy="290" r="4" class="screw"/>
+    <circle cx="30" cy="308" r="4" class="screw"/><circle cx="48" cy="308" r="4" class="screw"/>
+    <rect x="25" y="284" width="6" height="3" class="shine"/>
+  </g>
+  <g>
+    <rect x="282" y="280" width="38" height="38" rx="1" fill="url(#metal)" class="outline"/>
+    <circle cx="292" cy="290" r="4" class="screw"/><circle cx="310" cy="290" r="4" class="screw"/>
+    <circle cx="292" cy="308" r="4" class="screw"/><circle cx="310" cy="308" r="4" class="screw"/>
+    <rect x="287" y="284" width="6" height="3" class="shine"/>
+  </g>
+</svg>

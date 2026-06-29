@@ -64,6 +64,11 @@ export async function setupAuthUI() {
         return;
     }
 
+    if (dialog.dataset.authWired === 'true') {
+        return;
+    }
+    dialog.dataset.authWired = 'true';
+
     let hasError = false;
     const authButtons = [signInButton, signUpButton, googleButton];
     const statusNodes = [summaryStatus, dialogStatus];
