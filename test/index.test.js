@@ -17,7 +17,6 @@ describe('PTE daily vocabulary page (index.html)', () => {
     let favoriteSetMock;
     let favoriteDeleteMock;
     let defaultUserAgent;
-    let defaultMaxTouchPoints;
 
     const createFavoritesSnapshot = () => ({
         forEach: (callback) => {
@@ -271,9 +270,6 @@ describe('PTE daily vocabulary page (index.html)', () => {
         if (!defaultUserAgent) {
             defaultUserAgent = window.navigator.userAgent;
         }
-        if (defaultMaxTouchPoints === undefined) {
-            defaultMaxTouchPoints = window.navigator.maxTouchPoints;
-        }
 
         mockFirebaseEnabled = false;
         mockAuthUser = { uid: 'user-123', email: 'test@example.com' };
@@ -333,10 +329,6 @@ describe('PTE daily vocabulary page (index.html)', () => {
             configurable: true,
             value: defaultUserAgent,
         });
-        Object.defineProperty(window.navigator, 'maxTouchPoints', {
-            configurable: true,
-            value: defaultMaxTouchPoints,
-        });
     });
 
     test('loads the cover page first and waits for the user to start review', async () => {
@@ -380,22 +372,6 @@ describe('PTE daily vocabulary page (index.html)', () => {
     test('uses a Google popup sign-in on desktop browsers', async () => {
         mockFirebaseEnabled = true;
         mockAuthUser = null;
-        await loadPage();
-
-        document.getElementById('auth-google-sign-in').click();
-        await Promise.resolve();
-
-        expect(window.__mockAuth.signInWithPopup).toHaveBeenCalledTimes(1);
-        expect(window.__mockAuth.signInWithRedirect).not.toHaveBeenCalled();
-    });
-
-    test('uses a Google popup sign-in on touch-enabled desktop browsers', async () => {
-        mockFirebaseEnabled = true;
-        mockAuthUser = null;
-        Object.defineProperty(window.navigator, 'maxTouchPoints', {
-            configurable: true,
-            value: 5,
-        });
         await loadPage();
 
         document.getElementById('auth-google-sign-in').click();

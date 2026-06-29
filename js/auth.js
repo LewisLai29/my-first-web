@@ -14,14 +14,6 @@ function getAuthErrorMessage(error) {
             return 'Sign-in cancelled.';
         case 'auth/redirect-operation-pending':
             return 'Another sign-in is already in progress.';
-        case 'auth/operation-not-supported-in-this-environment':
-            return 'Sign-in is not supported in this browser.';
-        case 'auth/unauthorized-domain':
-            return 'This domain is not authorized for sign-in.';
-        case 'auth/web-storage-unsupported':
-            return 'This browser blocks required storage.';
-        case 'auth/network-request-failed':
-            return 'Network request failed.';
         case 'auth/invalid-email':
             return 'Invalid email address.';
         case 'auth/wrong-password':
@@ -55,11 +47,12 @@ function shouldUseRedirectSignIn() {
     if (typeof navigator === 'undefined') return false;
 
     const userAgent = navigator.userAgent || '';
-    const isMobileBrowser = navigator.userAgentData?.mobile
-        || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(userAgent)
-        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const hasTouchOnlyCoarsePointer = navigator.maxTouchPoints > 0
+        && typeof window !== 'undefined'
+        && window.matchMedia?.('(pointer: coarse)')?.matches;
 
-    return Boolean(isMobileBrowser);
+    return Boolean(isMobileBrowser || hasTouchOnlyCoarsePointer);
 }
 
 function setButtonsDisabled(buttons, disabled) {
@@ -207,17 +200,8 @@ export async function setupAuthUI() {
 
         try {
             if (shouldUseRedirectSignIn() && auth.signInWithRedirect) {
-                try {
-                    await auth.signInWithRedirect(googleProvider);
-                    return;
-                } catch (redirectError) {
-                    if (auth.signInWithPopup) {
-                        await auth.signInWithPopup(googleProvider);
-                        return;
-                    }
-
-                    throw redirectError;
-                }
+                await auth.signInWithRedirect(googleProvider);
+                return;
             }
 
             await auth.signInWithPopup(googleProvider);
