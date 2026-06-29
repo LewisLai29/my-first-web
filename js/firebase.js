@@ -34,8 +34,8 @@ function loadScript(src) {
 
         const script = document.createElement('script');
         script.src = src;
-        script.async = true;
-        script.defer = true;
+        // Keep Firebase SDK execution ordered across app/auth/firestore loads.
+        script.async = false;
         script.addEventListener('load', () => {
             script.dataset.loaded = 'true';
             resolve(script);
