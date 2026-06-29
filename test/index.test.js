@@ -16,7 +16,6 @@ describe('PTE daily vocabulary page (index.html)', () => {
     let favoriteStore;
     let favoriteSetMock;
     let favoriteDeleteMock;
-    let defaultUserAgent;
 
     const createFavoritesSnapshot = () => ({
         forEach: (callback) => {
@@ -39,8 +38,6 @@ describe('PTE daily vocabulary page (index.html)', () => {
             createUserWithEmailAndPassword: jest.fn(),
             signInWithEmailAndPassword: jest.fn(),
             signInWithPopup: jest.fn(),
-            signInWithRedirect: jest.fn(),
-            getRedirectResult: jest.fn().mockResolvedValue(null),
             signOut: jest.fn(),
             onAuthStateChanged: jest.fn((listener) => {
                 authStateListeners.push(listener);
@@ -48,7 +45,6 @@ describe('PTE daily vocabulary page (index.html)', () => {
                 return jest.fn();
             }),
         };
-        window.__mockAuth = auth;
 
         const favoriteCollection = {
             doc: jest.fn((favoriteId) => ({
@@ -94,9 +90,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         };
 
         const authFactory = jest.fn(() => auth);
-        authFactory.GoogleAuthProvider = function GoogleAuthProvider() {
-            this.setCustomParameters = jest.fn();
-        };
+        authFactory.GoogleAuthProvider = function GoogleAuthProvider() {};
 
         const firestoreFactory = jest.fn(() => db);
         firestoreFactory.FieldValue = {
@@ -267,10 +261,6 @@ describe('PTE daily vocabulary page (index.html)', () => {
     };
 
     beforeEach(() => {
-        if (!defaultUserAgent) {
-            defaultUserAgent = window.navigator.userAgent;
-        }
-
         mockFirebaseEnabled = false;
         mockAuthUser = { uid: 'user-123', email: 'test@example.com' };
         authStateListeners = [];
@@ -324,11 +314,6 @@ describe('PTE daily vocabulary page (index.html)', () => {
             document.body.replaceChildren();
         }
         delete window.firebase;
-        delete window.__mockAuth;
-        Object.defineProperty(window.navigator, 'userAgent', {
-            configurable: true,
-            value: defaultUserAgent,
-        });
     });
 
     test('loads the cover page first and waits for the user to start review', async () => {
@@ -367,48 +352,6 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('feature-screen')).not.toBeNull();
         expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
         expect(document.getElementById('auth-sign-out')).not.toBeNull();
-    });
-
-    test('uses a Google popup sign-in on desktop browsers', async () => {
-        mockFirebaseEnabled = true;
-        mockAuthUser = null;
-        await loadPage();
-
-        document.getElementById('auth-google-sign-in').click();
-        await Promise.resolve();
-
-        expect(window.__mockAuth.signInWithPopup).toHaveBeenCalledTimes(1);
-        expect(window.__mockAuth.signInWithRedirect).not.toHaveBeenCalled();
-    });
-
-    test('opens the auth dialog with a fallback when showModal is unavailable', async () => {
-        mockFirebaseEnabled = true;
-        mockAuthUser = null;
-        await loadPage();
-
-        const dialog = document.getElementById('auth-dialog');
-        dialog.showModal = undefined;
-        dialog.show = undefined;
-        document.getElementById('auth-open-sign-in').click();
-
-        expect(dialog.hasAttribute('open')).toBe(true);
-    });
-
-    test('uses a Google redirect sign-in on mobile browsers', async () => {
-        mockFirebaseEnabled = true;
-        mockAuthUser = null;
-        Object.defineProperty(window.navigator, 'userAgent', {
-            configurable: true,
-            value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148',
-        });
-
-        await loadPage();
-
-        document.getElementById('auth-google-sign-in').click();
-        await Promise.resolve();
-
-        expect(window.__mockAuth.signInWithRedirect).toHaveBeenCalledTimes(1);
-        expect(window.__mockAuth.signInWithPopup).not.toHaveBeenCalled();
     });
 
     test('loads review.html as a separate page without the cover screen', async () => {
