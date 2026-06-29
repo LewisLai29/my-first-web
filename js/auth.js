@@ -103,11 +103,42 @@ export async function setupAuthUI() {
 
     const setDialogOpen = (open) => {
         if (open) {
-            if (!dialog.open) dialog.showModal();
+            if (dialog.open || dialog.hasAttribute('open')) return;
+
+            if (typeof dialog.showModal === 'function') {
+                try {
+                    dialog.showModal();
+                    return;
+                } catch {
+                    // Fall through to the non-modal fallback below.
+                }
+            }
+
+            if (typeof dialog.show === 'function') {
+                try {
+                    dialog.show();
+                    return;
+                } catch {
+                    // Fall through to the attribute fallback below.
+                }
+            }
+
+            dialog.setAttribute('open', '');
             return;
         }
 
-        if (dialog.open) dialog.close();
+        if (dialog.open || dialog.hasAttribute('open')) {
+            if (typeof dialog.close === 'function') {
+                try {
+                    dialog.close();
+                } catch {
+                    dialog.removeAttribute('open');
+                }
+                return;
+            }
+
+            dialog.removeAttribute('open');
+        }
     };
 
     const services = await ensureFirebaseServices();

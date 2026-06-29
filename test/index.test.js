@@ -381,6 +381,19 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(window.__mockAuth.signInWithRedirect).not.toHaveBeenCalled();
     });
 
+    test('opens the auth dialog with a fallback when showModal is unavailable', async () => {
+        mockFirebaseEnabled = true;
+        mockAuthUser = null;
+        await loadPage();
+
+        const dialog = document.getElementById('auth-dialog');
+        dialog.showModal = undefined;
+        dialog.show = undefined;
+        document.getElementById('auth-open-sign-in').click();
+
+        expect(dialog.hasAttribute('open')).toBe(true);
+    });
+
     test('uses a Google redirect sign-in on mobile browsers', async () => {
         mockFirebaseEnabled = true;
         mockAuthUser = null;
