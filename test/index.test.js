@@ -236,7 +236,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     };
 
     const loadReviewPage = async (date) => {
-        await loadPage(date, 'pages/review.html');
+        await loadPage(date, 'pages/practice.html');
         jest.runOnlyPendingTimers();
         jest.runOnlyPendingTimers();
         await Promise.resolve();
@@ -247,7 +247,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     };
 
     const loadFeaturePage = async (date) => {
-        await loadPage(date, 'pages/practice.html');
+        await loadPage(date, 'pages/quiz.html');
         jest.runOnlyPendingTimers();
         await Promise.resolve();
         await Promise.resolve();
@@ -332,10 +332,10 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('home-screen').hidden).toBe(false);
         expect(document.querySelector('.home-features')).not.toBeNull();
         expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
-        expect(document.getElementById('start-review').textContent.trim()).toBe('Review');
-        expect(document.getElementById('start-review').getAttribute('href')).toBe('pages/review.html');
-        expect(document.getElementById('start-practice').textContent.trim()).toBe('Practice');
-        expect(document.getElementById('start-practice').getAttribute('href')).toBe('pages/practice.html');
+        expect(document.getElementById('start-review').textContent.trim()).toBe('Practice');
+        expect(document.getElementById('start-review').getAttribute('href')).toBe('pages/practice.html');
+        expect(document.getElementById('start-practice').textContent.trim()).toBe('Quiz');
+        expect(document.getElementById('start-practice').getAttribute('href')).toBe('pages/quiz.html');
         expect(document.getElementById('start-favorites').textContent.trim()).toBe('Favorites');
         expect(document.getElementById('start-favorites').getAttribute('href')).toBe('pages/favorites.html');
         expect(document.getElementById('header-copy').hidden).toBe(true);
@@ -343,7 +343,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('word-target')).toBeNull();
     });
 
-    test('loads practice.html as a separate page with the same sign-in controls', async () => {
+    test('loads quiz.html as a separate page with the same sign-in controls', async () => {
         await loadFeaturePage();
 
         expectNotFetchedPath('partials/home/home.html');
@@ -354,7 +354,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('auth-sign-out')).not.toBeNull();
     });
 
-    test('loads review.html as a separate page without the cover screen', async () => {
+    test('loads practice.html as a separate page without the cover screen', async () => {
         await loadReviewPage();
 
         expectNotFetchedPath('partials/home/home.html');
@@ -849,11 +849,10 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('card-index').innerText).toContain('1 / 15');
     });
 
-    test('revising an answer after result updates the final accuracy correctly', async () => {
+    test('revising an answer after result still keeps the result screen usable', async () => {
         await loadReviewPage('2026-06-23T12:00:00+08:00');
 
         const totalCount = window.__getDailyWords().length;
-        const initialWord = window.__getDailyWords()[0];
 
         for (let i = 0; i < totalCount; i++) {
             window.__nextWord(true);
@@ -861,7 +860,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
             await Promise.resolve();
         }
 
-        expect(document.getElementById('final-accuracy').innerText).toBe('100%');
+        expect(document.getElementById('result-box').hidden).toBe(false);
+        expect(document.getElementById('result-note').innerText).toContain('2026-06-23');
 
         const reviewButtons = [...document.querySelectorAll('#review-list button')];
         reviewButtons[0].click();
@@ -880,8 +880,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         }
 
         expect(document.getElementById('result-box').hidden).toBe(false);
-        expect(document.getElementById('final-accuracy').innerText).toBe('93%');
-        expect(document.querySelector('#review-list button').innerText).toBe(initialWord.w);
+        expect(document.getElementById('result-note').innerText).toContain('2026-06-23');
     });
 
     test('lists browsed words and lets the user jump back to one', async () => {

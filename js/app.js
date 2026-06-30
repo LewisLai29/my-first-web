@@ -428,11 +428,6 @@ function showResult() {
     setResultVisible(true);
 
     recomputeScore();
-    const accuracy = dailyWords.length > 0 ? Math.round((score / dailyWords.length) * 100) : 0;
-    const finalAccuracy = getElement('final-accuracy');
-    if (finalAccuracy) {
-        finalAccuracy.innerText = `${accuracy}%`;
-    }
     updateDeckLabels();
 }
 
@@ -611,7 +606,7 @@ window.PteVocabApp = {
             return loadAndInitQuiz(0);
         }
 
-        window.location.href = 'pages/review.html';
+        window.location.href = 'pages/practice.html';
         return Promise.resolve();
     },
     lookupExampleWordMeaning: lookupController.lookupExampleWordMeaning,
