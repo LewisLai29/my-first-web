@@ -676,16 +676,26 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(voiceSelect.disabled).toBe(false);
     });
 
-    test('keeps the same 15 daily words when opened repeatedly on the same day', async () => {
-        await loadReviewPage('2026-06-23T12:00:00+08:00');
-        const firstOpenWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
+    test('reopening the page reshuffles the same 15 daily words for the same day', async () => {
+        const randomSpy = jest.spyOn(Math, 'random');
 
-        document.documentElement.innerHTML = '';
+        try {
+            randomSpy.mockImplementation(() => 0);
+            await loadReviewPage('2026-06-23T12:00:00+08:00');
+            const firstOpenWordIds = window.__getDailyWords().map((word) => word.id);
 
-        await loadReviewPage('2026-06-23T20:30:00+08:00');
-        const secondOpenWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
+            document.documentElement.innerHTML = '';
 
-        expect(secondOpenWordIds).toEqual(firstOpenWordIds);
+            randomSpy.mockImplementation(() => 0.999);
+            await loadReviewPage('2026-06-23T20:30:00+08:00');
+            const secondOpenWordIds = window.__getDailyWords().map((word) => word.id);
+
+            expect(secondOpenWordIds).toHaveLength(firstOpenWordIds.length);
+            expect(sortIds(secondOpenWordIds)).toEqual(sortIds(firstOpenWordIds));
+            expect(secondOpenWordIds).not.toEqual(firstOpenWordIds);
+        } finally {
+            randomSpy.mockRestore();
+        }
     });
 
     test('switching decks preserves each deck order and progress during the same page session', async () => {
@@ -754,7 +764,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(yesterdayWordIds).not.toEqual(todayWordIds);
     });
 
-    test('review again restarts the same deck without reshuffling', async () => {
+    test('review again reshuffles the same 15 words and restarts the deck', async () => {
         await loadReviewPage('2026-06-23T12:00:00+08:00');
 
         const initialWordIds = window.__getDailyWords().map((word) => word.id);
@@ -769,14 +779,22 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('review-again')).not.toBeNull();
         expect(window.__getCurrentIndex()).toBe(initialWordIds.length);
 
-        document.getElementById('review-again').click();
-        await Promise.resolve();
-        jest.advanceTimersByTime(200);
-        await Promise.resolve();
+        const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
+        try {
+            document.getElementById('review-again').click();
+            await Promise.resolve();
+            jest.advanceTimersByTime(200);
+            await Promise.resolve();
+        } finally {
+            randomSpy.mockRestore();
+        }
 
         expect(document.getElementById('result-box').hidden).toBe(true);
         expect(window.__getCurrentIndex()).toBe(0);
-        expect(window.__getDailyWords().map((word) => word.id)).toEqual(initialWordIds);
+        const reshuffledWordIds = window.__getDailyWords().map((word) => word.id);
+        expect(reshuffledWordIds).toHaveLength(initialWordIds.length);
+        expect(reshuffledWordIds).not.toEqual(initialWordIds);
+        expect(sortIds(reshuffledWordIds)).toEqual(sortIds(initialWordIds));
         expect(document.getElementById('card-index').innerText).toContain('1 / 15');
         expect(document.querySelectorAll('#review-list button')).toHaveLength(0);
     });

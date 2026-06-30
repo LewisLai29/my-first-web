@@ -57,7 +57,7 @@ export function buildVocabMeaningMap(items) {
     return map;
 }
 
-function shuffleWords(words, randomFn = Math.random) {
+export function shuffleWords(words, randomFn = Math.random) {
     const pool = [...words];
 
     for (let i = pool.length - 1; i > 0; i--) {

@@ -19,6 +19,7 @@ import {
     normalizeLookupWord,
     normalizeVocabItems,
     pickDailyWords,
+    shuffleWords,
 } from './vocab.js';
 
 const deckSessions = new Map();
@@ -438,6 +439,7 @@ function showResult() {
 function restartActiveDeck() {
     if (!activeSession) return;
 
+    activeSession.dailyWords = shuffleWords(activeSession.dailyWords);
     activeSession.currentIndex = 0;
     activeSession.score = 0;
     activeSession.reviewedWords = [];
@@ -548,6 +550,7 @@ async function loadDeck(deckOffset = 0) {
         let session = deckSessions.get(deckKey);
         if (!session) {
             session = createDeckSession(pickDailyWords(allVocab, deckKey, DAILY_WORD_COUNT));
+            session.dailyWords = shuffleWords(session.dailyWords);
             deckSessions.set(deckKey, session);
         }
 
