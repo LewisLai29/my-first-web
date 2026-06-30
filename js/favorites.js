@@ -1,7 +1,7 @@
 import { ensureFirebaseServices } from './firebase.js';
 
 function getFavoriteId(word) {
-    const rawId = word?.id ?? word?.w;
+    const rawId = word && word.id != null ? word.id : word && word.w;
     return encodeURIComponent(String(rawId || '').trim().toLowerCase());
 }
 
@@ -18,7 +18,10 @@ function toFavoriteData(word) {
 }
 
 function getCreatedAtValue() {
-    return window.firebase?.firestore?.FieldValue?.serverTimestamp
+    return window.firebase
+        && window.firebase.firestore
+        && window.firebase.firestore.FieldValue
+        && window.firebase.firestore.FieldValue.serverTimestamp
         ? window.firebase.firestore.FieldValue.serverTimestamp()
         : new Date().toISOString();
 }

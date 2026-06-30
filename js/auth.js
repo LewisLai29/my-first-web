@@ -5,7 +5,7 @@ function getElement(id) {
 }
 
 function getAuthErrorMessage(error) {
-    switch (error?.code) {
+    switch (error && error.code) {
         case 'auth/popup-closed-by-user':
             return 'Sign-in cancelled.';
         case 'auth/popup-blocked':

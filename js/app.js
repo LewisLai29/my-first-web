@@ -67,7 +67,7 @@ function getElement(id) {
 
 function getPageMode() {
     const appRoot = getElement('app');
-    const pageMode = appRoot?.dataset.page;
+    const pageMode = appRoot && appRoot.dataset ? appRoot.dataset.page : '';
 
     if (pageMode === 'review' || pageMode === 'feature' || pageMode === 'favorites' || pageMode === 'quiz') {
         return pageMode;
