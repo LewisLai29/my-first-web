@@ -3,6 +3,7 @@ import {
     FAVORITES_HTML_FUNCTIONS,
     FEATURE_HTML_FUNCTIONS,
     HOME_HTML_FUNCTIONS,
+    QUIZ_HTML_FUNCTIONS,
     REVIEW_HTML_FUNCTIONS,
     VOCAB_SOURCE,
 } from './config.js';
@@ -11,6 +12,7 @@ import { loadHtmlFunctions } from './html-functions.js';
 import { setupAuthUI } from './auth.js';
 import { createFavoritesController } from './favorites.js';
 import { createLookupController, hideLookupPopup } from './lookup.js';
+import { createQuizAttemptsController } from './quiz-attempts.js';
 import { renderReviewList } from './review-list.js';
 import { createSpeechController, canSpeak } from './speech.js';
 import { renderTermList } from './terms.js';
@@ -39,10 +41,18 @@ let activeLoadToken = 0;
 let bootPromise = null;
 let wiredAppRoot = null;
 let bootedPageMode = '';
+let quizDateString = '';
+let quizIsSaving = false;
+let quizIsLoading = false;
+let quizIsResetting = false;
 
 const favoritesController = createFavoritesController(() => {
     updateFavoriteButton();
     renderFavoritesPage();
+});
+
+const quizAttemptsController = createQuizAttemptsController(() => {
+    renderQuizPageState();
 });
 
 const lookupController = createLookupController((word) => (
@@ -59,7 +69,7 @@ function getPageMode() {
     const appRoot = getElement('app');
     const pageMode = appRoot?.dataset.page;
 
-    if (pageMode === 'review' || pageMode === 'feature' || pageMode === 'favorites') {
+    if (pageMode === 'review' || pageMode === 'feature' || pageMode === 'favorites' || pageMode === 'quiz') {
         return pageMode;
     }
 
@@ -98,6 +108,10 @@ function resetRuntimeState() {
     activeDeckOffset = 0;
     activeDeckDateString = '';
     activeDeckLabel = 'Today';
+    quizDateString = '';
+    quizIsSaving = false;
+    quizIsLoading = false;
+    quizIsResetting = false;
     activeLoadToken++;
     clearPendingWordRender();
     hideLookupPopup();
@@ -118,6 +132,17 @@ function isAppShellMounted() {
 
     if (pageMode === 'favorites') {
         return Boolean(getElement('favorites-screen') && getElement('auth-dialog'));
+    }
+
+    if (pageMode === 'quiz') {
+        return Boolean(
+            getElement('quiz-gate')
+            && getElement('quiz-box')
+            && getElement('quiz-result-box')
+            && getElement('quiz-reset-attempt')
+            && getElement('lookup-popup')
+            && getElement('auth-dialog')
+        );
     }
 
     return Boolean(
@@ -144,6 +169,83 @@ function showReviewView() {
 
 function renderCurrentReviewList() {
     renderReviewList(reviewedWords, dailyWords, currentIndex, jumpToWord);
+}
+
+function calculateScore(correctCount, totalCount) {
+    return totalCount > 0 ? Math.round((correctCount * 100) / totalCount) : 0;
+}
+
+function getReviewedAnswers() {
+    return dailyWords.map((word, index) => {
+        const reviewedWord = reviewedWords.find((item) => item.index === index);
+        return {
+            id: word.id,
+            w: word.w,
+            pos: word.pos || '',
+            m: word.m || '',
+            e: word.e || '',
+            isRight: Boolean(reviewedWord && reviewedWord.isRight),
+        };
+    });
+}
+
+function setQuizGateVisible(visible, message = '') {
+    setHidden('quiz-gate', !visible);
+    const messageElement = getElement('quiz-gate-message');
+    if (messageElement && message) {
+        messageElement.innerText = message;
+    }
+}
+
+function setQuizExamVisible(visible) {
+    setHidden('quiz-box', !visible);
+}
+
+function setQuizResultVisible(visible) {
+    setHidden('quiz-result-box', !visible);
+}
+
+function setQuizHeader() {
+    const headerCopy = getElement('header-copy');
+    if (headerCopy) {
+        headerCopy.hidden = false;
+    }
+
+    const headerTitle = document.querySelector('#header-copy h1');
+    if (headerTitle) {
+        headerTitle.innerText = 'PTE vocabulary daily quiz';
+    }
+
+    const dateBadge = getElement('today-date');
+    if (dateBadge) {
+        dateBadge.innerText = `Today: ${quizDateString || getDateStringWithOffset(0)}`;
+    }
+
+    const deckSwitcher = document.querySelector('.deck-switcher');
+    if (deckSwitcher) {
+        deckSwitcher.remove();
+    }
+
+    const hintText = document.querySelector('.hint-text');
+    if (hintText) {
+        hintText.innerText = 'Tap the card to check the answer, then mark the question correct or wrong.';
+    }
+}
+
+function setQuizResetStatus(message, isError = false) {
+    const status = getElement('quiz-reset-status');
+    if (!status) return;
+
+    status.innerText = message;
+    status.classList.toggle('quiz-reset-status-error', isError);
+}
+
+function updateQuizResetButton() {
+    const resetButton = getElement('quiz-reset-attempt');
+    if (!resetButton) return;
+
+    const canReset = Boolean(quizAttemptsController.getUser()) && quizAttemptsController.isReady() && !quizIsResetting;
+    resetButton.disabled = !canReset;
 }
 
 function setFavoriteStatus(message, isError = false) {
@@ -431,6 +533,261 @@ function showResult() {
     updateDeckLabels();
 }
 
+function renderQuizAnalysisList(answers) {
+    const list = getElement('quiz-analysis-list');
+    if (!list) return;
+
+    list.innerHTML = '';
+    answers.forEach((answer, index) => {
+        const item = document.createElement('li');
+        item.className = answer.isRight ? 'quiz-analysis-item quiz-analysis-right' : 'quiz-analysis-item quiz-analysis-wrong';
+
+        const heading = document.createElement('div');
+        heading.className = 'quiz-analysis-heading';
+
+        const word = document.createElement('strong');
+        word.innerText = `${index + 1}. ${answer.w}`;
+
+        const pos = document.createElement('span');
+        pos.className = 'quiz-analysis-pos';
+        pos.innerText = answer.pos ? `(${answer.pos})` : '';
+
+        const result = document.createElement('span');
+        result.className = 'quiz-analysis-result';
+        result.innerText = answer.isRight ? 'Correct' : 'Wrong';
+
+        heading.append(word, pos, result);
+
+        const meaning = document.createElement('p');
+        meaning.className = 'quiz-analysis-meaning';
+        meaning.innerText = answer.m || 'No explanation';
+
+        const example = document.createElement('p');
+        example.className = 'example quiz-analysis-example';
+        lookupController.renderExampleText(example, answer.e || 'No example');
+
+        item.append(heading, meaning, example);
+        list.appendChild(item);
+    });
+}
+
+function renderQuizResult(attempt) {
+    if (!attempt) return;
+
+    setQuizGateVisible(false);
+    setQuizExamVisible(false);
+    setQuizResultVisible(true);
+    setQuizHeader();
+    hideLookupPopup();
+    clearPendingWordRender();
+
+    const scoreElement = getElement('quiz-score');
+    if (scoreElement) {
+        scoreElement.innerText = `${attempt.score} points`;
+    }
+
+    const noteElement = getElement('quiz-result-note');
+    if (noteElement) {
+        noteElement.innerText = `${attempt.correctCount} / ${attempt.totalCount} correct`;
+    }
+
+    renderQuizAnalysisList(Array.isArray(attempt.answers) ? attempt.answers : []);
+    updateQuizResetButton();
+}
+
+function showQuizWord() {
+    if (currentIndex >= dailyWords.length) {
+        submitQuizAttempt();
+        return;
+    }
+
+    const wordCard = getElement('word-card');
+    const wordTarget = getElement('word-target');
+    const wordExample = getElement('word-example');
+    const wordMeaning = getElement('word-meaning');
+    if (!wordCard || !wordTarget || !wordExample || !wordMeaning) {
+        return;
+    }
+
+    setQuizGateVisible(false);
+    setQuizExamVisible(true);
+    setQuizResultVisible(false);
+    setQuizHeader();
+    hideLookupPopup();
+    wordCard.classList.remove('flipped');
+    clearPendingWordRender();
+
+    const current = dailyWords[currentIndex];
+    wordTarget.innerText = current.w;
+
+    const wordPos = getElement('word-pos');
+    if (wordPos) {
+        wordPos.innerText = current.pos ? `(${current.pos})` : '';
+    }
+
+    wordMeaning.innerText = current.m;
+    lookupController.renderExampleText(wordExample, current.e);
+
+    getElement('card-index').innerText = `Question: ${currentIndex + 1} / ${dailyWords.length}`;
+    getElement('score-count').innerText = `Correct: ${score}`;
+    getElement('progress').style.width = `${(currentIndex / dailyWords.length) * 100}%`;
+    speechController.updateSpeakButton();
+    updateQuizResetButton();
+}
+
+async function submitQuizAttempt() {
+    if (quizIsSaving || quizAttemptsController.getAttempt()) {
+        renderQuizResult(quizAttemptsController.getAttempt());
+        return;
+    }
+
+    quizIsSaving = true;
+    recomputeScore();
+    const answers = getReviewedAnswers();
+    const attempt = {
+        date: quizDateString,
+        totalCount: dailyWords.length,
+        correctCount: score,
+        score: calculateScore(score, dailyWords.length),
+        answers,
+    };
+
+    setQuizGateVisible(true, 'Saving quiz result...');
+    setQuizExamVisible(false);
+    setQuizResultVisible(false);
+
+    try {
+        const savedAttempt = await quizAttemptsController.saveAttempt(attempt);
+        renderQuizResult(savedAttempt);
+    } catch (error) {
+        console.error('Failed to save quiz attempt.', error);
+        setQuizGateVisible(true, 'Could not save your quiz result. Please check Firebase permissions and try again.');
+    } finally {
+        quizIsSaving = false;
+    }
+}
+
+function nextQuizWord(isRight) {
+    if (quizAttemptsController.getAttempt() || quizIsSaving) return;
+
+    markCurrentWordReviewed(isRight);
+    recomputeScore();
+    currentIndex++;
+    showQuizWord();
+}
+
+async function loadQuizDeck() {
+    if (quizIsLoading) return;
+    quizIsLoading = true;
+    const loadToken = ++activeLoadToken;
+    clearPendingWordRender();
+    quizDateString = getDateStringWithOffset(0);
+    activeDeckKey = quizDateString;
+    activeDeckDateString = quizDateString;
+    setQuizHeader();
+
+    try {
+        const response = await fetch(VOCAB_SOURCE);
+        if (!response.ok) throw new Error('Failed to load vocabulary JSON.');
+        const vocabData = await response.json();
+        const allVocab = normalizeVocabItems(vocabData);
+        vocabMeaningMap = buildVocabMeaningMap(allVocab);
+
+        if (loadToken !== activeLoadToken) return;
+
+        dailyWords = pickDailyWords(allVocab, quizDateString, DAILY_WORD_COUNT);
+        currentIndex = 0;
+        score = 0;
+        reviewedWords = [];
+        speechController.retryLoadVoices();
+        showQuizWord();
+    } catch (error) {
+        if (loadToken !== activeLoadToken) return;
+        setQuizGateVisible(true, 'Please confirm the vocabulary JSON can be loaded.');
+        setQuizExamVisible(false);
+        setQuizResultVisible(false);
+        console.error(error);
+    } finally {
+        if (loadToken === activeLoadToken) {
+            quizIsLoading = false;
+        }
+    }
+}
+
+function renderQuizPageState() {
+    if (getPageMode() !== 'quiz' || !getElement('quiz-gate')) return;
+
+    setQuizHeader();
+    updateQuizResetButton();
+
+    if (!quizAttemptsController.isReady()) {
+        setQuizGateVisible(true, 'Loading today quiz...');
+        setQuizExamVisible(false);
+        setQuizResultVisible(false);
+        return;
+    }
+
+    if (!quizAttemptsController.getUser()) {
+        dailyWords = [];
+        currentIndex = 0;
+        score = 0;
+        reviewedWords = [];
+        setQuizGateVisible(true, 'Please sign in to start today quiz.');
+        setQuizExamVisible(false);
+        setQuizResultVisible(false);
+        setQuizResetStatus('');
+        updateQuizResetButton();
+        return;
+    }
+
+    const attempt = quizAttemptsController.getAttempt();
+    if (attempt) {
+        renderQuizResult(attempt);
+        return;
+    }
+
+    if (dailyWords.length === 0 && !quizIsSaving && !quizIsLoading) {
+        loadQuizDeck();
+    }
+}
+
+async function resetTodayQuizAttempt() {
+    if (quizIsResetting) return;
+
+    if (!quizAttemptsController.getUser()) {
+        setQuizResetStatus('Please sign in before resetting today quiz.', true);
+        updateQuizResetButton();
+        return;
+    }
+
+    quizIsResetting = true;
+    updateQuizResetButton();
+    setQuizResetStatus('Resetting today quiz...');
+
+    activeLoadToken++;
+    dailyWords = [];
+    currentIndex = 0;
+    score = 0;
+    reviewedWords = [];
+    quizIsSaving = false;
+    quizIsLoading = false;
+
+    try {
+        await quizAttemptsController.resetAttempt(quizDateString || getDateStringWithOffset(0));
+        setQuizResetStatus('Today quiz has been reset.');
+        setQuizGateVisible(true, 'Loading today quiz...');
+        setQuizExamVisible(false);
+        setQuizResultVisible(false);
+        renderQuizPageState();
+    } catch (error) {
+        console.error('Failed to reset quiz attempt.', error);
+        setQuizResetStatus('Reset failed. Please check Firebase permissions.', true);
+    } finally {
+        quizIsResetting = false;
+        updateQuizResetButton();
+    }
+}
+
 function restartActiveDeck() {
     if (!activeSession) return;
 
@@ -447,6 +804,52 @@ function restartActiveDeck() {
     showWord();
 }
 
+function wireCardFlipEvents() {
+    const wordCard = getElement('word-card');
+    if (!wordCard) return;
+
+    wordCard.addEventListener('click', () => {
+        wordCard.classList.toggle('flipped');
+    });
+
+    wordCard.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            wordCard.classList.toggle('flipped');
+        }
+    });
+}
+
+function wireSharedCardEvents() {
+    const speakButton = getElement('speak-word');
+    const voiceSelect = getElement('voice-select');
+
+    if (speakButton) {
+        speakButton.addEventListener('click', speechController.speakCurrentWord);
+    }
+
+    if (voiceSelect) {
+        voiceSelect.addEventListener('change', (event) => speechController.setSelectedVoice(event.target.value, event));
+        voiceSelect.addEventListener('click', (event) => event.stopPropagation());
+    }
+
+    document.addEventListener('click', (event) => {
+        const popup = getElement('lookup-popup');
+        if (
+            popup
+            && !popup.hidden
+            && !popup.contains(event.target)
+            && !event.target.closest('.example-word')
+        ) {
+            hideLookupPopup();
+        }
+    });
+
+    if (canSpeak()) {
+        window.speechSynthesis.onvoiceschanged = speechController.retryLoadVoices;
+    }
+}
+
 function wireEvents() {
     const appRoot = getElement('app');
     if (!appRoot || wiredAppRoot === appRoot) {
@@ -454,24 +857,21 @@ function wireEvents() {
     }
     wiredAppRoot = appRoot;
 
-    if (getPageMode() !== 'review') {
+    const pageMode = getPageMode();
+    if (pageMode !== 'review' && pageMode !== 'quiz') {
         return;
     }
 
-    getElement('word-card').addEventListener('click', () => {
-        getElement('word-card').classList.toggle('flipped');
-    });
+    wireCardFlipEvents();
+    wireSharedCardEvents();
 
-    getElement('word-card').addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            getElement('word-card').classList.toggle('flipped');
-        }
-    });
+    if (pageMode === 'quiz') {
+        getElement('mark-wrong').addEventListener('click', () => nextQuizWord(false));
+        getElement('mark-right').addEventListener('click', () => nextQuizWord(true));
+        getElement('quiz-reset-attempt').addEventListener('click', resetTodayQuizAttempt);
+        return;
+    }
 
-    getElement('speak-word').addEventListener('click', speechController.speakCurrentWord);
-    getElement('voice-select').addEventListener('change', (event) => speechController.setSelectedVoice(event.target.value, event));
-    getElement('voice-select').addEventListener('click', (event) => event.stopPropagation());
     getElement('mark-wrong').addEventListener('click', () => nextWord(false));
     getElement('mark-right').addEventListener('click', () => nextWord(true));
     getElement('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
@@ -496,22 +896,6 @@ function wireEvents() {
             updateFavoriteButton();
         }
     });
-
-    document.addEventListener('click', (event) => {
-        const popup = getElement('lookup-popup');
-        if (
-            popup
-            && !popup.hidden
-            && !popup.contains(event.target)
-            && !event.target.closest('.example-word')
-        ) {
-            hideLookupPopup();
-        }
-    });
-
-    if (canSpeak()) {
-        window.speechSynthesis.onvoiceschanged = speechController.retryLoadVoices;
-    }
 }
 
 async function loadAndInitQuiz(deckOffset = 0) {
@@ -576,16 +960,27 @@ async function boot() {
     bootPromise = (async () => {
         const functionPaths = pageMode === 'review'
             ? REVIEW_HTML_FUNCTIONS
-            : pageMode === 'feature'
-                ? FEATURE_HTML_FUNCTIONS
-                : pageMode === 'favorites'
-                    ? FAVORITES_HTML_FUNCTIONS
-                    : HOME_HTML_FUNCTIONS;
+            : pageMode === 'quiz'
+                ? QUIZ_HTML_FUNCTIONS
+                : pageMode === 'feature'
+                    ? FEATURE_HTML_FUNCTIONS
+                    : pageMode === 'favorites'
+                        ? FAVORITES_HTML_FUNCTIONS
+                        : HOME_HTML_FUNCTIONS;
 
         await loadHtmlFunctions(functionPaths);
         await setupAuthUI();
         await favoritesController.init();
         renderFavoritesPage();
+        if (pageMode === 'quiz') {
+            quizDateString = getDateStringWithOffset(0);
+            setQuizHeader();
+            wireEvents();
+            await quizAttemptsController.init(quizDateString);
+            renderQuizPageState();
+            return;
+        }
+
         if (pageMode !== 'review') {
             return;
         }
@@ -619,8 +1014,10 @@ window.PteVocabApp = {
     getActiveDeckDateString: () => activeDeckDateString,
     getActiveDeckKey: () => activeDeckKey,
     getFavorites: favoritesController.getFavorites,
+    getQuizAttempt: quizAttemptsController.getAttempt,
     dispose: () => {
         favoritesController.dispose();
+        quizAttemptsController.dispose();
     },
 };
 

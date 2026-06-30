@@ -16,6 +16,13 @@ export const FAVORITES_HTML_FUNCTIONS = [
     new URL('../partials/favorites/favorites.html', import.meta.url).href,
 ];
 
+export const QUIZ_HTML_FUNCTIONS = [
+    new URL('../partials/common/header.html', import.meta.url).href,
+    new URL('../partials/common/auth-modal.html', import.meta.url).href,
+    new URL('../partials/quiz/quiz.html', import.meta.url).href,
+    new URL('../partials/review/lookup-popup.html', import.meta.url).href,
+];
+
 export const REVIEW_HTML_FUNCTIONS = [
     new URL('../partials/common/header.html', import.meta.url).href,
     new URL('../partials/common/auth-modal.html', import.meta.url).href,
@@ -29,6 +36,7 @@ export const HTML_FUNCTIONS = [
     ...HOME_HTML_FUNCTIONS,
     ...FEATURE_HTML_FUNCTIONS,
     ...FAVORITES_HTML_FUNCTIONS,
+    ...QUIZ_HTML_FUNCTIONS,
     ...REVIEW_HTML_FUNCTIONS,
 ];
 

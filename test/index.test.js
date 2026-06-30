@@ -16,6 +16,9 @@ describe('PTE daily vocabulary page (index.html)', () => {
     let favoriteStore;
     let favoriteSetMock;
     let favoriteDeleteMock;
+    let quizAttemptStore;
+    let quizAttemptSetMock;
+    let quizAttemptDeleteMock;
 
     const createFavoritesSnapshot = () => ({
         forEach: (callback) => {
@@ -68,10 +71,30 @@ describe('PTE daily vocabulary page (index.html)', () => {
             }),
         };
 
+        const quizAttemptCollection = {
+            doc: jest.fn((attemptId) => ({
+                get: jest.fn(() => Promise.resolve({
+                    exists: quizAttemptStore.has(attemptId),
+                    data: () => quizAttemptStore.get(attemptId),
+                })),
+                set: jest.fn((data) => {
+                    quizAttemptSetMock(attemptId, data);
+                    quizAttemptStore.set(attemptId, data);
+                    return Promise.resolve();
+                }),
+                delete: jest.fn(() => {
+                    quizAttemptDeleteMock(attemptId);
+                    quizAttemptStore.delete(attemptId);
+                    return Promise.resolve();
+                }),
+            })),
+        };
+
         const userDocument = {
             collection: jest.fn((name) => {
-                expect(name).toBe('favorites');
-                return favoriteCollection;
+                if (name === 'favorites') return favoriteCollection;
+                if (name === 'quizAttempts') return quizAttemptCollection;
+                throw new Error(`Unexpected user collection: ${name}`);
             }),
         };
 
@@ -140,6 +163,46 @@ describe('PTE daily vocabulary page (index.html)', () => {
         const dailyWordsLength = window.PteVocabApp.getDailyWords().length;
         const wordExample = document.getElementById('word-example');
         throw new Error(`Review UI did not render in time. words=${dailyWordsLength}, example=${wordExample ? wordExample.innerHTML : 'missing'}, body=${document.body ? document.body.innerHTML.slice(0, 200) : 'missing body'}`);
+    };
+
+    const waitForQuizUi = async () => {
+        for (let i = 0; i < 100; i++) {
+            const quizBox = document.getElementById('quiz-box');
+            const wordExample = document.getElementById('word-example');
+            const wordTarget = document.getElementById('word-target');
+
+            if (
+                quizBox
+                && quizBox.hidden === false
+                && wordTarget
+                && wordTarget.innerText !== 'Loading...'
+                && wordExample
+                && wordExample.innerText !== 'Loading example...'
+            ) {
+                return;
+            }
+
+            jest.advanceTimersByTime(50);
+            await Promise.resolve();
+            await Promise.resolve();
+        }
+
+        throw new Error(`Quiz UI did not render in time. body=${document.body ? document.body.innerHTML.slice(0, 300) : 'missing body'}`);
+    };
+
+    const waitForQuizResult = async () => {
+        for (let i = 0; i < 100; i++) {
+            const resultBox = document.getElementById('quiz-result-box');
+            if (resultBox && resultBox.hidden === false) {
+                return;
+            }
+
+            jest.advanceTimersByTime(50);
+            await Promise.resolve();
+            await Promise.resolve();
+        }
+
+        throw new Error('Quiz result did not render in time.');
     };
 
     const waitForActiveDeckKey = async (expectedKey) => {
@@ -233,6 +296,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         window.__speakCurrentWord = window.PteVocabApp.speakCurrentWord;
         window.__lookupExampleWordMeaning = window.PteVocabApp.lookupExampleWordMeaning;
         window.__getActiveDeckKey = window.PteVocabApp.getActiveDeckKey;
+        window.__getQuizAttempt = window.PteVocabApp.getQuizAttempt;
     };
 
     const loadReviewPage = async (date) => {
@@ -246,7 +310,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await waitForReviewUi();
     };
 
-    const loadFeaturePage = async (date) => {
+    const loadQuizPage = async (date) => {
         await loadPage(date, 'pages/quiz.html');
         jest.runOnlyPendingTimers();
         await Promise.resolve();
@@ -268,6 +332,9 @@ describe('PTE daily vocabulary page (index.html)', () => {
         favoriteStore = new Map();
         favoriteSetMock = jest.fn();
         favoriteDeleteMock = jest.fn();
+        quizAttemptStore = new Map();
+        quizAttemptSetMock = jest.fn();
+        quizAttemptDeleteMock = jest.fn();
         mockVoices = [
             { name: 'Microsoft David Desktop', lang: 'en-US' },
             { name: 'Google US English', lang: 'en-US' },
@@ -343,15 +410,137 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('word-target')).toBeNull();
     });
 
-    test('loads quiz.html as a separate page with the same sign-in controls', async () => {
-        await loadFeaturePage();
+    test('asks signed-out users to sign in before starting the quiz', async () => {
+        mockFirebaseEnabled = true;
+        mockAuthUser = null;
 
+        await loadQuizPage();
+
+        expectFetchedPath('partials/quiz/quiz.html');
         expectNotFetchedPath('partials/home/home.html');
         expectNotFetchedPath('partials/review/quiz.html');
         expect(document.getElementById('home-screen')).toBeNull();
-        expect(document.getElementById('feature-screen')).not.toBeNull();
-        expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
-        expect(document.getElementById('auth-sign-out')).not.toBeNull();
+        expect(document.getElementById('quiz-gate')).not.toBeNull();
+        expect(document.getElementById('quiz-gate').hidden).toBe(false);
+        expect(document.getElementById('quiz-gate-message').innerText).toBe('Please sign in to start today quiz.');
+        expect(document.getElementById('quiz-box').hidden).toBe(true);
+        expect(window.__getDailyWords()).toHaveLength(0);
+        expect(document.getElementById('quiz-reset-attempt').disabled).toBe(true);
+        expect(quizAttemptSetMock).not.toHaveBeenCalled();
+    });
+
+    test('loads quiz.html as a signed-in daily quiz with practice-style card front and simple back', async () => {
+        mockFirebaseEnabled = true;
+
+        await loadQuizPage('2026-06-23T12:00:00+08:00');
+        await waitForQuizUi();
+
+        expectFetchedPath('partials/quiz/quiz.html');
+        expect(document.getElementById('quiz-box').hidden).toBe(false);
+        expect(document.getElementById('quiz-result-box').hidden).toBe(true);
+        expect(window.__getDailyWords()).toHaveLength(15);
+        expect(document.getElementById('card-index').innerText).toContain('1 / 15');
+        expect(document.getElementById('word-meaning')).not.toBeNull();
+        expect(document.getElementById('word-example')).not.toBeNull();
+        expect(document.getElementById('word-family')).toBeNull();
+        expect(document.getElementById('word-collocations')).toBeNull();
+        expect(document.querySelector('.deck-switcher')).toBeNull();
+    });
+
+    test('saves the completed daily quiz and shows rounded score with analysis', async () => {
+        mockFirebaseEnabled = true;
+
+        await loadQuizPage('2026-06-23T12:00:00+08:00');
+        await waitForQuizUi();
+
+        const totalCount = window.__getDailyWords().length;
+        for (let i = 0; i < totalCount; i++) {
+            document.getElementById(i === 0 ? 'mark-wrong' : 'mark-right').click();
+            jest.advanceTimersByTime(200);
+            await Promise.resolve();
+            await Promise.resolve();
+        }
+
+        await waitForQuizResult();
+
+        expect(quizAttemptSetMock).toHaveBeenCalledWith('2026-06-23', expect.objectContaining({
+            date: '2026-06-23',
+            totalCount: 15,
+            correctCount: 14,
+            score: 93,
+            completedAt: 'SERVER_TIME',
+        }));
+        expect(quizAttemptSetMock.mock.calls[0][1].answers).toHaveLength(15);
+        expect(document.getElementById('quiz-score').innerText).toBe('93 points');
+        expect(document.getElementById('quiz-result-note').innerText).toBe('14 / 15 correct');
+        expect(document.querySelectorAll('#quiz-analysis-list .quiz-analysis-item')).toHaveLength(15);
+        expect(document.querySelector('#quiz-analysis-list .quiz-analysis-wrong')).not.toBeNull();
+        expect(document.getElementById('review-again')).toBeNull();
+    });
+
+    test('shows an existing daily quiz attempt instead of allowing a retake', async () => {
+        mockFirebaseEnabled = true;
+        quizAttemptStore.set('2026-06-23', {
+            date: '2026-06-23',
+            totalCount: 15,
+            correctCount: 14,
+            score: 93,
+            completedAt: 'SERVER_TIME',
+            answers: [{
+                id: 1,
+                w: 'analyze',
+                pos: 'v.',
+                m: 'study carefully',
+                e: 'We **analyze** the result.',
+                isRight: true,
+            }],
+        });
+
+        await loadQuizPage('2026-06-23T12:00:00+08:00');
+        await waitForQuizResult();
+
+        expect(document.getElementById('quiz-box').hidden).toBe(true);
+        expect(document.getElementById('quiz-score').innerText).toBe('93 points');
+        expect(document.getElementById('quiz-result-note').innerText).toBe('14 / 15 correct');
+        expect(document.querySelectorAll('#quiz-analysis-list .quiz-analysis-item')).toHaveLength(1);
+        expect(document.querySelector('#quiz-analysis-list').textContent).toContain('analyze');
+        expect(window.__getDailyWords()).toHaveLength(0);
+        expect(quizAttemptSetMock).not.toHaveBeenCalled();
+    });
+
+    test('reset button clears today quiz attempt and starts a new quiz', async () => {
+        mockFirebaseEnabled = true;
+        quizAttemptStore.set('2026-06-23', {
+            date: '2026-06-23',
+            totalCount: 15,
+            correctCount: 14,
+            score: 93,
+            completedAt: 'SERVER_TIME',
+            answers: [{
+                id: 1,
+                w: 'analyze',
+                pos: 'v.',
+                m: 'study carefully',
+                e: 'We **analyze** the result.',
+                isRight: true,
+            }],
+        });
+
+        await loadQuizPage('2026-06-23T12:00:00+08:00');
+        await waitForQuizResult();
+
+        document.getElementById('quiz-reset-attempt').click();
+        await Promise.resolve();
+        await Promise.resolve();
+        jest.advanceTimersByTime(200);
+        await Promise.resolve();
+        await waitForQuizUi();
+
+        expect(quizAttemptDeleteMock).toHaveBeenCalledWith('2026-06-23');
+        expect(document.getElementById('quiz-result-box').hidden).toBe(true);
+        expect(document.getElementById('quiz-box').hidden).toBe(false);
+        expect(window.__getDailyWords()).toHaveLength(15);
+        expect(document.getElementById('quiz-reset-status').innerText).toBe('Today quiz has been reset.');
     });
 
     test('loads practice.html as a separate page without the cover screen', async () => {
