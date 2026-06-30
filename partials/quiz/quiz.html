@@ -1,0 +1,55 @@
+<section id="quiz-gate" class="quiz-gate" aria-labelledby="quiz-gate-title" hidden>
+    <h2 id="quiz-gate-title">Daily quiz</h2>
+    <p id="quiz-gate-message">Please sign in to start today's quiz.</p>
+</section>
+
+<section id="quiz-box" aria-labelledby="quiz-title" hidden>
+    <h2 id="quiz-title" class="visually-hidden">Daily quiz</h2>
+
+    <div class="stats">
+        <span id="card-index">Question: -- / 15</span>
+        <span class="score-count" id="score-count">Correct: 0</span>
+    </div>
+
+    <div class="progress-bar" aria-hidden="true">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <div class="quiz-container">
+        <div class="card" id="word-card" role="button" tabindex="0" aria-label="Flip vocabulary card">
+            <div class="card-face card-front">
+                <h2>
+                    <span class="pos-tag" id="word-pos"></span>
+                    <span id="word-target">Loading...</span>
+                </h2>
+                <p>Tap to reveal the explanation and example.</p>
+                <div class="voice-controls">
+                    <button id="speak-word" class="speak-button" type="button" title="Speak word" aria-label="Speak word">Speak</button>
+                    <select id="voice-select" class="voice-select" aria-label="Voice"></select>
+                </div>
+            </div>
+
+            <div class="card-face card-back">
+                <h3 id="word-meaning">Explanation</h3>
+                <p class="example" id="word-example">Loading example...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-wrong" type="button" id="mark-wrong">Wrong</button>
+        <button class="btn-right" type="button" id="mark-right">Correct</button>
+    </div>
+</section>
+
+<section id="quiz-result-box" class="result-screen quiz-result-screen" aria-labelledby="quiz-result-title" hidden>
+    <h2 id="quiz-result-title">Quiz complete</h2>
+    <p class="quiz-score" id="quiz-score">--</p>
+    <p class="result-note" id="quiz-result-note">Today quiz is complete.</p>
+    <ol id="quiz-analysis-list" class="quiz-analysis-list"></ol>
+</section>
+
+<section class="quiz-reset-panel" aria-label="Quiz reset controls">
+    <button id="quiz-reset-attempt" class="quiz-reset-button" type="button">Reset today quiz</button>
+    <p id="quiz-reset-status" class="quiz-reset-status" aria-live="polite"></p>
+</section>
