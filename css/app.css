@@ -398,15 +398,16 @@ h1 {
     }
 
     .home-features {
-        width: min(100%, 264px);
-        grid-template-columns: repeat(2, 76px);
-        gap: 22px 18px;
+        width: min(100%, 330px);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px 12px;
         margin-top: 32px;
     }
 
     .feature-tile {
-        width: 76px;
-        height: 76px;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        height: auto;
     }
 }
 
