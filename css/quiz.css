@@ -45,6 +45,10 @@ body[data-page="quiz"] .header-home-link {
     font-weight: 600;
 }
 
+.quiz-reset-panel {
+    display: none;
+}
+
 .favorite-status-message {
     min-height: 20px;
     margin: -12px 0 14px;
@@ -56,13 +60,6 @@ body[data-page="quiz"] .header-home-link {
 
 .favorite-status-error {
     color: #dc2626;
-}
-
-.quiz-reset-panel {
-    margin-top: 18px;
-    display: grid;
-    gap: 8px;
-    justify-items: center;
 }
 
 .quiz-reset-button {
