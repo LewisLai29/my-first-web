@@ -1,0 +1,74 @@
+.feature-screen {
+    margin-top: auto;
+    margin-bottom: auto;
+    padding-top: 0;
+    justify-content: center;
+    align-content: center;
+}
+
+.feature-note {
+    margin: 8px 0 0;
+    color: #475569;
+    font-size: 0.95rem;
+}
+
+.feature-placeholder {
+    width: min(100%, 420px);
+    margin-top: 32px;
+    padding: 22px 20px;
+    border-radius: 18px;
+    border: 1px solid #dbe4f0;
+    background: linear-gradient(180deg, #f8fafc 0%, #eef6ff 100%);
+    color: #0f172a;
+    text-align: center;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.date-badge {
+    background-color: #e2e8f0;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #475569;
+    font-weight: bold;
+}
+
+.deck-switcher {
+    display: inline-flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 6px;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.deck-switcher .deck-switch-button {
+    flex: 0 0 auto;
+    min-width: 88px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #475569;
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.deck-switcher .deck-switch-button.active {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.deck-switcher .deck-switch-button:hover {
+    background: #f8fafc;
+}
+
+.hint-text {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 5px;
+}
+
