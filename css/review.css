@@ -36,8 +36,7 @@
 .deck-switcher {
     display: inline-flex;
     gap: 8px;
-    margin-top: 12px;
-    padding: 6px;
+    padding: 1px;
     border-radius: 999px;
     background: #e2e8f0;
 }
@@ -45,13 +44,14 @@
 .deck-switcher .deck-switch-button {
     flex: 0 0 auto;
     min-width: 88px;
-    padding: 8px 14px;
+    padding: 5px 14px;
     border-radius: 999px;
     border: 1px solid transparent;
     background: transparent;
     color: #475569;
     font-size: 0.92rem;
     font-weight: 700;
+    line-height: 1;
 }
 
 .deck-switcher .deck-switch-button.active {

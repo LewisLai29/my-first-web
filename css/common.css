@@ -67,6 +67,14 @@ header {
     text-align: center;
 }
 
+.header-date-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .header-home-link {
     margin: 0;
     justify-self: end;
