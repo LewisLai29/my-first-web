@@ -18,39 +18,6 @@
     font-weight: 600;
 }
 
-.favorite-toggle {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    z-index: 5;
-    flex: 0 0 auto;
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-    padding: 0;
-    border-radius: 50%;
-    border: 1px solid #fde68a;
-    background: #fffbeb;
-    color: #ca8a04;
-    box-shadow: 0 8px 18px rgba(202, 138, 4, 0.18);
-    font-size: 1.45rem;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.favorite-toggle:hover,
-.favorite-toggle.active {
-    background: #fef3c7;
-    color: #a16207;
-}
-
-.favorite-toggle:disabled {
-    cursor: wait;
-    opacity: 0.7;
-}
-
 .favorite-status-message {
     min-height: 20px;
     margin: -12px 0 14px;
@@ -103,4 +70,3 @@
 .quiz-reset-status-error {
     color: #dc2626;
 }
-

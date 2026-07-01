@@ -72,3 +72,41 @@
     margin-top: 5px;
 }
 
+.favorite-toggle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid #fde68a;
+    background: #fffbeb;
+    color: #ca8a04;
+    box-shadow: 0 8px 18px rgba(202, 138, 4, 0.18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.favorite-toggle:hover,
+.favorite-toggle.active {
+    background: #fef3c7;
+    color: #eab308;
+}
+
+.favorite-toggle:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.favorite-toggle-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
+    flex: 0 0 auto;
+}

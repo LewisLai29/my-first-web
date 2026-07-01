@@ -2,6 +2,15 @@ export function canSpeak() {
     return 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 }
 
+const SPEAK_BUTTON_ICON_HTML = `
+    <svg class="speak-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 10v4h4l5 4V6L7 10H3z" fill="currentColor"></path>
+        <path d="M16.5 8.5a4.5 4.5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+        <path d="M19.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+    </svg>
+    <span class="visually-hidden">Speak word</span>
+`;
+
 export function createSpeechController(getCurrentWord) {
     let availableVoices = [];
     let selectedVoiceName = '';
@@ -112,6 +121,9 @@ export function createSpeechController(getCurrentWord) {
         const speakButton = document.getElementById('speak-word');
         if (!speakButton) return;
 
+        if (!speakButton.querySelector('.speak-button-icon')) {
+            speakButton.innerHTML = SPEAK_BUTTON_ICON_HTML;
+        }
         speakButton.disabled = !canSpeak() || !getCurrentWord();
     }
 

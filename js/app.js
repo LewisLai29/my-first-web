@@ -266,7 +266,9 @@ function updateFavoriteButton() {
     if (!isSignedIn || !current) return;
 
     const isFavorite = favoritesController.hasFavorite(current);
-    favoriteButton.innerText = isFavorite ? '★' : '☆';
+    favoriteButton.innerHTML = isFavorite
+        ? '<svg class="favorite-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 17.3 6.2 20.8l1.6-6.6L2.7 9.7l6.8-.6L12 3l2.5 6.1 6.8.6-5.1 4.5 1.6 6.6z" fill="currentColor"></path></svg><span class="visually-hidden">Remove from favorites</span>'
+        : '<svg class="favorite-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 17.3 6.2 20.8l1.6-6.6L2.7 9.7l6.8-.6L12 3l2.5 6.1 6.8.6-5.1 4.5 1.6 6.6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span class="visually-hidden">Add to favorites</span>';
     favoriteButton.classList.toggle('active', isFavorite);
     favoriteButton.setAttribute('aria-label', isFavorite ? 'Remove from favorites' : 'Add to favorites');
     favoriteButton.setAttribute('aria-pressed', String(isFavorite));

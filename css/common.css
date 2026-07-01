@@ -436,6 +436,7 @@ button:active {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    line-height: 0;
 }
 
 .speak-button:hover {
@@ -457,6 +458,13 @@ button:active {
 
 .voice-controls .speak-button {
     margin-top: 0;
+}
+
+.speak-button-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
+    flex: 0 0 auto;
 }
 
 .voice-select {
