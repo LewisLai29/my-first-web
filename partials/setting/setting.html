@@ -1,0 +1,33 @@
+<section id="setting-screen" class="home-screen feature-screen" aria-labelledby="setting-title">
+    <div class="home-copy">
+        <h1 id="setting-title">Setting Page</h1>
+        <p class="feature-note">Choose how many words to review each day.</p>
+        <a class="header-home-link setting-home-link" href="../index.html">Home</a>
+    </div>
+
+    <form class="setting-form" aria-label="Daily word count setting">
+        <div class="setting-field">
+            <span id="daily-word-count-label">Daily word count</span>
+            <div id="daily-word-count-dropdown" class="setting-dropdown">
+                <button
+                    id="daily-word-count"
+                    class="setting-select"
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                    aria-labelledby="daily-word-count-label daily-word-count"
+                ></button>
+                <div
+                    id="daily-word-count-options"
+                    class="setting-options"
+                    role="listbox"
+                    aria-labelledby="daily-word-count-label"
+                    hidden
+                ></div>
+            </div>
+        </div>
+
+        <button id="setting-apply" class="setting-apply-button" type="button">Apply</button>
+        <p id="setting-status" class="setting-status" aria-live="polite"></p>
+    </form>
+</section>

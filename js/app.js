@@ -1,10 +1,10 @@
 import {
-    DAILY_WORD_COUNT,
     FAVORITES_HTML_FUNCTIONS,
     FEATURE_HTML_FUNCTIONS,
     HOME_HTML_FUNCTIONS,
     QUIZ_HTML_FUNCTIONS,
     REVIEW_HTML_FUNCTIONS,
+    SETTING_HTML_FUNCTIONS,
     VOCAB_SOURCE,
 } from './config.js';
 import { getDateStringWithOffset } from './date-utils.js';
@@ -14,6 +14,7 @@ import { createFavoritesController } from './favorites.js';
 import { createLookupController, hideLookupPopup } from './lookup.js';
 import { createQuizAttemptsController } from './quiz-attempts.js';
 import { renderReviewList } from './review-list.js';
+import { DAILY_WORD_COUNT_OPTIONS, getDailyWordCount, normalizeDailyWordCount, setDailyWordCount } from './settings.js';
 import { createSpeechController, canSpeak } from './speech.js';
 import { renderTermList } from './terms.js';
 import {
@@ -68,7 +69,7 @@ function getPageMode() {
     const appRoot = getElement('app');
     const pageMode = appRoot && appRoot.dataset ? appRoot.dataset.page : '';
 
-    if (pageMode === 'review' || pageMode === 'feature' || pageMode === 'favorites' || pageMode === 'quiz') {
+    if (pageMode === 'review' || pageMode === 'feature' || pageMode === 'setting' || pageMode === 'favorites' || pageMode === 'quiz') {
         return pageMode;
     }
 
@@ -126,6 +127,10 @@ function isAppShellMounted() {
 
     if (pageMode === 'feature') {
         return Boolean(getElement('feature-screen') && getElement('auth-dialog'));
+    }
+
+    if (pageMode === 'setting') {
+        return Boolean(getElement('setting-screen') && getElement('auth-dialog'));
     }
 
     if (pageMode === 'favorites') {
@@ -688,7 +693,7 @@ async function loadQuizDeck() {
 
         if (loadToken !== activeLoadToken) return;
 
-        dailyWords = pickDailyWords(allVocab, quizDateString, DAILY_WORD_COUNT);
+        dailyWords = pickDailyWords(allVocab, quizDateString, getDailyWordCount());
         currentIndex = 0;
         score = 0;
         reviewedWords = [];
@@ -741,6 +746,11 @@ function renderQuizPageState() {
 
     if (dailyWords.length === 0 && !quizIsSaving && !quizIsLoading) {
         loadQuizDeck();
+        return;
+    }
+
+    if (dailyWords.length > 0 && !quizIsSaving && !quizIsLoading) {
+        showQuizWord();
     }
 }
 
@@ -843,6 +853,64 @@ function wireSharedCardEvents() {
     }
 }
 
+function wireSettingEvents() {
+    const dropdown = getElement('daily-word-count-dropdown');
+    const countSelect = getElement('daily-word-count');
+    const optionsPanel = getElement('daily-word-count-options');
+    const applyButton = getElement('setting-apply');
+    const status = getElement('setting-status');
+    if (!dropdown || !countSelect || !optionsPanel || !applyButton || !status) return;
+
+    optionsPanel.replaceChildren(...DAILY_WORD_COUNT_OPTIONS.map((count) => {
+        const optionButton = document.createElement('button');
+        optionButton.type = 'button';
+        optionButton.className = 'setting-option';
+        optionButton.dataset.value = String(count);
+        optionButton.role = 'option';
+        optionButton.innerText = String(count);
+        return optionButton;
+    }));
+
+    const options = [...optionsPanel.querySelectorAll('.setting-option')];
+    const setSelectedValue = (value) => {
+        const selectedValue = String(normalizeDailyWordCount(value));
+        countSelect.innerText = selectedValue;
+        countSelect.dataset.value = selectedValue;
+        options.forEach((option) => {
+            option.setAttribute('aria-selected', String(option.dataset.value === selectedValue));
+        });
+    };
+
+    const setOpen = (open) => {
+        optionsPanel.hidden = !open;
+        countSelect.setAttribute('aria-expanded', String(open));
+    };
+
+    setSelectedValue(getDailyWordCount());
+    status.innerText = '';
+
+    countSelect.addEventListener('click', () => setOpen(optionsPanel.hidden));
+    options.forEach((option) => {
+        option.addEventListener('click', () => {
+            setSelectedValue(option.dataset.value);
+            setOpen(false);
+            countSelect.focus();
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!optionsPanel.hidden && !dropdown.contains(event.target)) {
+            setOpen(false);
+        }
+    });
+
+    applyButton.addEventListener('click', () => {
+        setSelectedValue(setDailyWordCount(countSelect.dataset.value || getDailyWordCount()));
+        setOpen(false);
+        status.innerText = 'Applied.';
+    });
+}
+
 function wireEvents() {
     const appRoot = getElement('app');
     if (!appRoot || wiredAppRoot === appRoot) {
@@ -851,6 +919,11 @@ function wireEvents() {
     wiredAppRoot = appRoot;
 
     const pageMode = getPageMode();
+    if (pageMode === 'setting') {
+        wireSettingEvents();
+        return;
+    }
+
     if (pageMode !== 'review' && pageMode !== 'quiz') {
         return;
     }
@@ -920,7 +993,7 @@ async function loadDeck(deckOffset = 0) {
 
         let session = deckSessions.get(deckKey);
         if (!session) {
-            session = createDeckSession(pickDailyWords(allVocab, deckKey, DAILY_WORD_COUNT));
+            session = createDeckSession(pickDailyWords(allVocab, deckKey, getDailyWordCount()));
             session.dailyWords = shuffleWords(session.dailyWords);
             deckSessions.set(deckKey, session);
         }
@@ -956,6 +1029,8 @@ async function boot() {
                 ? QUIZ_HTML_FUNCTIONS
                 : pageMode === 'feature'
                     ? FEATURE_HTML_FUNCTIONS
+                    : pageMode === 'setting'
+                        ? SETTING_HTML_FUNCTIONS
                     : pageMode === 'favorites'
                         ? FAVORITES_HTML_FUNCTIONS
                         : HOME_HTML_FUNCTIONS;
@@ -970,6 +1045,11 @@ async function boot() {
             wireEvents();
             await quizAttemptsController.init(quizDateString);
             renderQuizPageState();
+            return;
+        }
+
+        if (pageMode === 'setting') {
+            wireEvents();
             return;
         }
 

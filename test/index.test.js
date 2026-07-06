@@ -377,6 +377,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         jest.clearAllMocks();
         jest.useRealTimers();
         window.sessionStorage.clear();
+        window.localStorage.clear();
         if (document.body) {
             document.body.replaceChildren();
         }
@@ -405,9 +406,74 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('start-practice').getAttribute('href')).toBe('pages/quiz.html');
         expect(document.getElementById('start-favorites').textContent.trim()).toBe('Favorites');
         expect(document.getElementById('start-favorites').getAttribute('href')).toBe('pages/favorites.html');
+        expect(document.getElementById('start-setting').textContent.trim()).toBe('Setting');
+        expect(document.getElementById('start-setting').getAttribute('href')).toBe('pages/setting.html');
         expect(document.getElementById('header-copy').hidden).toBe(true);
         expect(document.getElementById('quiz-box')).toBeNull();
         expect(document.getElementById('word-target')).toBeNull();
+    });
+
+    test('loads setting.html with daily word count settings', async () => {
+        await loadPage('2026-06-23T12:00:00+08:00', 'pages/setting.html');
+
+        expectFetchedPath('partials/common/header.html');
+        expectFetchedPath('partials/common/auth-modal.html');
+        expectFetchedPath('partials/setting/setting.html');
+        expect(document.getElementById('setting-screen')).not.toBeNull();
+        expect(document.getElementById('setting-title').textContent).toBe('Setting Page');
+        expect(document.querySelector('.setting-home-link').getAttribute('href')).toBe('../index.html');
+        expect(document.getElementById('daily-word-count').innerText).toBe('15');
+        expect(document.getElementById('daily-word-count-options').hidden).toBe(true);
+        expect([...document.querySelectorAll('.setting-option')].map((option) => option.dataset.value)).toEqual([
+            '15',
+            '16',
+            '17',
+            '18',
+            '19',
+            '20',
+            '21',
+            '22',
+            '23',
+            '24',
+            '25',
+            '26',
+            '27',
+            '28',
+            '29',
+            '30',
+        ]);
+        expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
+        expect(document.getElementById('home-screen')).toBeNull();
+
+        document.getElementById('daily-word-count').click();
+        expect(document.getElementById('daily-word-count-options').hidden).toBe(false);
+        document.querySelector('.setting-option[data-value="30"]').click();
+        document.getElementById('setting-apply').click();
+
+        expect(window.localStorage.getItem('pte.dailyWordCount')).toBe('30');
+        expect(document.getElementById('setting-status').innerText).toBe('Applied.');
+
+        document.querySelector('.setting-option[data-value="16"]').click();
+        document.getElementById('setting-apply').click();
+
+        expect(window.localStorage.getItem('pte.dailyWordCount')).toBe('16');
+    });
+
+    test('falls back to 15 when saved daily word count is invalid', async () => {
+        window.localStorage.setItem('pte.dailyWordCount', '99');
+
+        await loadPage('2026-06-23T12:00:00+08:00', 'pages/setting.html');
+
+        expect(document.getElementById('daily-word-count').innerText).toBe('15');
+    });
+
+    test('uses the saved daily word count on the review page', async () => {
+        window.localStorage.setItem('pte.dailyWordCount', '30');
+
+        await loadReviewPage('2026-06-23T12:00:00+08:00');
+
+        expect(window.__getDailyWords()).toHaveLength(30);
+        expect(document.getElementById('card-index').innerText).toContain('1 / 30');
     });
 
     test('asks signed-out users to sign in before starting the quiz', async () => {
@@ -568,7 +634,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
         const wordCard = document.getElementById('word-card');
 
         expect(favoriteButton.hidden).toBe(false);
-        expect(favoriteButton.innerText).toBe('☆');
+        expect(favoriteButton.getAttribute('aria-pressed')).toBe('false');
+        expect(favoriteButton.getAttribute('aria-label')).toBe('Add to favorites');
 
         favoriteButton.click();
         await Promise.resolve();
@@ -582,7 +649,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
             e: currentWord.e,
             createdAt: 'SERVER_TIME',
         }));
-        expect(favoriteButton.innerText).toBe('★');
+        expect(favoriteButton.getAttribute('aria-pressed')).toBe('true');
+        expect(favoriteButton.getAttribute('aria-label')).toBe('Remove from favorites');
         expect(document.getElementById('favorite-status').innerText).toBe('Added to favorites.');
 
         favoriteButton.click();
@@ -590,7 +658,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await Promise.resolve();
 
         expect(favoriteDeleteMock).toHaveBeenCalledWith(String(currentWord.id));
-        expect(favoriteButton.innerText).toBe('☆');
+        expect(favoriteButton.getAttribute('aria-pressed')).toBe('false');
+        expect(favoriteButton.getAttribute('aria-label')).toBe('Add to favorites');
         expect(document.getElementById('favorite-status').innerText).toBe('Removed from favorites.');
     });
 
