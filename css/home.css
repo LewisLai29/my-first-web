@@ -77,6 +77,83 @@
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
+.setting-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    padding: 50px;
+    background: rgba(15, 23, 42, 0);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, background-color 0.18s ease;
+    box-sizing: border-box;
+}
+
+.setting-popup.open {
+    background: rgba(15, 23, 42, 0.48);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.setting-popup[hidden] {
+    display: none;
+}
+
+.setting-popup-window {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-height: calc(100dvh - 100px);
+    overflow-y: auto;
+    padding: 34px 24px 28px;
+    border-radius: 18px;
+    border: 1px solid #dbe4f0;
+    background: rgba(255, 255, 255, 0.54);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.26);
+    transform: translateY(18px) scale(0.98);
+    transition: transform 0.18s ease;
+    box-sizing: border-box;
+}
+
+.setting-popup.open .setting-popup-window {
+    transform: translateY(0) scale(1);
+}
+
+.setting-popup-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    padding: 0;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #0f172a;
+    box-shadow: none;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+.setting-popup-close:hover {
+    background: #e2e8f0;
+}
+
+.setting-popup-body .feature-screen {
+    min-height: auto;
+    margin: 0;
+    padding: 0;
+}
+
+.setting-popup-body .setting-form {
+    margin-left: auto;
+    margin-right: auto;
+}
+
 @media (max-width: 720px) {
     .home-screen {
         grid-template-rows: auto auto 1fr;
@@ -94,5 +171,14 @@
         width: 100%;
         aspect-ratio: 1 / 1;
         height: auto;
+    }
+
+    .setting-popup {
+        padding: 14px;
+    }
+
+    .setting-popup-window {
+        max-height: calc(100dvh - 28px);
+        padding: 34px 18px 24px;
     }
 }

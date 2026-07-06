@@ -408,9 +408,43 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('start-favorites').getAttribute('href')).toBe('pages/favorites.html');
         expect(document.getElementById('start-setting').textContent.trim()).toBe('Setting');
         expect(document.getElementById('start-setting').getAttribute('href')).toBe('pages/setting.html');
+        expect(document.getElementById('setting-popup').hidden).toBe(true);
+        expect(document.getElementById('setting-screen')).toBeNull();
         expect(document.getElementById('header-copy').hidden).toBe(true);
         expect(document.getElementById('quiz-box')).toBeNull();
         expect(document.getElementById('word-target')).toBeNull();
+    });
+
+    test('opens setting from the cover page in a popup without navigating away', async () => {
+        await loadPage();
+
+        expectNotFetchedPath('partials/setting/setting.html');
+
+        document.getElementById('start-setting').click();
+        for (let i = 0; i < 10 && document.getElementById('setting-popup').hidden; i++) {
+            await Promise.resolve();
+            jest.advanceTimersByTime(20);
+        }
+
+        expectFetchedPath('partials/setting/setting.html');
+        expect(document.getElementById('home-screen')).not.toBeNull();
+        expect(document.getElementById('setting-popup').hidden).toBe(false);
+        expect(document.getElementById('setting-screen')).not.toBeNull();
+        expect(document.querySelector('.setting-home-link').textContent).toBe('Close');
+        expect(document.querySelector('.setting-home-link').getAttribute('href')).toBeNull();
+        expect(document.getElementById('daily-word-count').innerText).toBe('15');
+
+        document.querySelector('.setting-option[data-value="30"]').click();
+        document.getElementById('setting-apply').click();
+
+        expect(window.localStorage.getItem('pte.dailyWordCount')).toBe('30');
+        expect(document.getElementById('setting-status').innerText).toBe('Applied.');
+
+        document.getElementById('setting-popup-close').click();
+        jest.advanceTimersByTime(200);
+
+        expect(document.getElementById('setting-popup').hidden).toBe(true);
+        expect(document.getElementById('home-screen')).not.toBeNull();
     });
 
     test('loads setting.html with daily word count settings', async () => {

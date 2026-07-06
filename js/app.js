@@ -5,6 +5,7 @@ import {
     QUIZ_HTML_FUNCTIONS,
     REVIEW_HTML_FUNCTIONS,
     SETTING_HTML_FUNCTIONS,
+    SETTING_PARTIAL,
     VOCAB_SOURCE,
 } from './config.js';
 import { getDateStringWithOffset } from './date-utils.js';
@@ -911,6 +912,105 @@ function wireSettingEvents() {
     });
 }
 
+function closeSettingPopup() {
+    const popup = getElement('setting-popup');
+    if (!popup || popup.hidden) return;
+
+    popup.classList.remove('open');
+    window.setTimeout(() => {
+        if (!popup.classList.contains('open')) {
+            popup.hidden = true;
+        }
+    }, 180);
+}
+
+async function ensureSettingPopupLoaded() {
+    const popupBody = getElement('setting-popup-body');
+    if (!popupBody) return false;
+
+    if (popupBody.dataset.loaded === 'true') {
+        return true;
+    }
+
+    const response = await fetch(SETTING_PARTIAL, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Failed to load setting popup.');
+
+    popupBody.innerHTML = await response.text();
+    popupBody.dataset.loaded = 'true';
+
+    const homeLink = popupBody.querySelector('.setting-home-link');
+    if (homeLink) {
+        homeLink.removeAttribute('href');
+        homeLink.setAttribute('role', 'button');
+        homeLink.setAttribute('tabindex', '0');
+        homeLink.textContent = 'Close';
+        homeLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            closeSettingPopup();
+        });
+        homeLink.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                closeSettingPopup();
+            }
+        });
+    }
+
+    wireSettingEvents();
+    return true;
+}
+
+async function openSettingPopup() {
+    const popup = getElement('setting-popup');
+    const closeButton = getElement('setting-popup-close');
+    if (!popup) return;
+
+    try {
+        const loaded = await ensureSettingPopupLoaded();
+        if (!loaded) return;
+
+        popup.hidden = false;
+        popup.classList.add('open');
+        if (closeButton) {
+            closeButton.focus();
+        }
+    } catch (error) {
+        console.error('Failed to open setting popup.', error);
+        window.location.href = 'pages/setting.html';
+    }
+}
+
+function wireHomeEvents() {
+    const settingTile = getElement('start-setting');
+    const popup = getElement('setting-popup');
+    const closeButton = getElement('setting-popup-close');
+
+    if (settingTile) {
+        settingTile.addEventListener('click', (event) => {
+            event.preventDefault();
+            openSettingPopup();
+        });
+    }
+
+    if (closeButton) {
+        closeButton.addEventListener('click', closeSettingPopup);
+    }
+
+    if (popup) {
+        popup.addEventListener('click', (event) => {
+            if (event.target === popup) {
+                closeSettingPopup();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeSettingPopup();
+        }
+    });
+}
+
 function wireEvents() {
     const appRoot = getElement('app');
     if (!appRoot || wiredAppRoot === appRoot) {
@@ -919,6 +1019,11 @@ function wireEvents() {
     wiredAppRoot = appRoot;
 
     const pageMode = getPageMode();
+    if (pageMode === 'home') {
+        wireHomeEvents();
+        return;
+    }
+
     if (pageMode === 'setting') {
         wireSettingEvents();
         return;
@@ -1054,6 +1159,7 @@ async function boot() {
         }
 
         if (pageMode !== 'review') {
+            wireEvents();
             return;
         }
 

@@ -16,6 +16,8 @@ export const SETTING_HTML_FUNCTIONS = [
     new URL('../partials/setting/setting.html', import.meta.url).href,
 ];
 
+export const SETTING_PARTIAL = new URL('../partials/setting/setting.html', import.meta.url).href;
+
 export const FAVORITES_HTML_FUNCTIONS = [
     new URL('../partials/common/header.html', import.meta.url).href,
     new URL('../partials/common/auth-modal.html', import.meta.url).href,
