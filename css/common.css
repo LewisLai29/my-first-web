@@ -8,22 +8,36 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-image: url("../assets/background.png");
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-attachment: fixed;
+    background: #ffffff;
     margin: 0;
     padding: 20px;
     color: #1e293b;
     min-height: 100vh;
+    min-height: 100dvh;
     box-sizing: border-box;
+    position: relative;
+    isolation: isolate;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("../assets/background.png");
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    pointer-events: none;
+    z-index: -1;
+    transform: translateZ(0);
+    will-change: transform;
 }
 
 .container {
     max-width: 600px;
     margin: 0 auto;
     min-height: calc(100vh - 40px);
+    min-height: calc(100dvh - 40px);
     display: flex;
     flex-direction: column;
 }
@@ -800,6 +814,11 @@ button:active {
 @media (max-width: 720px) {
     .container {
         min-height: calc(100vh - 40px);
+        min-height: calc(100dvh - 40px);
+    }
+
+    body::before {
+        position: absolute;
     }
 
     .header-auth-row {
