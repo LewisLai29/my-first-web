@@ -41,6 +41,10 @@
     background: #e2e8f0;
 }
 
+.deck-switcher[hidden] {
+    display: none;
+}
+
 .deck-switcher .deck-switch-button {
     flex: 0 0 auto;
     min-width: 88px;

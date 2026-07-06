@@ -410,6 +410,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('start-setting').getAttribute('href')).toBe('pages/setting.html');
         expect(document.getElementById('setting-popup').hidden).toBe(true);
         expect(document.getElementById('practice-popup').hidden).toBe(true);
+        expect(document.getElementById('quiz-popup').hidden).toBe(true);
+        expect(document.getElementById('favorites-popup').hidden).toBe(true);
         expect(document.getElementById('setting-screen')).toBeNull();
         expect(document.getElementById('header-copy').hidden).toBe(true);
         expect(document.getElementById('quiz-box')).toBeNull();
@@ -442,6 +444,79 @@ describe('PTE daily vocabulary page (index.html)', () => {
 
         expect(document.getElementById('practice-popup').hidden).toBe(true);
         expect(document.getElementById('home-screen')).not.toBeNull();
+    });
+
+    test('opens quiz from the cover page in a popup without navigating away', async () => {
+        mockFirebaseEnabled = true;
+        await loadPage();
+
+        expectNotFetchedPath('partials/quiz/quiz.html');
+
+        document.getElementById('start-practice').click();
+        await waitForQuizUi();
+
+        expectFetchedPath('partials/quiz/quiz.html');
+        expectFetchedPath('partials/review/lookup-popup.html');
+        expect(document.getElementById('home-screen')).not.toBeNull();
+        expect(document.getElementById('quiz-popup').hidden).toBe(false);
+        expect(document.getElementById('quiz-box')).not.toBeNull();
+        expect(document.querySelector('.quiz-popup .deck-switcher').hidden).toBe(true);
+        expect(window.__getDailyWords()).toHaveLength(15);
+
+        document.getElementById('quiz-popup-close').click();
+        jest.advanceTimersByTime(200);
+
+        expect(document.getElementById('quiz-popup').hidden).toBe(true);
+    });
+
+    test('switches from practice popup to quiz popup without leaking practice UI', async () => {
+        mockFirebaseEnabled = true;
+        await loadPage();
+
+        document.getElementById('start-review').click();
+        await waitForReviewUi();
+        expect(document.getElementById('practice-popup').hidden).toBe(false);
+        expect(document.getElementById('practice-popup-review-body')).not.toBeNull();
+
+        document.getElementById('start-practice').click();
+        await waitForQuizUi();
+
+        expect(document.getElementById('practice-popup').hidden).toBe(true);
+        expect(document.getElementById('practice-popup-review-body')).toBeNull();
+        expect(document.getElementById('quiz-popup').hidden).toBe(false);
+        expect(document.querySelector('.quiz-popup .deck-switcher').hidden).toBe(true);
+        expect(document.getElementById('word-target').innerText).not.toBe('Error');
+    });
+
+    test('opens favorites from the cover page in a popup without navigating away', async () => {
+        mockFirebaseEnabled = true;
+        favoriteStore.set('1', {
+            id: 1,
+            w: 'word1',
+            m: 'meaning1',
+            e: 'This is **word1** in an example.',
+        });
+        await loadPage();
+
+        expectNotFetchedPath('partials/favorites/favorites.html');
+
+        document.getElementById('start-favorites').click();
+        for (let i = 0; i < 10 && document.getElementById('favorites-popup').hidden; i++) {
+            await Promise.resolve();
+            jest.advanceTimersByTime(20);
+        }
+
+        expectFetchedPath('partials/favorites/favorites.html');
+        expect(document.getElementById('home-screen')).not.toBeNull();
+        expect(document.getElementById('favorites-popup').hidden).toBe(false);
+        expect(document.getElementById('favorites-screen')).not.toBeNull();
+        expect(document.querySelector('.favorites-back-link')).toBeNull();
+        expect(document.getElementById('favorites-list').textContent).toContain('word1');
+
+        document.getElementById('favorites-popup-close').click();
+        jest.advanceTimersByTime(200);
+
+        expect(document.getElementById('favorites-popup').hidden).toBe(true);
     });
 
     test('opens setting from the cover page in a popup without navigating away', async () => {

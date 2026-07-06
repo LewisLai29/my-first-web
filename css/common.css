@@ -33,6 +33,10 @@ body::before {
     will-change: transform;
 }
 
+[hidden] {
+    display: none !important;
+}
+
 .container {
     max-width: 600px;
     margin: 0 auto;

@@ -1,8 +1,10 @@
 import {
     FAVORITES_HTML_FUNCTIONS,
+    FAVORITES_PARTIAL,
     FEATURE_HTML_FUNCTIONS,
     HOME_HTML_FUNCTIONS,
     PRACTICE_POPUP_PARTIALS,
+    QUIZ_POPUP_PARTIALS,
     QUIZ_HTML_FUNCTIONS,
     REVIEW_HTML_FUNCTIONS,
     SETTING_HTML_FUNCTIONS,
@@ -10,14 +12,19 @@ import {
     VOCAB_SOURCE,
 } from './config.js';
 import { getDateStringWithOffset } from './date-utils.js';
+import { createHomePopupController } from './home-popup-controller.js';
 import { loadHtmlFunctions } from './html-functions.js';
 import { setupAuthUI } from './auth.js';
 import { createFavoritesController } from './favorites.js';
+import { renderFavoritesScreen } from './favorites-ui.js';
 import { createLookupController, hideLookupPopup } from './lookup.js';
+import { fetchHtmlPartial, fetchHtmlParts } from './partial-loader.js';
 import { createPopupScrollbarController } from './popup-scrollbar.js';
 import { createQuizAttemptsController } from './quiz-attempts.js';
+import { renderQuizResultScreen } from './quiz-ui.js';
 import { renderReviewList } from './review-list.js';
-import { DAILY_WORD_COUNT_OPTIONS, getDailyWordCount, normalizeDailyWordCount, setDailyWordCount } from './settings.js';
+import { getDailyWordCount } from './settings.js';
+import { wireSettingEvents } from './setting-ui.js';
 import { createSpeechController, canSpeak } from './speech.js';
 import { renderTermList } from './terms.js';
 import {
@@ -66,6 +73,18 @@ const speechController = createSpeechController(() => dailyWords[currentIndex]);
 
 const popupScrollbarController = createPopupScrollbarController();
 
+const homePopupController = createHomePopupController({
+    getElement,
+    onCancelMode: cancelPopupWork,
+    onUnloadMode: unloadPopupContent,
+    popupIds: {
+        setting: 'setting-popup',
+        practice: 'practice-popup',
+        quiz: 'quiz-popup',
+        favorites: 'favorites-popup',
+    },
+});
+
 function getElement(id) {
     return document.getElementById(id);
 }
@@ -89,7 +108,7 @@ function setHidden(id, hidden) {
 }
 
 function setHomeVisible(visible) {
-    if (!visible && isPracticePopupOpen()) {
+    if (!visible && isHomePopupOpen()) {
         return;
     }
 
@@ -173,6 +192,15 @@ function showHome() {
     setResultVisible(false);
 }
 
+function resetHomeShellState() {
+    homePopupController.reset();
+
+    const headerCopy = getElement('header-copy');
+    if (headerCopy) {
+        headerCopy.hidden = true;
+    }
+}
+
 function showReviewView() {
     setHomeVisible(false);
     setQuizVisible(true);
@@ -235,12 +263,34 @@ function setQuizHeader() {
 
     const deckSwitcher = document.querySelector('.deck-switcher');
     if (deckSwitcher) {
-        deckSwitcher.remove();
+        deckSwitcher.hidden = true;
     }
 
     const hintText = document.querySelector('.hint-text');
     if (hintText) {
         hintText.innerText = 'Tap the card to check the answer, then mark the question correct or wrong.';
+    }
+}
+
+function setPracticeHeader() {
+    const headerCopy = getElement('header-copy');
+    if (headerCopy) {
+        headerCopy.hidden = false;
+    }
+
+    const headerTitle = document.querySelector('#header-copy h1');
+    if (headerTitle) {
+        headerTitle.innerText = 'PTE vocabulary daily review';
+    }
+
+    const deckSwitcher = document.querySelector('.deck-switcher');
+    if (deckSwitcher) {
+        deckSwitcher.hidden = false;
+    }
+
+    const hintText = document.querySelector('.hint-text');
+    if (hintText) {
+        hintText.innerText = 'Tap the card to check the answer, then mark whether you remembered it.';
     }
 }
 
@@ -286,108 +336,15 @@ function updateFavoriteButton() {
     favoriteButton.setAttribute('aria-pressed', String(isFavorite));
 }
 
-function renderFavoriteTermList(list, terms) {
-    list.innerHTML = '';
-    renderTermList(list, terms);
-    if (list.children.length === 0) {
-        const emptyItem = document.createElement('li');
-        emptyItem.className = 'favorite-term-empty';
-        emptyItem.innerText = 'No entries';
-        list.appendChild(emptyItem);
-    }
-}
-
 function renderFavoritesPage() {
     const pageMode = getPageMode();
-    if (pageMode !== 'favorites') return;
+    if (pageMode !== 'favorites' && !isFavoritesPopupOpen()) return;
+    if (!getElement('favorites-screen')) return;
 
-    const status = getElement('favorites-status');
-    const list = getElement('favorites-list');
-    if (!status || !list) return;
-
-    const user = favoritesController.getUser();
-    const favorites = favoritesController.getFavorites();
-    list.innerHTML = '';
-
-    if (!user) {
-        status.innerText = 'Please sign in to view favorites.';
-        return;
-    }
-
-    if (favorites.length === 0) {
-        status.innerText = 'No favorite words yet.';
-        return;
-    }
-
-    status.innerText = `${favorites.length} favorite word${favorites.length === 1 ? '' : 's'}.`;
-
-    favorites.forEach((favorite) => {
-        const item = document.createElement('li');
-        item.className = 'favorite-item';
-
-        const details = document.createElement('details');
-        details.className = 'favorite-details-toggle';
-
-        const summary = document.createElement('summary');
-        summary.className = 'favorite-summary';
-
-        const heading = document.createElement('div');
-        heading.className = 'favorite-item-heading';
-
-        const title = document.createElement('h2');
-        title.innerText = favorite.w;
-
-        const pos = document.createElement('span');
-        pos.className = 'favorite-pos';
-        pos.innerText = favorite.pos ? `(${favorite.pos})` : '';
-
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.className = 'favorite-remove';
-        removeButton.innerText = 'Remove';
-        removeButton.addEventListener('click', async (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            removeButton.disabled = true;
-            try {
-                await favoritesController.removeFavorite(favorite);
-            } catch (error) {
-                removeButton.disabled = false;
-                console.error('Failed to remove favorite.', error);
-            }
-        });
-
-        heading.append(title, pos, removeButton);
-
-        const meaning = document.createElement('p');
-        meaning.className = 'favorite-meaning';
-        meaning.innerText = favorite.m || 'No meaning';
-
-        summary.append(heading, meaning);
-
-        const fullContent = document.createElement('div');
-        fullContent.className = 'favorite-full-content';
-
-        const example = document.createElement('p');
-        example.className = 'favorite-example';
-        example.innerText = favorite.e || 'No example';
-
-        const familyTitle = document.createElement('h3');
-        familyTitle.innerText = 'Word family';
-        const familyList = document.createElement('ul');
-        familyList.className = 'detail-list';
-        renderFavoriteTermList(familyList, favorite.wordFamily);
-
-        const collocationTitle = document.createElement('h3');
-        collocationTitle.innerText = 'Collocations';
-        const collocationList = document.createElement('ul');
-        collocationList.className = 'detail-list';
-        renderFavoriteTermList(collocationList, favorite.collocations);
-
-        fullContent.append(example, familyTitle, familyList, collocationTitle, collocationList);
-        details.append(summary, fullContent);
-        item.append(details);
-        list.appendChild(item);
+    renderFavoritesScreen({
+        user: favoritesController.getUser(),
+        favorites: favoritesController.getFavorites(),
+        onRemoveFavorite: (favorite) => favoritesController.removeFavorite(favorite),
     });
 }
 
@@ -540,44 +497,6 @@ function showResult() {
     updateDeckLabels();
 }
 
-function renderQuizAnalysisList(answers) {
-    const list = getElement('quiz-analysis-list');
-    if (!list) return;
-
-    list.innerHTML = '';
-    answers.forEach((answer, index) => {
-        const item = document.createElement('li');
-        item.className = answer.isRight ? 'quiz-analysis-item quiz-analysis-right' : 'quiz-analysis-item quiz-analysis-wrong';
-
-        const heading = document.createElement('div');
-        heading.className = 'quiz-analysis-heading';
-
-        const word = document.createElement('strong');
-        word.innerText = `${index + 1}. ${answer.w}`;
-
-        const pos = document.createElement('span');
-        pos.className = 'quiz-analysis-pos';
-        pos.innerText = answer.pos ? `(${answer.pos})` : '';
-
-        const result = document.createElement('span');
-        result.className = 'quiz-analysis-result';
-        result.innerText = answer.isRight ? 'Correct' : 'Wrong';
-
-        heading.append(word, pos, result);
-
-        const meaning = document.createElement('p');
-        meaning.className = 'quiz-analysis-meaning';
-        meaning.innerText = answer.m || 'No explanation';
-
-        const example = document.createElement('p');
-        example.className = 'example quiz-analysis-example';
-        lookupController.renderExampleText(example, answer.e || 'No example');
-
-        item.append(heading, meaning, example);
-        list.appendChild(item);
-    });
-}
-
 function renderQuizResult(attempt) {
     if (!attempt) return;
 
@@ -588,17 +507,9 @@ function renderQuizResult(attempt) {
     hideLookupPopup();
     clearPendingWordRender();
 
-    const scoreElement = getElement('quiz-score');
-    if (scoreElement) {
-        scoreElement.innerText = `${attempt.score} points`;
-    }
-
-    const noteElement = getElement('quiz-result-note');
-    if (noteElement) {
-        noteElement.innerText = `${attempt.correctCount} / ${attempt.totalCount} correct`;
-    }
-
-    renderQuizAnalysisList(Array.isArray(attempt.answers) ? attempt.answers : []);
+    renderQuizResultScreen(attempt, {
+        renderExampleText: lookupController.renderExampleText,
+    });
     updateQuizResetButton();
 }
 
@@ -684,6 +595,8 @@ function nextQuizWord(isRight) {
 }
 
 async function loadQuizDeck() {
+    if (!isQuizContextActive()) return;
+
     if (quizIsLoading) return;
     quizIsLoading = true;
     const loadToken = ++activeLoadToken;
@@ -701,6 +614,7 @@ async function loadQuizDeck() {
         vocabMeaningMap = buildVocabMeaningMap(allVocab);
 
         if (loadToken !== activeLoadToken) return;
+        if (!isQuizContextActive()) return;
 
         dailyWords = pickDailyWords(allVocab, quizDateString, getDailyWordCount());
         currentIndex = 0;
@@ -710,6 +624,7 @@ async function loadQuizDeck() {
         showQuizWord();
     } catch (error) {
         if (loadToken !== activeLoadToken) return;
+        if (!isQuizContextActive()) return;
         setQuizGateVisible(true, 'Please confirm the vocabulary JSON can be loaded.');
         setQuizExamVisible(false);
         setQuizResultVisible(false);
@@ -722,7 +637,8 @@ async function loadQuizDeck() {
 }
 
 function renderQuizPageState() {
-    if (getPageMode() !== 'quiz' || !getElement('quiz-gate')) return;
+    if (!isQuizContextActive()) return;
+    if (!getElement('quiz-gate')) return;
 
     setQuizHeader();
     updateQuizResetButton();
@@ -862,67 +778,28 @@ function wireSharedCardEvents() {
     }
 }
 
-function wireSettingEvents() {
-    const dropdown = getElement('daily-word-count-dropdown');
-    const countSelect = getElement('daily-word-count');
-    const optionsPanel = getElement('daily-word-count-options');
-    const applyButton = getElement('setting-apply');
-    const status = getElement('setting-status');
-    if (!dropdown || !countSelect || !optionsPanel || !applyButton || !status) return;
-
-    optionsPanel.replaceChildren(...DAILY_WORD_COUNT_OPTIONS.map((count) => {
-        const optionButton = document.createElement('button');
-        optionButton.type = 'button';
-        optionButton.className = 'setting-option';
-        optionButton.dataset.value = String(count);
-        optionButton.role = 'option';
-        optionButton.innerText = String(count);
-        return optionButton;
-    }));
-
-    const options = [...optionsPanel.querySelectorAll('.setting-option')];
-    const setSelectedValue = (value) => {
-        const selectedValue = String(normalizeDailyWordCount(value));
-        countSelect.innerText = selectedValue;
-        countSelect.dataset.value = selectedValue;
-        options.forEach((option) => {
-            option.setAttribute('aria-selected', String(option.dataset.value === selectedValue));
-        });
-    };
-
-    const setOpen = (open) => {
-        optionsPanel.hidden = !open;
-        countSelect.setAttribute('aria-expanded', String(open));
-    };
-
-    setSelectedValue(getDailyWordCount());
-    status.innerText = '';
-
-    countSelect.addEventListener('click', () => setOpen(optionsPanel.hidden));
-    options.forEach((option) => {
-        option.addEventListener('click', () => {
-            setSelectedValue(option.dataset.value);
-            setOpen(false);
-            countSelect.focus();
-        });
-    });
-
-    document.addEventListener('click', (event) => {
-        if (!optionsPanel.hidden && !dropdown.contains(event.target)) {
-            setOpen(false);
-        }
-    });
-
-    applyButton.addEventListener('click', () => {
-        setSelectedValue(setDailyWordCount(countSelect.dataset.value || getDailyWordCount()));
-        setOpen(false);
-        status.innerText = 'Applied.';
-    });
+function isPracticePopupOpen() {
+    return homePopupController.isModeOpen('practice');
 }
 
-function isPracticePopupOpen() {
-    const popup = getElement('practice-popup');
-    return Boolean(popup && !popup.hidden && popup.classList.contains('open'));
+function isQuizPopupOpen() {
+    return homePopupController.isModeOpen('quiz');
+}
+
+function isFavoritesPopupOpen() {
+    return homePopupController.isModeOpen('favorites');
+}
+
+function isHomePopupOpen() {
+    return homePopupController.isAnyOpen();
+}
+
+function isReviewContextActive() {
+    return getPageMode() === 'review' || isPracticePopupOpen();
+}
+
+function isQuizContextActive() {
+    return getPageMode() === 'quiz' || isQuizPopupOpen();
 }
 
 function wireReviewSessionEvents() {
@@ -959,53 +836,89 @@ function wireReviewSessionEvents() {
     });
 }
 
-function closeSettingPopup() {
-    const popup = getElement('setting-popup');
-    if (!popup || popup.hidden) return;
+function cancelPopupWork(mode) {
+    if (mode === 'practice' || mode === 'quiz') {
+        activeLoadToken++;
+        hideLookupPopup();
+        clearPendingWordRender();
+    }
+}
 
-    popup.classList.remove('open');
-    window.setTimeout(() => {
-        if (!popup.classList.contains('open')) {
-            popup.hidden = true;
-        }
-    }, 180);
+function unloadPopupContent(mode) {
+    if (mode === 'practice') {
+        unloadPracticePopupContent();
+    }
+
+    if (mode === 'quiz') {
+        unloadQuizPopupContent();
+    }
+}
+
+function closeSettingPopup() {
+    homePopupController.close('setting');
 }
 
 function closePracticePopup() {
-    const popup = getElement('practice-popup');
-    if (!popup || popup.hidden) return;
+    homePopupController.close('practice');
+}
 
-    activeLoadToken++;
-    hideLookupPopup();
-    clearPendingWordRender();
-    popup.classList.remove('open');
-    window.setTimeout(() => {
-        if (!popup.classList.contains('open')) {
-            popup.hidden = true;
-        }
-    }, 180);
+function closeQuizPopup() {
+    homePopupController.close('quiz');
+}
+
+function closeFavoritesPopup() {
+    homePopupController.close('favorites');
+}
+
+function removePopupContent(contentId, popupBodyId, loadedDatasetKey = 'loaded') {
+    const content = getElement(contentId);
+    if (content) {
+        content.remove();
+    }
+
+    const popupBody = getElement(popupBodyId);
+    if (popupBody) {
+        delete popupBody.dataset[loadedDatasetKey];
+    }
+}
+
+function unloadPracticePopupContent() {
+    removePopupContent('practice-popup-review-body', 'practice-popup-body');
+    const popupBody = getElement('practice-popup-body');
+    if (popupBody) {
+        delete popupBody.dataset.reviewWired;
+    }
+}
+
+function unloadQuizPopupContent() {
+    removePopupContent('quiz-popup-content', 'quiz-popup-body');
+    const popupBody = getElement('quiz-popup-body');
+    if (popupBody) {
+        delete popupBody.dataset.quizWired;
+    }
+}
+
+function moveHeaderCopyToPopup(popupBody) {
+    const headerCopy = getElement('header-copy');
+    if (!headerCopy || !popupBody || popupBody.contains(headerCopy)) return;
+
+    popupBody.prepend(headerCopy);
+
+    const homeLink = headerCopy.querySelector('.header-home-link');
+    if (homeLink) {
+        homeLink.remove();
+    }
 }
 
 async function ensurePracticePopupLoaded() {
     const popupBody = getElement('practice-popup-body');
     if (!popupBody) return false;
 
-    const headerCopy = getElement('header-copy');
-    if (headerCopy && !popupBody.contains(headerCopy)) {
-        popupBody.appendChild(headerCopy);
-
-        const homeLink = headerCopy.querySelector('.header-home-link');
-        if (homeLink) {
-            homeLink.remove();
-        }
-    }
+    moveHeaderCopyToPopup(popupBody);
+    setPracticeHeader();
 
     if (popupBody.dataset.loaded !== 'true') {
-        const htmlParts = await Promise.all(PRACTICE_POPUP_PARTIALS.map(async (partialPath) => {
-            const response = await fetch(partialPath, { cache: 'no-store' });
-            if (!response.ok) throw new Error(`Failed to load ${partialPath}`);
-            return response.text();
-        }));
+        const htmlParts = await fetchHtmlParts(PRACTICE_POPUP_PARTIALS);
 
         const reviewBody = document.createElement('div');
         reviewBody.id = 'practice-popup-review-body';
@@ -1018,17 +931,67 @@ async function ensurePracticePopupLoaded() {
     return true;
 }
 
+function wireQuizSessionEvents() {
+    const popupBody = getElement('quiz-popup-body');
+    if (!popupBody || popupBody.dataset.quizWired === 'true') return;
+
+    popupBody.dataset.quizWired = 'true';
+    wireCardFlipEvents();
+    wireSharedCardEvents();
+    getElement('mark-wrong').addEventListener('click', () => nextQuizWord(false));
+    getElement('mark-right').addEventListener('click', () => nextQuizWord(true));
+    getElement('quiz-reset-attempt').addEventListener('click', resetTodayQuizAttempt);
+}
+
+async function ensureQuizPopupLoaded() {
+    const popupBody = getElement('quiz-popup-body');
+    if (!popupBody) return false;
+
+    moveHeaderCopyToPopup(popupBody);
+
+    if (popupBody.dataset.loaded !== 'true') {
+        const htmlParts = await fetchHtmlParts(QUIZ_POPUP_PARTIALS);
+        const quizBody = document.createElement('div');
+        quizBody.id = 'quiz-popup-content';
+        quizBody.innerHTML = htmlParts.join('\n');
+        popupBody.appendChild(quizBody);
+        popupBody.dataset.loaded = 'true';
+    }
+
+    setQuizHeader();
+    wireQuizSessionEvents();
+    return true;
+}
+
+async function ensureFavoritesPopupLoaded() {
+    const popupBody = getElement('favorites-popup-body');
+    if (!popupBody) return false;
+
+    if (popupBody.dataset.loaded !== 'true') {
+        popupBody.innerHTML = await fetchHtmlPartial(FAVORITES_PARTIAL, 'Failed to load favorites popup.');
+        popupBody.dataset.loaded = 'true';
+
+        const backLink = popupBody.querySelector('.favorites-back-link');
+        if (backLink) {
+            backLink.remove();
+        }
+    }
+
+    renderFavoritesPage();
+    return true;
+}
+
 async function openPracticePopup() {
     const popup = getElement('practice-popup');
     const closeButton = getElement('practice-popup-close');
     if (!popup) return;
 
     try {
+        homePopupController.prepareExclusive('practice');
         const loaded = await ensurePracticePopupLoaded();
         if (!loaded) return;
 
-        popup.hidden = false;
-        popup.classList.add('open');
+        homePopupController.show('practice');
         if (closeButton) {
             closeButton.focus();
         }
@@ -1040,6 +1003,60 @@ async function openPracticePopup() {
     }
 }
 
+async function openQuizPopup() {
+    const popup = getElement('quiz-popup');
+    const closeButton = getElement('quiz-popup-close');
+    if (!popup) return;
+
+    try {
+        homePopupController.prepareExclusive('quiz');
+        dailyWords = [];
+        currentIndex = 0;
+        score = 0;
+        reviewedWords = [];
+        quizIsSaving = false;
+        quizIsLoading = false;
+        const loaded = await ensureQuizPopupLoaded();
+        if (!loaded) return;
+
+        homePopupController.show('quiz');
+        if (closeButton) {
+            closeButton.focus();
+        }
+
+        quizDateString = getDateStringWithOffset(0);
+        setQuizHeader();
+        await quizAttemptsController.init(quizDateString);
+        renderQuizPageState();
+        popupScrollbarController.refresh();
+    } catch (error) {
+        console.error('Failed to open quiz popup.', error);
+        window.location.href = 'pages/quiz.html';
+    }
+}
+
+async function openFavoritesPopup() {
+    const popup = getElement('favorites-popup');
+    const closeButton = getElement('favorites-popup-close');
+    if (!popup) return;
+
+    try {
+        homePopupController.prepareExclusive('favorites');
+        const loaded = await ensureFavoritesPopupLoaded();
+        if (!loaded) return;
+
+        homePopupController.show('favorites');
+        renderFavoritesPage();
+        if (closeButton) {
+            closeButton.focus();
+        }
+        popupScrollbarController.refresh();
+    } catch (error) {
+        console.error('Failed to open favorites popup.', error);
+        window.location.href = 'pages/favorites.html';
+    }
+}
+
 async function ensureSettingPopupLoaded() {
     const popupBody = getElement('setting-popup-body');
     if (!popupBody) return false;
@@ -1048,10 +1065,7 @@ async function ensureSettingPopupLoaded() {
         return true;
     }
 
-    const response = await fetch(SETTING_PARTIAL, { cache: 'no-store' });
-    if (!response.ok) throw new Error('Failed to load setting popup.');
-
-    popupBody.innerHTML = await response.text();
+    popupBody.innerHTML = await fetchHtmlPartial(SETTING_PARTIAL, 'Failed to load setting popup.');
     popupBody.dataset.loaded = 'true';
 
     const homeLink = popupBody.querySelector('.setting-home-link');
@@ -1082,11 +1096,11 @@ async function openSettingPopup() {
     if (!popup) return;
 
     try {
+        homePopupController.prepareExclusive('setting');
         const loaded = await ensureSettingPopupLoaded();
         if (!loaded) return;
 
-        popup.hidden = false;
-        popup.classList.add('open');
+        homePopupController.show('setting');
         if (closeButton) {
             closeButton.focus();
         }
@@ -1098,17 +1112,39 @@ async function openSettingPopup() {
 }
 
 function wireHomeEvents() {
+    resetHomeShellState();
+
     const practiceTile = getElement('start-review');
+    const quizTile = getElement('start-practice');
+    const favoritesTile = getElement('start-favorites');
     const settingTile = getElement('start-setting');
     const settingPopup = getElement('setting-popup');
     const settingCloseButton = getElement('setting-popup-close');
     const practicePopup = getElement('practice-popup');
     const practiceCloseButton = getElement('practice-popup-close');
+    const quizPopup = getElement('quiz-popup');
+    const quizCloseButton = getElement('quiz-popup-close');
+    const favoritesPopup = getElement('favorites-popup');
+    const favoritesCloseButton = getElement('favorites-popup-close');
 
     if (practiceTile) {
         practiceTile.addEventListener('click', (event) => {
             event.preventDefault();
             openPracticePopup();
+        });
+    }
+
+    if (quizTile) {
+        quizTile.addEventListener('click', (event) => {
+            event.preventDefault();
+            openQuizPopup();
+        });
+    }
+
+    if (favoritesTile) {
+        favoritesTile.addEventListener('click', (event) => {
+            event.preventDefault();
+            openFavoritesPopup();
         });
     }
 
@@ -1127,6 +1163,14 @@ function wireHomeEvents() {
         practiceCloseButton.addEventListener('click', closePracticePopup);
     }
 
+    if (quizCloseButton) {
+        quizCloseButton.addEventListener('click', closeQuizPopup);
+    }
+
+    if (favoritesCloseButton) {
+        favoritesCloseButton.addEventListener('click', closeFavoritesPopup);
+    }
+
     if (settingPopup) {
         settingPopup.addEventListener('click', (event) => {
             if (event.target === settingPopup) {
@@ -1143,6 +1187,22 @@ function wireHomeEvents() {
         });
     }
 
+    if (quizPopup) {
+        quizPopup.addEventListener('click', (event) => {
+            if (event.target === quizPopup) {
+                closeQuizPopup();
+            }
+        });
+    }
+
+    if (favoritesPopup) {
+        favoritesPopup.addEventListener('click', (event) => {
+            if (event.target === favoritesPopup) {
+                closeFavoritesPopup();
+            }
+        });
+    }
+
     popupScrollbarController.observe();
     popupScrollbarController.refresh();
 
@@ -1150,6 +1210,8 @@ function wireHomeEvents() {
         if (event.key === 'Escape') {
             closeSettingPopup();
             closePracticePopup();
+            closeQuizPopup();
+            closeFavoritesPopup();
         }
     });
 }
@@ -1218,6 +1280,8 @@ async function loadAndInitQuiz(deckOffset = 0) {
 }
 
 async function loadDeck(deckOffset = 0) {
+    if (!isReviewContextActive()) return;
+
     const loadToken = ++activeLoadToken;
     persistActiveSession();
     clearPendingWordRender();
@@ -1238,6 +1302,7 @@ async function loadDeck(deckOffset = 0) {
         vocabMeaningMap = buildVocabMeaningMap(allVocab);
 
         if (loadToken !== activeLoadToken) return;
+        if (!isReviewContextActive()) return;
 
         let session = deckSessions.get(deckKey);
         if (!session) {
@@ -1253,6 +1318,7 @@ async function loadDeck(deckOffset = 0) {
         showWord();
     } catch (error) {
         if (loadToken !== activeLoadToken) return;
+        if (!isReviewContextActive()) return;
         const wordTarget = getElement('word-target');
         const wordExample = getElement('word-example');
         if (wordTarget) wordTarget.innerText = 'Error';
