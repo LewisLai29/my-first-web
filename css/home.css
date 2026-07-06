@@ -106,7 +106,6 @@
     width: 100%;
     height: 100%;
     max-height: calc(100dvh - 100px);
-    overflow-y: auto;
     padding: 34px 24px 28px;
     border-radius: 18px;
     border: 1px solid #dbe4f0;
@@ -137,6 +136,7 @@
     box-shadow: none;
     font-size: 0.9rem;
     line-height: 1;
+    z-index: 5;
 }
 
 .setting-popup-close:hover {
@@ -152,6 +152,19 @@
 .setting-popup-body .setting-form {
     margin-left: auto;
     margin-right: auto;
+}
+
+.practice-popup-window {
+    max-width: 680px;
+}
+
+.practice-popup-body {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.practice-popup-body .header-copy {
+    margin-bottom: 20px;
 }
 
 @media (max-width: 720px) {

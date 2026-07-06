@@ -409,10 +409,39 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('start-setting').textContent.trim()).toBe('Setting');
         expect(document.getElementById('start-setting').getAttribute('href')).toBe('pages/setting.html');
         expect(document.getElementById('setting-popup').hidden).toBe(true);
+        expect(document.getElementById('practice-popup').hidden).toBe(true);
         expect(document.getElementById('setting-screen')).toBeNull();
         expect(document.getElementById('header-copy').hidden).toBe(true);
         expect(document.getElementById('quiz-box')).toBeNull();
         expect(document.getElementById('word-target')).toBeNull();
+    });
+
+    test('opens practice from the cover page in a popup without navigating away', async () => {
+        await loadPage();
+
+        expectNotFetchedPath('partials/review/quiz.html');
+        expectNotFetchedPath('pte_vocab.json');
+
+        document.getElementById('start-review').click();
+        await waitForReviewUi();
+
+        expectFetchedPath('partials/review/quiz.html');
+        expectFetchedPath('partials/review/review-list.html');
+        expectFetchedPath('partials/review/result.html');
+        expectFetchedPath('partials/review/lookup-popup.html');
+        expectFetchedPath('pte_vocab.json');
+        expect(document.getElementById('home-screen')).not.toBeNull();
+        expect(document.getElementById('practice-popup').hidden).toBe(false);
+        expect(document.getElementById('quiz-box')).not.toBeNull();
+        expect(document.getElementById('word-target').innerText).not.toBe('Loading...');
+        expect(document.querySelector('.practice-popup-body .header-home-link')).toBeNull();
+        expect(window.__getDailyWords()).toHaveLength(15);
+
+        document.getElementById('practice-popup-close').click();
+        jest.advanceTimersByTime(200);
+
+        expect(document.getElementById('practice-popup').hidden).toBe(true);
+        expect(document.getElementById('home-screen')).not.toBeNull();
     });
 
     test('opens setting from the cover page in a popup without navigating away', async () => {

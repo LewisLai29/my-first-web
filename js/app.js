@@ -2,6 +2,7 @@ import {
     FAVORITES_HTML_FUNCTIONS,
     FEATURE_HTML_FUNCTIONS,
     HOME_HTML_FUNCTIONS,
+    PRACTICE_POPUP_PARTIALS,
     QUIZ_HTML_FUNCTIONS,
     REVIEW_HTML_FUNCTIONS,
     SETTING_HTML_FUNCTIONS,
@@ -13,6 +14,7 @@ import { loadHtmlFunctions } from './html-functions.js';
 import { setupAuthUI } from './auth.js';
 import { createFavoritesController } from './favorites.js';
 import { createLookupController, hideLookupPopup } from './lookup.js';
+import { createPopupScrollbarController } from './popup-scrollbar.js';
 import { createQuizAttemptsController } from './quiz-attempts.js';
 import { renderReviewList } from './review-list.js';
 import { DAILY_WORD_COUNT_OPTIONS, getDailyWordCount, normalizeDailyWordCount, setDailyWordCount } from './settings.js';
@@ -62,6 +64,8 @@ const lookupController = createLookupController((word) => (
 
 const speechController = createSpeechController(() => dailyWords[currentIndex]);
 
+const popupScrollbarController = createPopupScrollbarController();
+
 function getElement(id) {
     return document.getElementById(id);
 }
@@ -85,6 +89,10 @@ function setHidden(id, hidden) {
 }
 
 function setHomeVisible(visible) {
+    if (!visible && isPracticePopupOpen()) {
+        return;
+    }
+
     setHidden('home-screen', !visible);
 }
 
@@ -912,6 +920,45 @@ function wireSettingEvents() {
     });
 }
 
+function isPracticePopupOpen() {
+    const popup = getElement('practice-popup');
+    return Boolean(popup && !popup.hidden && popup.classList.contains('open'));
+}
+
+function wireReviewSessionEvents() {
+    const popupBody = getElement('practice-popup-body');
+    if (!popupBody || popupBody.dataset.reviewWired === 'true') return;
+
+    popupBody.dataset.reviewWired = 'true';
+    wireCardFlipEvents();
+    wireSharedCardEvents();
+
+    getElement('mark-wrong').addEventListener('click', () => nextWord(false));
+    getElement('mark-right').addEventListener('click', () => nextWord(true));
+    getElement('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
+    getElement('deck-yesterday').addEventListener('click', () => loadAndInitQuiz(-1));
+    getElement('review-again').addEventListener('click', restartActiveDeck);
+    getElement('favorite-toggle').addEventListener('click', async (event) => {
+        event.stopPropagation();
+
+        const favoriteButton = event.currentTarget;
+        const current = dailyWords[currentIndex];
+        if (!current || favoriteButton.disabled) return;
+
+        favoriteButton.disabled = true;
+        try {
+            const isFavorite = await favoritesController.toggleFavorite(current);
+            setFavoriteStatus(isFavorite ? 'Added to favorites.' : 'Removed from favorites.');
+        } catch (error) {
+            setFavoriteStatus('Favorite update failed. Please check Firebase permissions.', true);
+            console.error('Failed to update favorite.', error);
+        } finally {
+            favoriteButton.disabled = false;
+            updateFavoriteButton();
+        }
+    });
+}
+
 function closeSettingPopup() {
     const popup = getElement('setting-popup');
     if (!popup || popup.hidden) return;
@@ -922,6 +969,75 @@ function closeSettingPopup() {
             popup.hidden = true;
         }
     }, 180);
+}
+
+function closePracticePopup() {
+    const popup = getElement('practice-popup');
+    if (!popup || popup.hidden) return;
+
+    activeLoadToken++;
+    hideLookupPopup();
+    clearPendingWordRender();
+    popup.classList.remove('open');
+    window.setTimeout(() => {
+        if (!popup.classList.contains('open')) {
+            popup.hidden = true;
+        }
+    }, 180);
+}
+
+async function ensurePracticePopupLoaded() {
+    const popupBody = getElement('practice-popup-body');
+    if (!popupBody) return false;
+
+    const headerCopy = getElement('header-copy');
+    if (headerCopy && !popupBody.contains(headerCopy)) {
+        popupBody.appendChild(headerCopy);
+
+        const homeLink = headerCopy.querySelector('.header-home-link');
+        if (homeLink) {
+            homeLink.remove();
+        }
+    }
+
+    if (popupBody.dataset.loaded !== 'true') {
+        const htmlParts = await Promise.all(PRACTICE_POPUP_PARTIALS.map(async (partialPath) => {
+            const response = await fetch(partialPath, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`Failed to load ${partialPath}`);
+            return response.text();
+        }));
+
+        const reviewBody = document.createElement('div');
+        reviewBody.id = 'practice-popup-review-body';
+        reviewBody.innerHTML = htmlParts.join('\n');
+        popupBody.appendChild(reviewBody);
+        popupBody.dataset.loaded = 'true';
+    }
+
+    wireReviewSessionEvents();
+    return true;
+}
+
+async function openPracticePopup() {
+    const popup = getElement('practice-popup');
+    const closeButton = getElement('practice-popup-close');
+    if (!popup) return;
+
+    try {
+        const loaded = await ensurePracticePopupLoaded();
+        if (!loaded) return;
+
+        popup.hidden = false;
+        popup.classList.add('open');
+        if (closeButton) {
+            closeButton.focus();
+        }
+        await loadDeck(0);
+        popupScrollbarController.refresh();
+    } catch (error) {
+        console.error('Failed to open practice popup.', error);
+        window.location.href = 'pages/practice.html';
+    }
 }
 
 async function ensureSettingPopupLoaded() {
@@ -974,6 +1090,7 @@ async function openSettingPopup() {
         if (closeButton) {
             closeButton.focus();
         }
+        popupScrollbarController.refresh();
     } catch (error) {
         console.error('Failed to open setting popup.', error);
         window.location.href = 'pages/setting.html';
@@ -981,9 +1098,19 @@ async function openSettingPopup() {
 }
 
 function wireHomeEvents() {
+    const practiceTile = getElement('start-review');
     const settingTile = getElement('start-setting');
-    const popup = getElement('setting-popup');
-    const closeButton = getElement('setting-popup-close');
+    const settingPopup = getElement('setting-popup');
+    const settingCloseButton = getElement('setting-popup-close');
+    const practicePopup = getElement('practice-popup');
+    const practiceCloseButton = getElement('practice-popup-close');
+
+    if (practiceTile) {
+        practiceTile.addEventListener('click', (event) => {
+            event.preventDefault();
+            openPracticePopup();
+        });
+    }
 
     if (settingTile) {
         settingTile.addEventListener('click', (event) => {
@@ -992,21 +1119,37 @@ function wireHomeEvents() {
         });
     }
 
-    if (closeButton) {
-        closeButton.addEventListener('click', closeSettingPopup);
+    if (settingCloseButton) {
+        settingCloseButton.addEventListener('click', closeSettingPopup);
     }
 
-    if (popup) {
-        popup.addEventListener('click', (event) => {
-            if (event.target === popup) {
+    if (practiceCloseButton) {
+        practiceCloseButton.addEventListener('click', closePracticePopup);
+    }
+
+    if (settingPopup) {
+        settingPopup.addEventListener('click', (event) => {
+            if (event.target === settingPopup) {
                 closeSettingPopup();
             }
         });
     }
 
+    if (practicePopup) {
+        practicePopup.addEventListener('click', (event) => {
+            if (event.target === practicePopup) {
+                closePracticePopup();
+            }
+        });
+    }
+
+    popupScrollbarController.observe();
+    popupScrollbarController.refresh();
+
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeSettingPopup();
+            closePracticePopup();
         }
     });
 }
@@ -1179,8 +1322,7 @@ window.PteVocabApp = {
             return loadAndInitQuiz(0);
         }
 
-        window.location.href = 'pages/practice.html';
-        return Promise.resolve();
+        return openPracticePopup();
     },
     lookupExampleWordMeaning: lookupController.lookupExampleWordMeaning,
     speakCurrentWord: speechController.speakCurrentWord,
@@ -1196,6 +1338,7 @@ window.PteVocabApp = {
     dispose: () => {
         favoritesController.dispose();
         quizAttemptsController.dispose();
+        popupScrollbarController.dispose();
     },
 };
 

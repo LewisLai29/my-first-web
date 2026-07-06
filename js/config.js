@@ -18,6 +18,13 @@ export const SETTING_HTML_FUNCTIONS = [
 
 export const SETTING_PARTIAL = new URL('../partials/setting/setting.html', import.meta.url).href;
 
+export const PRACTICE_POPUP_PARTIALS = [
+    new URL('../partials/review/quiz.html', import.meta.url).href,
+    new URL('../partials/review/review-list.html', import.meta.url).href,
+    new URL('../partials/review/result.html', import.meta.url).href,
+    new URL('../partials/review/lookup-popup.html', import.meta.url).href,
+];
+
 export const FAVORITES_HTML_FUNCTIONS = [
     new URL('../partials/common/header.html', import.meta.url).href,
     new URL('../partials/common/auth-modal.html', import.meta.url).href,
