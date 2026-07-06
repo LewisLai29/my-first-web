@@ -891,7 +891,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await loadReviewPage('2026-06-23T12:00:00+08:00');
 
         const todayWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
-        expect(document.getElementById('today-date').innerText).toContain('Today: 2026-06-23');
+        expect(document.getElementById('today-date').innerText).toBe('2026-06-23');
         expect(window.__getActiveDeckKey()).toBe('2026-06-23');
 
         document.getElementById('mark-wrong').click();
@@ -911,7 +911,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
 
         const yesterdayWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
 
-        expect(document.getElementById('today-date').innerText).toContain('Yesterday: 2026-06-22');
+        expect(document.getElementById('today-date').innerText).toBe('2026-06-22');
         expect(yesterdayWordIds).toHaveLength(15);
         expect(window.__getActiveDeckKey()).toBe('2026-06-22');
         expect(window.__getCurrentIndex()).toBe(0);

@@ -35,7 +35,6 @@ let reviewedWords = [];
 let vocabMeaningMap = new Map();
 let activeDeckOffset = 0;
 let activeDeckDateString = '';
-let activeDeckLabel = 'Today';
 let pendingWordRenderTimer = null;
 let activeLoadToken = 0;
 let bootPromise = null;
@@ -107,7 +106,6 @@ function resetRuntimeState() {
     vocabMeaningMap = new Map();
     activeDeckOffset = 0;
     activeDeckDateString = '';
-    activeDeckLabel = 'Today';
     quizDateString = '';
     quizIsSaving = false;
     quizIsLoading = false;
@@ -218,7 +216,7 @@ function setQuizHeader() {
 
     const dateBadge = getElement('today-date');
     if (dateBadge) {
-        dateBadge.innerText = `Today: ${quizDateString || getDateStringWithOffset(0)}`;
+        dateBadge.innerText = quizDateString || getDateStringWithOffset(0);
     }
 
     const deckSwitcher = document.querySelector('.deck-switcher');
@@ -408,7 +406,6 @@ function activateSession(session, deckKey, deckOffset) {
     activeSession = session;
     activeDeckKey = deckKey;
     activeDeckOffset = deckOffset;
-    activeDeckLabel = getDeckLabel(deckOffset);
     activeDeckDateString = deckKey;
     dailyWords = session.dailyWords;
     currentIndex = session.currentIndex;
@@ -416,12 +413,6 @@ function activateSession(session, deckKey, deckOffset) {
     score = session.score;
     recomputeScore();
     session.score = score;
-}
-
-function getDeckLabel(offsetDays) {
-    if (offsetDays === 0) return 'Today';
-    if (offsetDays === -1) return 'Yesterday';
-    return getDateStringWithOffset(offsetDays);
 }
 
 function updateDeckSwitcher() {
@@ -437,12 +428,12 @@ function updateDeckSwitcher() {
 function updateDeckLabels() {
     const dateBadge = document.getElementById('today-date');
     if (dateBadge) {
-        dateBadge.innerText = `${activeDeckLabel}: ${activeDeckDateString}`;
+        dateBadge.innerText = activeDeckDateString;
     }
 
     const resultNote = document.getElementById('result-note');
     if (resultNote) {
-        resultNote.innerText = `You are reviewing ${activeDeckLabel.toLowerCase()}'s set: ${activeDeckDateString}.`;
+        resultNote.innerText = `You are reviewing ${activeDeckDateString}.`;
     }
 }
 
@@ -913,7 +904,6 @@ async function loadDeck(deckOffset = 0) {
 
     const deckKey = getDateStringWithOffset(deckOffset);
     activeDeckOffset = deckOffset;
-    activeDeckLabel = getDeckLabel(deckOffset);
     activeDeckDateString = deckKey;
 
     updateDeckSwitcher();

@@ -27,7 +27,8 @@
 .feature-tile-art {
     width: 100%;
     height: 100%;
-    display: block;
+    display: grid;
+    place-items: center;
     overflow: hidden;
     border-radius: 0;
     box-shadow: none;
@@ -36,33 +37,36 @@
     transition: transform 0.18s ease;
 }
 
+.feature-tile:hover .feature-tile-art {
+    transform: scale(1.05);
+}
+
 .feature-tile-art img {
     width: 100%;
     height: 100%;
     display: block;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .feature-tile-label {
     position: absolute;
     left: 50%;
-    top: 50%;
+    top: calc(41% - 8px);
     transform: translate(-50%, -50%);
     min-width: 48px;
     padding: 3px 8px;
-    border-radius: 999px;
+    border-radius: 12px;
     background: rgba(255, 255, 255, 0.86);
     color: #0f172a;
     font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0;
-    line-height: 1.1;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
-}
-
-.feature-tile:hover .feature-tile-art {
-    transform: rotate(90deg);
 }
 
 .feature-tile:focus-visible {
@@ -92,4 +96,3 @@
         height: auto;
     }
 }
-
