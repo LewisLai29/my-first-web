@@ -488,6 +488,44 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('word-target').innerText).not.toBe('Error');
     });
 
+    test('reopens practice after quiz without saving quiz state into the review deck', async () => {
+        await loadPage();
+
+        document.getElementById('start-review').click();
+        await waitForReviewUi();
+        const firstPracticeWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
+
+        document.getElementById('start-practice').click();
+        for (let i = 0; i < 100; i++) {
+            const quizPopup = document.getElementById('quiz-popup');
+            const quizGate = document.getElementById('quiz-gate');
+            if (quizPopup && quizPopup.hidden === false && quizGate && quizGate.hidden === false) {
+                break;
+            }
+
+            await Promise.resolve();
+            jest.advanceTimersByTime(20);
+        }
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(document.getElementById('quiz-popup').hidden).toBe(false);
+        expect(document.getElementById('quiz-gate').hidden).toBe(false);
+        expect(window.__getDailyWords()).toHaveLength(0);
+
+        document.getElementById('start-review').click();
+        await waitForReviewUi();
+
+        expect(document.getElementById('practice-popup').hidden).toBe(false);
+        expect(document.getElementById('quiz-popup').hidden).toBe(true);
+        expect(document.getElementById('quiz-box').hidden).toBe(false);
+        expect(document.getElementById('result-box').hidden).toBe(true);
+        expect(window.__getDailyWords()).toHaveLength(15);
+        expect(sortIds(window.__getDailyWords().map((word) => word.id))).toEqual(firstPracticeWordIds);
+        expect(document.getElementById('card-index').innerText).toContain('1 / 15');
+        expect(document.querySelectorAll('#review-list button')).toHaveLength(0);
+    });
+
     test('opens favorites from the cover page in a popup without navigating away', async () => {
         mockFirebaseEnabled = true;
         favoriteStore.set('1', {

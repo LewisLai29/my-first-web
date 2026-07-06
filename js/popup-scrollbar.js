@@ -44,6 +44,7 @@ export function createPopupScrollbarController({
 
         thumb.addEventListener('pointerdown', (event) => {
             event.preventDefault();
+            event.stopPropagation();
             const startY = event.clientY;
             const startScrollTop = scrollElement.scrollTop;
             const maxScrollTop = scrollElement.scrollHeight - scrollElement.clientHeight;
@@ -68,6 +69,10 @@ export function createPopupScrollbarController({
             thumb.addEventListener('pointermove', onPointerMove);
             thumb.addEventListener('pointerup', onPointerUp);
             thumb.addEventListener('pointercancel', onPointerUp);
+        });
+
+        thumb.addEventListener('click', (event) => {
+            event.stopPropagation();
         });
     };
 

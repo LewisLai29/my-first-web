@@ -55,6 +55,7 @@ let quizDateString = '';
 let quizIsSaving = false;
 let quizIsLoading = false;
 let quizIsResetting = false;
+let activeRuntimeMode = '';
 
 const favoritesController = createFavoritesController(() => {
     updateFavoriteButton();
@@ -72,6 +73,12 @@ const lookupController = createLookupController((word) => (
 const speechController = createSpeechController(() => dailyWords[currentIndex]);
 
 const popupScrollbarController = createPopupScrollbarController();
+const cardScrollbarController = createPopupScrollbarController({
+    popupSelector: '.card-back',
+    scrollBodySelector: '.card-back-scroll-content',
+    trackSelector: '.card-scrollbar',
+    thumbSelector: '.card-scrollbar-thumb',
+});
 
 const homePopupController = createHomePopupController({
     getElement,
@@ -127,6 +134,7 @@ function setResultVisible(visible) {
 
 function resetRuntimeState() {
     activeSession = null;
+    activeRuntimeMode = '';
     activeDeckKey = '';
     dailyWords = [];
     currentIndex = 0;
@@ -364,7 +372,7 @@ function createDeckSession(dailyWordsForDeck) {
 }
 
 function persistActiveSession() {
-    if (!activeSession) return;
+    if (!activeSession || activeRuntimeMode !== 'practice') return;
 
     recomputeScore();
     activeSession.dailyWords = dailyWords;
@@ -375,6 +383,7 @@ function persistActiveSession() {
 
 function activateSession(session, deckKey, deckOffset) {
     activeSession = session;
+    activeRuntimeMode = 'practice';
     activeDeckKey = deckKey;
     activeDeckOffset = deckOffset;
     activeDeckDateString = deckKey;
@@ -454,6 +463,7 @@ function showWord() {
     renderCurrentReviewList();
     updateFavoriteButton();
     speechController.updateSpeakButton();
+    cardScrollbarController.refresh();
 }
 
 function markCurrentWordReviewed(isRight) {
@@ -551,6 +561,7 @@ function showQuizWord() {
     getElement('progress').style.width = `${(currentIndex / dailyWords.length) * 100}%`;
     speechController.updateSpeakButton();
     updateQuizResetButton();
+    cardScrollbarController.refresh();
 }
 
 async function submitQuizAttempt() {
@@ -600,6 +611,7 @@ async function loadQuizDeck() {
     if (quizIsLoading) return;
     quizIsLoading = true;
     const loadToken = ++activeLoadToken;
+    activeRuntimeMode = 'quiz';
     clearPendingWordRender();
     quizDateString = getDateStringWithOffset(0);
     activeDeckKey = quizDateString;
@@ -1010,6 +1022,8 @@ async function openQuizPopup() {
 
     try {
         homePopupController.prepareExclusive('quiz');
+        persistActiveSession();
+        activeRuntimeMode = 'quiz';
         dailyWords = [];
         currentIndex = 0;
         score = 0;
@@ -1070,20 +1084,7 @@ async function ensureSettingPopupLoaded() {
 
     const homeLink = popupBody.querySelector('.setting-home-link');
     if (homeLink) {
-        homeLink.removeAttribute('href');
-        homeLink.setAttribute('role', 'button');
-        homeLink.setAttribute('tabindex', '0');
-        homeLink.textContent = 'Close';
-        homeLink.addEventListener('click', (event) => {
-            event.preventDefault();
-            closeSettingPopup();
-        });
-        homeLink.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                closeSettingPopup();
-            }
-        });
+        homeLink.remove();
     }
 
     wireSettingEvents();
@@ -1204,7 +1205,9 @@ function wireHomeEvents() {
     }
 
     popupScrollbarController.observe();
+    cardScrollbarController.observe();
     popupScrollbarController.refresh();
+    cardScrollbarController.refresh();
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
@@ -1405,6 +1408,7 @@ window.PteVocabApp = {
         favoritesController.dispose();
         quizAttemptsController.dispose();
         popupScrollbarController.dispose();
+        cardScrollbarController.dispose();
     },
 };
 
