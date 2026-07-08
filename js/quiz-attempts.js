@@ -9,7 +9,7 @@ function getCompletedAtValue() {
         : new Date().toISOString();
 }
 
-export function createQuizAttemptsController(onChange = () => {}) {
+export function createQuizAttemptsController(onChange = () => {}, collectionName = 'quizAttempts') {
     let services = null;
     let user = null;
     let attempt = null;
@@ -30,7 +30,7 @@ export function createQuizAttemptsController(onChange = () => {}) {
         return services.db
             .collection('users')
             .doc(user.uid)
-            .collection('quizAttempts')
+            .collection(collectionName)
             .doc(dateString);
     };
 

@@ -31,6 +31,7 @@ export const QUIZ_POPUP_PARTIALS = [
 ];
 
 export const FAVORITES_PARTIAL = new URL('../partials/favorites/favorites.html', import.meta.url).href;
+export const EXAM_PARTIAL = new URL('../partials/exam/exam.html', import.meta.url).href;
 
 export const FAVORITES_HTML_FUNCTIONS = [
     new URL('../partials/common/header.html', import.meta.url).href,

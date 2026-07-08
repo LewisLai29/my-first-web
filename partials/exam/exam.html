@@ -1,0 +1,31 @@
+<section id="exam-gate" class="exam-gate" aria-labelledby="exam-gate-title" hidden>
+    <h2 id="exam-gate-title">Daily exam</h2>
+    <p id="exam-gate-message">Please sign in to start today's exam.</p>
+</section>
+
+<section id="exam-box" aria-labelledby="exam-title" hidden>
+    <h2 id="exam-title" class="visually-hidden">Daily exam</h2>
+
+    <div class="stats">
+        <span id="exam-index">Question: -- / --</span>
+        <span class="score-count" id="exam-score-count">Correct: 0</span>
+    </div>
+
+    <div class="progress-bar" aria-hidden="true">
+        <div class="progress-fill" id="exam-progress"></div>
+    </div>
+
+    <div class="exam-card">
+        <p class="exam-example" id="exam-example">Loading example...</p>
+        <div class="exam-options" id="exam-options" role="group" aria-label="Answer options"></div>
+    </div>
+
+    <button id="exam-next" class="exam-next-button" type="button" disabled>Next</button>
+</section>
+
+<section id="exam-result-box" class="result-screen exam-result-screen" aria-labelledby="exam-result-title" hidden>
+    <h2 id="exam-result-title">Exam complete</h2>
+    <p class="quiz-score" id="exam-score">--</p>
+    <p class="result-note" id="exam-result-note">Today exam is complete.</p>
+    <ol id="exam-analysis-list" class="quiz-analysis-list"></ol>
+</section>

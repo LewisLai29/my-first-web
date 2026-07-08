@@ -1,6 +1,7 @@
 import {
     FAVORITES_HTML_FUNCTIONS,
     FAVORITES_PARTIAL,
+    EXAM_PARTIAL,
     FEATURE_HTML_FUNCTIONS,
     HOME_HTML_FUNCTIONS,
     PRACTICE_POPUP_PARTIALS,
@@ -89,6 +90,7 @@ const homePopupController = createHomePopupController({
         practice: 'practice-popup',
         quiz: 'quiz-popup',
         favorites: 'favorites-popup',
+        exam: 'exam-popup',
     },
 });
 
@@ -277,6 +279,33 @@ function setQuizHeader() {
     const hintText = document.querySelector('.hint-text');
     if (hintText) {
         hintText.innerText = 'Tap the card to check the answer, then mark the question correct or wrong.';
+    }
+}
+
+function setExamHeader() {
+    const headerCopy = getElement('header-copy');
+    if (headerCopy) {
+        headerCopy.hidden = false;
+    }
+
+    const headerTitle = document.querySelector('#header-copy h1');
+    if (headerTitle) {
+        headerTitle.innerText = 'PTE vocabulary exam';
+    }
+
+    const dateBadge = getElement('today-date');
+    if (dateBadge) {
+        dateBadge.innerText = getDateStringWithOffset(0);
+    }
+
+    const deckSwitcher = document.querySelector('.deck-switcher');
+    if (deckSwitcher) {
+        deckSwitcher.hidden = true;
+    }
+
+    const hintText = document.querySelector('.hint-text');
+    if (hintText) {
+        hintText.innerText = 'Choose the word that best completes the example sentence.';
     }
 }
 
@@ -802,6 +831,10 @@ function isFavoritesPopupOpen() {
     return homePopupController.isModeOpen('favorites');
 }
 
+function isExamPopupOpen() {
+    return homePopupController.isModeOpen('exam');
+}
+
 function isHomePopupOpen() {
     return homePopupController.isAnyOpen();
 }
@@ -864,6 +897,10 @@ function unloadPopupContent(mode) {
     if (mode === 'quiz') {
         unloadQuizPopupContent();
     }
+
+    if (mode === 'exam') {
+        unloadExamPopupContent();
+    }
 }
 
 function closeSettingPopup() {
@@ -880,6 +917,10 @@ function closeQuizPopup() {
 
 function closeFavoritesPopup() {
     homePopupController.close('favorites');
+}
+
+function closeExamPopup() {
+    homePopupController.close('exam');
 }
 
 function removePopupContent(contentId, popupBodyId, loadedDatasetKey = 'loaded') {
@@ -908,6 +949,14 @@ function unloadQuizPopupContent() {
     if (popupBody) {
         delete popupBody.dataset.quizWired;
     }
+}
+
+function unloadExamPopupContent() {
+    if (window.PteExamApp && typeof window.PteExamApp.dispose === 'function') {
+        window.PteExamApp.dispose();
+    }
+
+    removePopupContent('exam-popup-content', 'exam-popup-body');
 }
 
 function moveHeaderCopyToPopup(popupBody) {
@@ -993,6 +1042,26 @@ async function ensureFavoritesPopupLoaded() {
     return true;
 }
 
+async function ensureExamPopupLoaded() {
+    const popupBody = getElement('exam-popup-body');
+    if (!popupBody) return false;
+
+    moveHeaderCopyToPopup(popupBody);
+    setExamHeader();
+
+    if (popupBody.dataset.loaded !== 'true') {
+        const examBody = document.createElement('div');
+        examBody.id = 'exam-popup-content';
+        examBody.innerHTML = await fetchHtmlPartial(EXAM_PARTIAL, 'Failed to load exam popup.');
+        popupBody.appendChild(examBody);
+        popupBody.dataset.loaded = 'true';
+    }
+
+    const examModule = await import('./exam.js');
+    await examModule.boot();
+    return true;
+}
+
 async function openPracticePopup() {
     const popup = getElement('practice-popup');
     const closeButton = getElement('practice-popup-close');
@@ -1071,6 +1140,27 @@ async function openFavoritesPopup() {
     }
 }
 
+async function openExamPopup() {
+    const popup = getElement('exam-popup');
+    const closeButton = getElement('exam-popup-close');
+    if (!popup) return;
+
+    try {
+        homePopupController.prepareExclusive('exam');
+        const loaded = await ensureExamPopupLoaded();
+        if (!loaded) return;
+
+        homePopupController.show('exam');
+        if (closeButton) {
+            closeButton.focus();
+        }
+        popupScrollbarController.refresh();
+    } catch (error) {
+        console.error('Failed to open exam popup.', error);
+        window.location.href = 'pages/exam.html';
+    }
+}
+
 async function ensureSettingPopupLoaded() {
     const popupBody = getElement('setting-popup-body');
     if (!popupBody) return false;
@@ -1118,6 +1208,7 @@ function wireHomeEvents() {
     const practiceTile = getElement('start-review');
     const quizTile = getElement('start-practice');
     const favoritesTile = getElement('start-favorites');
+    const examTile = getElement('start-exam');
     const settingTile = getElement('start-setting');
     const settingPopup = getElement('setting-popup');
     const settingCloseButton = getElement('setting-popup-close');
@@ -1127,6 +1218,8 @@ function wireHomeEvents() {
     const quizCloseButton = getElement('quiz-popup-close');
     const favoritesPopup = getElement('favorites-popup');
     const favoritesCloseButton = getElement('favorites-popup-close');
+    const examPopup = getElement('exam-popup');
+    const examCloseButton = getElement('exam-popup-close');
 
     if (practiceTile) {
         practiceTile.addEventListener('click', (event) => {
@@ -1146,6 +1239,13 @@ function wireHomeEvents() {
         favoritesTile.addEventListener('click', (event) => {
             event.preventDefault();
             openFavoritesPopup();
+        });
+    }
+
+    if (examTile) {
+        examTile.addEventListener('click', (event) => {
+            event.preventDefault();
+            openExamPopup();
         });
     }
 
@@ -1170,6 +1270,10 @@ function wireHomeEvents() {
 
     if (favoritesCloseButton) {
         favoritesCloseButton.addEventListener('click', closeFavoritesPopup);
+    }
+
+    if (examCloseButton) {
+        examCloseButton.addEventListener('click', closeExamPopup);
     }
 
     if (settingPopup) {
@@ -1204,6 +1308,14 @@ function wireHomeEvents() {
         });
     }
 
+    if (examPopup) {
+        examPopup.addEventListener('click', (event) => {
+            if (event.target === examPopup) {
+                closeExamPopup();
+            }
+        });
+    }
+
     popupScrollbarController.observe();
     cardScrollbarController.observe();
     popupScrollbarController.refresh();
@@ -1215,6 +1327,7 @@ function wireHomeEvents() {
             closePracticePopup();
             closeQuizPopup();
             closeFavoritesPopup();
+            closeExamPopup();
         }
     });
 }

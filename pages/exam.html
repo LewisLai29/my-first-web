@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PTE Exam</title>
+    <link rel="preload" as="image" href="../assets/background-optimized.jpg" fetchpriority="high">
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/exam.css">
+</head>
+<body data-page="exam">
+    <main id="app" class="container exam-page" data-page="exam" aria-live="polite">
+        <header class="site-header">
+            <div class="header-auth-row">
+                <div class="auth-panel" aria-label="Sign in controls">
+                    <span id="auth-summary-status" class="auth-status" aria-live="polite">Not signed in</span>
+                    <button id="auth-open-sign-in" class="auth-button" type="button">Sign in</button>
+                    <button id="auth-sign-out" class="auth-button auth-button-secondary" type="button" hidden>Sign out</button>
+                </div>
+            </div>
+            <div id="header-copy" class="header-copy">
+                <div class="header-copy-row">
+                    <h1>PTE vocabulary exam</h1>
+                    <a class="header-home-link" href="../index.html">Home</a>
+                </div>
+                <div class="header-date-row">
+                    <span class="date-badge" id="today-date">-----</span>
+                </div>
+                <div class="hint-text">Choose the word that best completes the example sentence.</div>
+            </div>
+        </header>
+
+        <dialog id="auth-dialog" class="auth-dialog" aria-label="Sign in">
+            <div class="auth-dialog-card">
+                <button id="auth-dialog-close" class="auth-dialog-close" type="button" aria-label="Close sign in dialog">x</button>
+
+                <label class="auth-field">
+                    <span>Email</span>
+                    <input id="auth-email" class="auth-input" type="email" autocomplete="email" placeholder="Email">
+                </label>
+
+                <label class="auth-field">
+                    <span>Password</span>
+                    <input id="auth-password" class="auth-input" type="password" autocomplete="current-password" placeholder="Password">
+                </label>
+
+                <p id="auth-dialog-status" class="auth-status" aria-live="polite">Loading sign-in...</p>
+
+                <div class="auth-actions">
+                    <button id="auth-sign-in" class="auth-button" type="button">Sign in</button>
+                    <button id="auth-sign-up" class="auth-button auth-button-secondary" type="button">Create account</button>
+                </div>
+
+                <div class="auth-divider" aria-hidden="true">
+                    <span>or</span>
+                </div>
+
+                <button id="auth-google-sign-in" class="auth-google-button" type="button">Continue with Google</button>
+            </div>
+        </dialog>
+
+        <section id="exam-gate" class="exam-gate" aria-labelledby="exam-gate-title" hidden>
+            <h2 id="exam-gate-title">Daily exam</h2>
+            <p id="exam-gate-message">Please sign in to start today's exam.</p>
+        </section>
+
+        <section id="exam-box" aria-labelledby="exam-title" hidden>
+            <h2 id="exam-title" class="visually-hidden">Daily exam</h2>
+
+            <div class="stats">
+                <span id="exam-index">Question: -- / --</span>
+                <span class="score-count" id="exam-score-count">Correct: 0</span>
+            </div>
+
+            <div class="progress-bar" aria-hidden="true">
+                <div class="progress-fill" id="exam-progress"></div>
+            </div>
+
+            <div class="exam-card">
+                <p class="exam-example" id="exam-example">Loading example...</p>
+                <div class="exam-options" id="exam-options" role="group" aria-label="Answer options"></div>
+                <p id="exam-feedback" class="exam-feedback" aria-live="polite"></p>
+            </div>
+
+            <button id="exam-next" class="exam-next-button" type="button" disabled>Next</button>
+        </section>
+
+        <section id="exam-result-box" class="result-screen exam-result-screen" aria-labelledby="exam-result-title" hidden>
+            <h2 id="exam-result-title">Exam complete</h2>
+            <p class="quiz-score" id="exam-score">--</p>
+            <p class="result-note" id="exam-result-note">Today exam is complete.</p>
+            <ol id="exam-analysis-list" class="quiz-analysis-list"></ol>
+        </section>
+
+        <section class="exam-reset-panel" aria-label="Exam reset controls">
+            <button id="exam-reset-attempt" class="exam-reset-button" type="button">Reset today exam</button>
+            <p id="exam-reset-status" class="exam-reset-status" aria-live="polite"></p>
+        </section>
+    </main>
+    <script type="module" src="../js/exam.js"></script>
+</body>
+</html>

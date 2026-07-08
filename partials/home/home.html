@@ -25,6 +25,13 @@
             <span class="feature-tile-label">Favorites</span>
         </a>
 
+        <a id="start-exam" class="feature-tile" href="pages/exam.html" aria-label="Open exam page">
+            <span class="feature-tile-art" aria-hidden="true">
+                <img src="assets/func_label.svg" alt="">
+            </span>
+            <span class="feature-tile-label">Exam</span>
+        </a>
+
         <a id="start-setting" class="feature-tile" href="pages/setting.html" aria-label="Open setting page">
             <span class="feature-tile-art" aria-hidden="true">
                 <img src="assets/func_label.svg" alt="">
@@ -67,6 +74,16 @@
         <div class="setting-popup-window practice-popup-window custom-scrollbar-host">
             <button id="favorites-popup-close" class="setting-popup-close" type="button" aria-label="Close favorites">x</button>
             <div id="favorites-popup-body" class="setting-popup-body practice-popup-body custom-scrollbar-content"></div>
+            <div class="custom-scrollbar" aria-hidden="true">
+                <div class="custom-scrollbar-thumb"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="exam-popup" class="setting-popup exam-popup" role="dialog" aria-modal="true" aria-labelledby="exam-title" hidden>
+        <div class="setting-popup-window practice-popup-window custom-scrollbar-host">
+            <button id="exam-popup-close" class="setting-popup-close" type="button" aria-label="Close exam">x</button>
+            <div id="exam-popup-body" class="setting-popup-body practice-popup-body custom-scrollbar-content"></div>
             <div class="custom-scrollbar" aria-hidden="true">
                 <div class="custom-scrollbar-thumb"></div>
             </div>
