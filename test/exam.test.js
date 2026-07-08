@@ -273,10 +273,33 @@ describe('PTE vocabulary exam page', () => {
         expect(document.getElementById('exam-box').hidden).toBe(false);
         expect(document.getElementById('exam-example').textContent).toContain('_____');
         expect(document.getElementById('exam-example').textContent).not.toContain('**');
+        expect(document.getElementById('exam-example').textContent).not.toMatch(/[\u3400-\u9FFF]/);
 
         const optionWords = [...document.querySelectorAll('.exam-option')].map((button) => button.dataset.word);
         expect(optionWords).toHaveLength(4);
         expect(new Set(optionWords).size).toBe(4);
+    });
+
+    test('strips translated text from multiline example sentences', async () => {
+        mockVocab = {
+            items: Array.from({ length: 15 }, (_, i) => ({
+                id: i + 1,
+                w: `word${i + 1}`,
+                m: `meaning${i + 1}`,
+                e: i === 0
+                    ? 'First **word1** example.（第一句翻譯）\nSecond **word1** example.（第二句翻譯）'
+                    : `This is **word${i + 1}** in an example.（中文句子${i + 1}）`,
+            })),
+        };
+
+        await loadExamPage('2026-06-23T12:00:00+08:00', { user: { uid: 'user-123', email: 'test@example.com' } });
+        await waitForExamUi();
+
+        const parsedQuestion = window.PteExamApp.getQuestions().find((question) => question.id === 1);
+        expect(parsedQuestion.exampleEnglish).toBe('First **word1** example.\nSecond **word1** example.');
+        expect(parsedQuestion.exampleTranslation).toBe('第一句翻譯\n第二句翻譯');
+        expect(parsedQuestion.blankedExample).toBe('First _____ example.\nSecond _____ example.');
+        expect(document.getElementById('exam-example').textContent).not.toMatch(/[\u3400-\u9FFF]/);
     });
 
     test('answers questions and saves examAttempts when signed in', async () => {
@@ -288,7 +311,7 @@ describe('PTE vocabulary exam page', () => {
             const question = window.PteExamApp.getQuestions()[i];
             document.querySelector(`.exam-option[data-word="${question.correctWord}"]`).click();
             expect(document.getElementById('exam-next').disabled).toBe(false);
-            expect(document.getElementById('exam-example').textContent).toContain('"');
+            expect(document.getElementById('exam-example').textContent).toMatch(/[\u3400-\u9FFF]/);
             expect([...document.querySelectorAll('.exam-option .exam-option-text')].every((node) => node.textContent.includes('('))).toBe(true);
             document.getElementById('exam-next').click();
             for (let wait = 0; wait < 20 && window.PteExamApp.getCurrentIndex() === i && i < totalQuestions - 1; wait++) {
@@ -304,8 +327,8 @@ describe('PTE vocabulary exam page', () => {
         expect(examAttemptSetMock.mock.calls[0][1].totalCount).toBe(totalQuestions);
         expect(document.getElementById('exam-score').innerText).toBe('100 points');
         expect(document.querySelectorAll('#exam-analysis-list .quiz-analysis-item')).toHaveLength(totalQuestions);
+        expect(document.querySelector('#exam-analysis-list .quiz-analysis-example').textContent).toMatch(/[\u3400-\u9FFF]/);
     });
-
     test('shows an existing exam attempt when it exists for today', async () => {
         examAttemptStore.set('2026-06-23', {
             date: '2026-06-23',
@@ -335,3 +358,4 @@ describe('PTE vocabulary exam page', () => {
         expect(examAttemptSetMock).not.toHaveBeenCalled();
     });
 });
+

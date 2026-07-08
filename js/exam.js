@@ -8,7 +8,7 @@ import { VOCAB_SOURCE } from './config.js';
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 const BLANK_TEXT = '_____';
 
-export const EXAM_REQUIRES_SIGN_IN = true;
+export const EXAM_REQUIRES_SIGN_IN = false;
 
 let allVocab = [];
 let examWords = [];
@@ -82,17 +82,45 @@ function normalizeWordForCompare(word) {
     return String(word).trim().toLowerCase();
 }
 
+function hasCjkCharacters(text) {
+    return /[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\u3040-\u30FF\uAC00-\uD7AF]/.test(String(text || ''));
+}
+
+function stripInlineTranslation(text) {
+    const source = String(text || '').trim();
+    if (!source) {
+        return '';
+    }
+
+    return source
+        .replace(/\s*[\uFF08(]([^()\r\n]*)[\uFF09)]/g, (match, inner) => (hasCjkCharacters(inner) ? '' : match))
+        .replace(/[ \t]+$/gm, '')
+        .trim();
+}
+
+function extractInlineTranslation(text) {
+    const source = String(text || '').trim();
+    if (!source) {
+        return '';
+    }
+
+    const matches = source.match(/^(.*?)(?:\s*[\uFF08(]([^()\r\n]*)[\uFF09)])?\s*$/);
+    const translation = matches && matches[2] ? matches[2].trim() : '';
+    return hasCjkCharacters(translation) ? translation : '';
+}
+
 function parseExampleText(text) {
     const source = String(text || '').trim();
     if (!source) {
         return { english: '', translation: '' };
     }
 
-    const matches = source.match(/^(.*?)(?:\s*[\uFF08(]([^\uFF08\uFF09()]*)[\uFF09)])?\s*$/);
-    const english = matches && matches[1] ? matches[1].trim() : source;
-    const translation = matches && matches[2] ? matches[2].trim() : '';
-
-    return { english, translation };
+    const englishLines = source.split(/\r?\n/).map((line) => stripInlineTranslation(line));
+    const translationLines = source.split(/\r?\n/).map((line) => extractInlineTranslation(line)).filter(Boolean);
+    return {
+        english: englishLines.join('\n').trim(),
+        translation: translationLines.join('\n').trim(),
+    };
 }
 
 function blankExampleText(englishText, correctWord) {
