@@ -97,6 +97,11 @@
     line-height: 0;
 }
 
+.card.flipped .card-front {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 .favorite-toggle:hover,
 .favorite-toggle.active {
     background: #fef3c7;

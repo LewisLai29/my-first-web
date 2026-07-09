@@ -355,14 +355,43 @@ function setFavoriteStatus(message, isError = false) {
     status.classList.toggle('favorite-status-error', isError);
 }
 
+function syncFavoriteButtonVisibility(wordCard = getElement('word-card')) {
+    const favoriteButton = getElement('favorite-toggle');
+    if (!favoriteButton) return;
+
+    const current = dailyWords[currentIndex];
+    const isFlipped = Boolean(wordCard?.classList.contains('flipped'));
+    favoriteButton.hidden = !favoritesController.getUser() || !current || isFlipped;
+
+    if (favoriteButton.hidden && document.activeElement === favoriteButton && wordCard) {
+        wordCard.focus();
+    }
+}
+
+function setCardFlipped(wordCard, isFlipped) {
+    if (!wordCard) return;
+
+    wordCard.classList.toggle('flipped', isFlipped);
+    syncFavoriteButtonVisibility(wordCard);
+}
+
+function toggleCardFlipped(wordCard) {
+    if (!wordCard) return;
+
+    setCardFlipped(wordCard, !wordCard.classList.contains('flipped'));
+}
+
 function updateFavoriteButton() {
     const favoriteButton = getElement('favorite-toggle');
     if (!favoriteButton) return;
 
     const current = dailyWords[currentIndex];
     const isSignedIn = Boolean(favoritesController.getUser());
-    favoriteButton.hidden = !isSignedIn || !current;
-    if (!isSignedIn || !current) return;
+    syncFavoriteButtonVisibility();
+    if (!isSignedIn || !current) {
+        favoriteButton.classList.remove('active');
+        return;
+    }
 
     const isFavorite = favoritesController.hasFavorite(current);
     favoriteButton.innerHTML = isFavorite
@@ -371,6 +400,7 @@ function updateFavoriteButton() {
     favoriteButton.classList.toggle('active', isFavorite);
     favoriteButton.setAttribute('aria-label', isFavorite ? 'Remove from favorites' : 'Add to favorites');
     favoriteButton.setAttribute('aria-pressed', String(isFavorite));
+    syncFavoriteButtonVisibility();
 }
 
 function renderFavoritesPage() {
@@ -469,7 +499,7 @@ function showWord() {
 
     showReviewView();
     hideLookupPopup();
-    wordCard.classList.remove('flipped');
+    setCardFlipped(wordCard, false);
     clearPendingWordRender();
     setFavoriteStatus('');
 
@@ -571,7 +601,7 @@ function showQuizWord() {
     setQuizResultVisible(false);
     setQuizHeader();
     hideLookupPopup();
-    wordCard.classList.remove('flipped');
+    setCardFlipped(wordCard, false);
     clearPendingWordRender();
 
     const current = dailyWords[currentIndex];
@@ -778,15 +808,43 @@ function wireCardFlipEvents() {
     if (!wordCard) return;
 
     wordCard.addEventListener('click', () => {
-        wordCard.classList.toggle('flipped');
+        toggleCardFlipped(wordCard);
     });
 
     wordCard.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
-            wordCard.classList.toggle('flipped');
+            toggleCardFlipped(wordCard);
         }
     });
+}
+
+async function handleFavoriteToggleClick(event) {
+    event.stopPropagation();
+
+    const favoriteButton = event.currentTarget;
+    const wordCard = getElement('word-card');
+    const current = dailyWords[currentIndex];
+    if (
+        !current
+        || favoriteButton.hidden
+        || favoriteButton.disabled
+        || wordCard?.classList.contains('flipped')
+    ) {
+        return;
+    }
+
+    favoriteButton.disabled = true;
+    try {
+        const isFavorite = await favoritesController.toggleFavorite(current);
+        setFavoriteStatus(isFavorite ? 'Added to favorites.' : 'Removed from favorites.');
+    } catch (error) {
+        setFavoriteStatus('Favorite update failed. Please check Firebase permissions.', true);
+        console.error('Failed to update favorite.', error);
+    } finally {
+        favoriteButton.disabled = false;
+        updateFavoriteButton();
+    }
 }
 
 function wireSharedCardEvents() {
@@ -860,25 +918,7 @@ function wireReviewSessionEvents() {
     getElement('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
     getElement('deck-yesterday').addEventListener('click', () => loadAndInitQuiz(-1));
     getElement('review-again').addEventListener('click', restartActiveDeck);
-    getElement('favorite-toggle').addEventListener('click', async (event) => {
-        event.stopPropagation();
-
-        const favoriteButton = event.currentTarget;
-        const current = dailyWords[currentIndex];
-        if (!current || favoriteButton.disabled) return;
-
-        favoriteButton.disabled = true;
-        try {
-            const isFavorite = await favoritesController.toggleFavorite(current);
-            setFavoriteStatus(isFavorite ? 'Added to favorites.' : 'Removed from favorites.');
-        } catch (error) {
-            setFavoriteStatus('Favorite update failed. Please check Firebase permissions.', true);
-            console.error('Failed to update favorite.', error);
-        } finally {
-            favoriteButton.disabled = false;
-            updateFavoriteButton();
-        }
-    });
+    getElement('favorite-toggle').addEventListener('click', handleFavoriteToggleClick);
 }
 
 function cancelPopupWork(mode) {
@@ -1369,25 +1409,7 @@ function wireEvents() {
     getElement('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
     getElement('deck-yesterday').addEventListener('click', () => loadAndInitQuiz(-1));
     getElement('review-again').addEventListener('click', restartActiveDeck);
-    getElement('favorite-toggle').addEventListener('click', async (event) => {
-        event.stopPropagation();
-
-        const favoriteButton = event.currentTarget;
-        const current = dailyWords[currentIndex];
-        if (!current || favoriteButton.disabled) return;
-
-        favoriteButton.disabled = true;
-        try {
-            const isFavorite = await favoritesController.toggleFavorite(current);
-            setFavoriteStatus(isFavorite ? 'Added to favorites.' : 'Removed from favorites.');
-        } catch (error) {
-            setFavoriteStatus('Favorite update failed. Please check Firebase permissions.', true);
-            console.error('Failed to update favorite.', error);
-        } finally {
-            favoriteButton.disabled = false;
-            updateFavoriteButton();
-        }
-    });
+    getElement('favorite-toggle').addEventListener('click', handleFavoriteToggleClick);
 }
 
 async function loadAndInitQuiz(deckOffset = 0) {

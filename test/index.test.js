@@ -839,6 +839,46 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('favorite-status').innerText).toBe('Removed from favorites.');
     });
 
+    test('disables the favorite star while the review card back is showing', async () => {
+        mockFirebaseEnabled = true;
+        await loadReviewPage();
+
+        const currentWord = window.__getDailyWords()[0];
+        const favoriteButton = document.getElementById('favorite-toggle');
+        const wordCard = document.getElementById('word-card');
+
+        expect(favoriteButton.hidden).toBe(false);
+        expect(favoriteButton.disabled).toBe(false);
+
+        wordCard.click();
+
+        expect(wordCard.classList.contains('flipped')).toBe(true);
+        expect(favoriteButton.hidden).toBe(true);
+
+        favoriteButton.click();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(favoriteSetMock).not.toHaveBeenCalled();
+        expect(favoriteDeleteMock).not.toHaveBeenCalled();
+
+        wordCard.click();
+
+        expect(wordCard.classList.contains('flipped')).toBe(false);
+        expect(favoriteButton.hidden).toBe(false);
+        expect(favoriteButton.disabled).toBe(false);
+
+        favoriteButton.click();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(favoriteSetMock).toHaveBeenCalledWith(String(currentWord.id), expect.objectContaining({
+            id: currentWord.id,
+            w: currentWord.w,
+        }));
+        expect(favoriteButton.getAttribute('aria-pressed')).toBe('true');
+    });
+
     test('loads favorites.html and asks signed-out users to sign in', async () => {
         mockFirebaseEnabled = true;
         mockAuthUser = null;
