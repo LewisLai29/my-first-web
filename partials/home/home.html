@@ -11,11 +11,11 @@
             <span class="feature-tile-label">Practice</span>
         </a>
 
-        <a id="start-tests" class="feature-tile" href="pages/quiz.html" aria-label="Open tests">
+        <a id="start-tests" class="feature-tile" href="pages/exams.html" aria-label="Open exams">
             <span class="feature-tile-art" aria-hidden="true">
                 <img src="assets/func_label.svg" alt="">
             </span>
-            <span class="feature-tile-label">Tests</span>
+            <span class="feature-tile-label">Exams</span>
         </a>
 
         <a id="start-favorites" class="feature-tile" href="pages/favorites.html" aria-label="Open favorites page">
@@ -65,38 +65,8 @@
 
     <div id="tests-popup" class="setting-popup tests-popup" role="dialog" aria-modal="true" aria-labelledby="tests-title" hidden>
         <div class="setting-popup-window practice-popup-window custom-scrollbar-host">
-            <button id="tests-popup-close" class="setting-popup-close" type="button" aria-label="Close tests">x</button>
-            <div id="tests-popup-body" class="setting-popup-body practice-popup-body tests-popup-body custom-scrollbar-content">
-                <section id="tests-home-view" class="tests-view tests-home-view" aria-labelledby="tests-title">
-                    <div class="tests-heading">
-                        <h2 id="tests-title">Tests</h2>
-                        <p>Choose today's vocabulary test mode.</p>
-                    </div>
-
-                    <div class="tests-options" aria-label="Test modes">
-                        <button id="start-daily-quiz" class="tests-option" type="button">
-                            <span>
-                                <strong>Daily Quiz</strong>
-                                <span>Flip cards and mark yourself correct or wrong.</span>
-                            </span>
-                            <span class="tests-option-action" aria-hidden="true">Start</span>
-                        </button>
-
-                        <button id="start-daily-exam" class="tests-option" type="button">
-                            <span>
-                                <strong>Daily Exam</strong>
-                                <span>Choose the word that completes the sentence.</span>
-                            </span>
-                            <span class="tests-option-action" aria-hidden="true">Start</span>
-                        </button>
-                    </div>
-                </section>
-
-                <section id="tests-session-view" class="tests-view tests-session-view" hidden>
-                    <button id="tests-back" class="tests-back-button" type="button">Back</button>
-                    <div id="tests-session-body"></div>
-                </section>
-            </div>
+            <button id="tests-popup-close" class="setting-popup-close" type="button" aria-label="Close exams">x</button>
+            <div id="tests-popup-body" class="setting-popup-body practice-popup-body tests-popup-body custom-scrollbar-content"></div>
             <div class="custom-scrollbar" aria-hidden="true">
                 <div class="custom-scrollbar-thumb"></div>
             </div>

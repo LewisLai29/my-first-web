@@ -1,28 +1,31 @@
 import {
+    CLOZE_EXAM_PARTIAL,
+    EXAMS_HTML_FUNCTIONS,
+    EXAMS_PARTIAL,
     FAVORITES_HTML_FUNCTIONS,
     FAVORITES_PARTIAL,
-    EXAM_PARTIAL,
     FEATURE_HTML_FUNCTIONS,
     HOME_HTML_FUNCTIONS,
     PRACTICE_POPUP_PARTIALS,
-    QUIZ_POPUP_PARTIALS,
-    QUIZ_HTML_FUNCTIONS,
     REVIEW_HTML_FUNCTIONS,
     SETTING_HTML_FUNCTIONS,
     SETTING_PARTIAL,
+    VOCAB_EXAM_HTML_FUNCTIONS,
+    VOCAB_EXAM_POPUP_PARTIALS,
     VOCAB_SOURCE,
 } from './config.js';
 import { getDateStringWithOffset } from './date-utils.js';
 import { createHomePopupController } from './home-popup-controller.js';
 import { loadHtmlFunctions } from './html-functions.js';
 import { setupAuthUI } from './auth.js';
+import { createExamsController } from './exams.js';
 import { createFavoritesController } from './favorites.js';
 import { renderFavoritesScreen } from './favorites-ui.js';
 import { createLookupController, hideLookupPopup } from './lookup.js';
 import { fetchHtmlPartial, fetchHtmlParts } from './partial-loader.js';
 import { createPopupScrollbarController } from './popup-scrollbar.js';
-import { createQuizAttemptsController } from './quiz-attempts.js';
-import { renderQuizResultScreen } from './quiz-ui.js';
+import { createQuizAttemptsController } from './exam-attempts.js';
+import { renderQuizResultScreen } from './vocab-exam-ui.js';
 import { renderReviewList } from './review-list.js';
 import { getDailyWordCount } from './settings.js';
 import { wireSettingEvents } from './setting-ui.js';
@@ -57,7 +60,6 @@ let quizIsSaving = false;
 let quizIsLoading = false;
 let quizIsResetting = false;
 let activeRuntimeMode = '';
-let testsPopupMode = 'home';
 
 const favoritesController = createFavoritesController(() => {
     updateFavoriteButton();
@@ -94,6 +96,11 @@ const homePopupController = createHomePopupController({
     },
 });
 
+const examsController = createExamsController({
+    getElement,
+    onRefresh: () => popupScrollbarController.refresh(),
+});
+
 function getElement(id) {
     return document.getElementById(id);
 }
@@ -102,7 +109,7 @@ function getPageMode() {
     const appRoot = getElement('app');
     const pageMode = appRoot && appRoot.dataset ? appRoot.dataset.page : '';
 
-    if (pageMode === 'review' || pageMode === 'feature' || pageMode === 'setting' || pageMode === 'favorites' || pageMode === 'quiz') {
+    if (pageMode === 'review' || pageMode === 'feature' || pageMode === 'setting' || pageMode === 'favorites' || pageMode === 'quiz' || pageMode === 'exams') {
         return pageMode;
     }
 
@@ -149,7 +156,7 @@ function resetRuntimeState() {
     quizIsSaving = false;
     quizIsLoading = false;
     quizIsResetting = false;
-    testsPopupMode = 'home';
+    examsController.reset();
     activeLoadToken++;
     clearPendingWordRender();
     hideLookupPopup();
@@ -174,6 +181,10 @@ function isAppShellMounted() {
 
     if (pageMode === 'favorites') {
         return Boolean(getElement('favorites-screen') && getElement('auth-dialog'));
+    }
+
+    if (pageMode === 'exams') {
+        return Boolean(getElement('tests-home-view') && getElement('auth-dialog'));
     }
 
     if (pageMode === 'quiz') {
@@ -264,7 +275,7 @@ function setQuizHeader() {
 
     const headerTitle = document.querySelector('#header-copy h1');
     if (headerTitle) {
-        headerTitle.innerText = 'PTE vocabulary daily quiz';
+        headerTitle.innerText = 'PTE vocabulary exam';
     }
 
     const dateBadge = getElement('today-date');
@@ -291,7 +302,7 @@ function setExamHeader() {
 
     const headerTitle = document.querySelector('#header-copy h1');
     if (headerTitle) {
-        headerTitle.innerText = 'PTE vocabulary exam';
+        headerTitle.innerText = 'PTE cloze exam';
     }
 
     const dateBadge = getElement('today-date');
@@ -641,7 +652,7 @@ async function submitQuizAttempt() {
         answers,
     };
 
-    setQuizGateVisible(true, 'Saving quiz result...');
+    setQuizGateVisible(true, 'Saving vocabulary exam result...');
     setQuizExamVisible(false);
     setQuizResultVisible(false);
 
@@ -649,8 +660,8 @@ async function submitQuizAttempt() {
         const savedAttempt = await quizAttemptsController.saveAttempt(attempt);
         renderQuizResult(savedAttempt);
     } catch (error) {
-        console.error('Failed to save quiz attempt.', error);
-        setQuizGateVisible(true, 'Could not save your quiz result. Please check Firebase permissions and try again.');
+        console.error('Failed to save vocabulary exam attempt.', error);
+        setQuizGateVisible(true, 'Could not save your vocabulary exam result. Please check Firebase permissions and try again.');
     } finally {
         quizIsSaving = false;
     }
@@ -716,7 +727,7 @@ function renderQuizPageState() {
     updateQuizResetButton();
 
     if (!quizAttemptsController.isReady()) {
-        setQuizGateVisible(true, 'Loading today quiz...');
+        setQuizGateVisible(true, 'Loading today vocabulary exam...');
         setQuizExamVisible(false);
         setQuizResultVisible(false);
         return;
@@ -727,7 +738,7 @@ function renderQuizPageState() {
         currentIndex = 0;
         score = 0;
         reviewedWords = [];
-        setQuizGateVisible(true, 'Please sign in to start today quiz.');
+        setQuizGateVisible(true, 'Please sign in to start today vocabulary exam.');
         setQuizExamVisible(false);
         setQuizResultVisible(false);
         setQuizResetStatus('');
@@ -755,14 +766,14 @@ async function resetTodayQuizAttempt() {
     if (quizIsResetting) return;
 
     if (!quizAttemptsController.getUser()) {
-        setQuizResetStatus('Please sign in before resetting today quiz.', true);
+        setQuizResetStatus('Please sign in before resetting today vocabulary exam.', true);
         updateQuizResetButton();
         return;
     }
 
     quizIsResetting = true;
     updateQuizResetButton();
-    setQuizResetStatus('Resetting today quiz...');
+    setQuizResetStatus('Resetting today vocabulary exam...');
 
     activeLoadToken++;
     dailyWords = [];
@@ -774,8 +785,8 @@ async function resetTodayQuizAttempt() {
 
     try {
         await quizAttemptsController.resetAttempt(quizDateString || getDateStringWithOffset(0));
-        setQuizResetStatus('Today quiz has been reset.');
-        setQuizGateVisible(true, 'Loading today quiz...');
+        setQuizResetStatus('Today vocabulary exam has been reset.');
+        setQuizGateVisible(true, 'Loading today vocabulary exam...');
         setQuizExamVisible(false);
         setQuizResultVisible(false);
         renderQuizPageState();
@@ -883,7 +894,7 @@ function isPracticePopupOpen() {
 }
 
 function isQuizPopupOpen() {
-    return homePopupController.isModeOpen('tests') && testsPopupMode === 'quiz';
+    return homePopupController.isModeOpen('tests') && examsController.getMode() === 'vocab-exam';
 }
 
 function isFavoritesPopupOpen() {
@@ -891,7 +902,7 @@ function isFavoritesPopupOpen() {
 }
 
 function isExamPopupOpen() {
-    return homePopupController.isModeOpen('tests') && testsPopupMode === 'exam';
+    return homePopupController.isModeOpen('tests') && examsController.getMode() === 'cloze-exam';
 }
 
 function isHomePopupOpen() {
@@ -964,7 +975,10 @@ function closeTestsPopup() {
     homePopupController.close('tests');
     window.setTimeout(() => {
         if (!homePopupController.isModeOpen('tests')) {
-            showTestsHome({ unloadSession: true });
+            examsController.showHome({
+                unloadSession: true,
+                onUnloadSession: unloadTestsSessionContent,
+            });
         }
     }, 180);
 }
@@ -1006,7 +1020,7 @@ function unloadExamPopupContent() {
 }
 
 function unloadTestsSessionContent() {
-    if (testsPopupMode === 'exam') {
+    if (examsController.getMode() === 'cloze-exam') {
         unloadExamPopupContent();
     }
 
@@ -1019,7 +1033,7 @@ function unloadTestsSessionContent() {
         delete sessionBody.dataset.loaded;
     }
 
-    if (testsPopupMode !== 'exam' && window.PteExamApp && typeof window.PteExamApp.dispose === 'function') {
+    if (examsController.getMode() !== 'cloze-exam' && window.PteExamApp && typeof window.PteExamApp.dispose === 'function') {
         window.PteExamApp.dispose();
     }
 }
@@ -1034,67 +1048,6 @@ function moveHeaderCopyToPopup(popupBody) {
     if (homeLink) {
         homeLink.remove();
     }
-}
-
-function getTestsPopupBody() {
-    return getElement('tests-popup-body');
-}
-
-function getTestsSessionBody() {
-    return getElement('tests-session-body');
-}
-
-function setTestsView(mode) {
-    testsPopupMode = mode;
-
-    const popupBody = getTestsPopupBody();
-    const homeView = getElement('tests-home-view');
-    const sessionView = getElement('tests-session-view');
-    const headerCopy = getElement('header-copy');
-
-    if (popupBody) {
-        popupBody.dataset.testsState = mode;
-    }
-
-    if (homeView) {
-        homeView.hidden = mode !== 'home';
-    }
-
-    if (sessionView) {
-        sessionView.hidden = mode === 'home';
-    }
-
-    if (headerCopy) {
-        headerCopy.hidden = mode === 'home';
-    }
-}
-
-function showTestsHome({ unloadSession = true } = {}) {
-    if (unloadSession) {
-        unloadTestsSessionContent();
-    }
-
-    setTestsView('home');
-    popupScrollbarController.refresh();
-}
-
-function transitionTestsView(nextMode, renderNextView) {
-    const popupBody = getTestsPopupBody();
-    const reduceMotion = typeof window.matchMedia === 'function'
-        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!popupBody || reduceMotion) {
-        renderNextView();
-        return Promise.resolve();
-    }
-
-    popupBody.classList.add('is-switching');
-    return new Promise((resolve) => {
-        window.setTimeout(() => {
-            renderNextView();
-            popupBody.classList.remove('is-switching');
-            resolve();
-        }, 120);
-    });
 }
 
 async function ensurePracticePopupLoaded() {
@@ -1119,7 +1072,7 @@ async function ensurePracticePopupLoaded() {
 }
 
 function wireQuizSessionEvents() {
-    const popupBody = getTestsSessionBody();
+    const popupBody = examsController.getSessionBody();
     if (!popupBody || popupBody.dataset.quizWired === 'true') return;
 
     popupBody.dataset.quizWired = 'true';
@@ -1131,13 +1084,13 @@ function wireQuizSessionEvents() {
 }
 
 async function ensureQuizPopupLoaded() {
-    const popupBody = getTestsSessionBody();
+    const popupBody = examsController.getSessionBody();
     if (!popupBody) return false;
 
-    moveHeaderCopyToPopup(getTestsPopupBody());
+    moveHeaderCopyToPopup(examsController.getPopupBody());
 
     if (popupBody.dataset.loaded !== 'true') {
-        const htmlParts = await fetchHtmlParts(QUIZ_POPUP_PARTIALS);
+        const htmlParts = await fetchHtmlParts(VOCAB_EXAM_POPUP_PARTIALS);
         const quizBody = document.createElement('div');
         quizBody.id = 'quiz-popup-content';
         quizBody.innerHTML = htmlParts.join('\n');
@@ -1169,21 +1122,21 @@ async function ensureFavoritesPopupLoaded() {
 }
 
 async function ensureExamPopupLoaded() {
-    const popupBody = getTestsSessionBody();
+    const popupBody = examsController.getSessionBody();
     if (!popupBody) return false;
 
-    moveHeaderCopyToPopup(getTestsPopupBody());
+    moveHeaderCopyToPopup(examsController.getPopupBody());
     setExamHeader();
 
     if (popupBody.dataset.loaded !== 'true') {
         const examBody = document.createElement('div');
         examBody.id = 'exam-popup-content';
-        examBody.innerHTML = await fetchHtmlPartial(EXAM_PARTIAL, 'Failed to load exam popup.');
+        examBody.innerHTML = await fetchHtmlPartial(CLOZE_EXAM_PARTIAL, 'Failed to load cloze exam popup.');
         popupBody.appendChild(examBody);
         popupBody.dataset.loaded = 'true';
     }
 
-    const examModule = await import('./exam.js');
+    const examModule = await import('./cloze-exam.js');
     await examModule.boot();
     return true;
 }
@@ -1210,27 +1163,25 @@ async function openPracticePopup() {
     }
 }
 
-function wireTestsHomeEvents() {
-    const popupBody = getTestsPopupBody();
-    if (!popupBody || popupBody.dataset.testsWired === 'true') return;
+async function ensureTestsPopupLoaded() {
+    const popupBody = examsController.getPopupBody();
+    if (!popupBody) return false;
 
-    popupBody.dataset.testsWired = 'true';
-
-    const quizButton = getElement('start-daily-quiz');
-    const examButton = getElement('start-daily-exam');
-    const backButton = getElement('tests-back');
-
-    if (quizButton) {
-        quizButton.addEventListener('click', openQuizPopup);
+    if (popupBody.dataset.loaded !== 'true') {
+        popupBody.innerHTML = await fetchHtmlPartial(EXAMS_PARTIAL, 'Failed to load exams popup.');
+        popupBody.dataset.loaded = 'true';
     }
 
-    if (examButton) {
-        examButton.addEventListener('click', openExamPopup);
-    }
+    examsController.wireEvents({
+        onOpenVocabExam: openQuizPopup,
+        onOpenClozeExam: openExamPopup,
+        onBack: () => examsController.showHome({
+            unloadSession: true,
+            onUnloadSession: unloadTestsSessionContent,
+        }),
+    });
 
-    if (backButton) {
-        backButton.addEventListener('click', () => showTestsHome({ unloadSession: true }));
-    }
+    return true;
 }
 
 async function openTestsPopup() {
@@ -1240,35 +1191,41 @@ async function openTestsPopup() {
 
     try {
         homePopupController.prepareExclusive('tests');
-        wireTestsHomeEvents();
-        showTestsHome({ unloadSession: true });
+        const loaded = await ensureTestsPopupLoaded();
+        if (!loaded) return;
+
+        examsController.showHome({
+            unloadSession: true,
+            onUnloadSession: unloadTestsSessionContent,
+        });
         homePopupController.show('tests');
         if (closeButton) {
             closeButton.focus();
         }
         popupScrollbarController.refresh();
     } catch (error) {
-        console.error('Failed to open tests popup.', error);
-        window.location.href = 'pages/quiz.html';
+        console.error('Failed to open exams popup.', error);
+        window.location.href = 'pages/vocab-exam.html';
     }
 }
 
 async function openQuizPopup() {
     const popup = getElement('tests-popup');
     if (!popup) {
-        window.location.href = 'pages/quiz.html';
+        window.location.href = 'pages/vocab-exam.html';
         return;
     }
 
     try {
         if (!homePopupController.isModeOpen('tests')) {
             homePopupController.prepareExclusive('tests');
+            await ensureTestsPopupLoaded();
             homePopupController.show('tests');
         }
 
-        await transitionTestsView('quiz', () => {
+        await examsController.transitionView('vocab-exam', () => {
             unloadTestsSessionContent();
-            setTestsView('quiz');
+            examsController.setView('vocab-exam');
         });
         persistActiveSession();
         activeRuntimeMode = 'quiz';
@@ -1288,7 +1245,7 @@ async function openQuizPopup() {
         popupScrollbarController.refresh();
     } catch (error) {
         console.error('Failed to open quiz popup.', error);
-        window.location.href = 'pages/quiz.html';
+        window.location.href = 'pages/vocab-exam.html';
     }
 }
 
@@ -1317,19 +1274,20 @@ async function openFavoritesPopup() {
 async function openExamPopup() {
     const popup = getElement('tests-popup');
     if (!popup) {
-        window.location.href = 'pages/exam.html';
+        window.location.href = 'pages/cloze-exam.html';
         return;
     }
 
     try {
         if (!homePopupController.isModeOpen('tests')) {
             homePopupController.prepareExclusive('tests');
+            await ensureTestsPopupLoaded();
             homePopupController.show('tests');
         }
 
-        await transitionTestsView('exam', () => {
+        await examsController.transitionView('cloze-exam', () => {
             unloadTestsSessionContent();
-            setTestsView('exam');
+            examsController.setView('cloze-exam');
         });
         const loaded = await ensureExamPopupLoaded();
         if (!loaded) return;
@@ -1337,7 +1295,7 @@ async function openExamPopup() {
         popupScrollbarController.refresh();
     } catch (error) {
         console.error('Failed to open exam popup.', error);
-        window.location.href = 'pages/exam.html';
+        window.location.href = 'pages/cloze-exam.html';
     }
 }
 
@@ -1489,6 +1447,18 @@ function wireHomeEvents() {
     });
 }
 
+function wireExamsPageEvents() {
+    examsController.wireEvents({
+        onOpenVocabExam: () => {
+            window.location.href = 'vocab-exam.html';
+        },
+        onOpenClozeExam: () => {
+            window.location.href = 'cloze-exam.html';
+        },
+    });
+    examsController.setView('home');
+}
+
 function wireEvents() {
     const appRoot = getElement('app');
     if (!appRoot || wiredAppRoot === appRoot) {
@@ -1504,6 +1474,11 @@ function wireEvents() {
 
     if (pageMode === 'setting') {
         wireSettingEvents();
+        return;
+    }
+
+    if (pageMode === 'exams') {
+        wireExamsPageEvents();
         return;
     }
 
@@ -1595,13 +1570,15 @@ async function boot() {
         const functionPaths = pageMode === 'review'
             ? REVIEW_HTML_FUNCTIONS
             : pageMode === 'quiz'
-                ? QUIZ_HTML_FUNCTIONS
+                ? VOCAB_EXAM_HTML_FUNCTIONS
                 : pageMode === 'feature'
                     ? FEATURE_HTML_FUNCTIONS
                     : pageMode === 'setting'
                         ? SETTING_HTML_FUNCTIONS
                     : pageMode === 'favorites'
                         ? FAVORITES_HTML_FUNCTIONS
+                    : pageMode === 'exams'
+                        ? EXAMS_HTML_FUNCTIONS
                         : HOME_HTML_FUNCTIONS;
 
         await loadHtmlFunctions(functionPaths);

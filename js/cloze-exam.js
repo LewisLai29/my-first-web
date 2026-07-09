@@ -1,6 +1,6 @@
 import { getDateStringWithOffset, seededRandom } from './date-utils.js';
 import { setupAuthUI } from './auth.js';
-import { createQuizAttemptsController } from './quiz-attempts.js';
+import { createQuizAttemptsController } from './exam-attempts.js';
 import { getDailyWordCount } from './settings.js';
 import { normalizeVocabItems, pickDailyWords } from './vocab.js';
 import { VOCAB_SOURCE } from './config.js';
@@ -359,7 +359,7 @@ async function submitExamAttempt() {
         answers,
     };
 
-    setGateVisible(true, 'Saving exam result...');
+    setGateVisible(true, 'Saving cloze exam result...');
     setExamVisible(false);
     setResultVisible(false);
 
@@ -376,8 +376,8 @@ async function submitExamAttempt() {
         const savedAttempt = await attemptsController.saveAttempt(attempt);
         renderResult(savedAttempt);
     } catch (error) {
-        console.error('Failed to save exam attempt.', error);
-        setGateVisible(true, 'Could not save your exam result. Please check Firebase permissions and try again.');
+        console.error('Failed to save cloze exam attempt.', error);
+        setGateVisible(true, 'Could not save your cloze exam result. Please check Firebase permissions and try again.');
     } finally {
         isSaving = false;
     }
@@ -387,7 +387,7 @@ async function loadExamDeck() {
     if (isLoading) return;
 
     isLoading = true;
-    setGateVisible(true, 'Loading today exam...');
+    setGateVisible(true, 'Loading today cloze exam...');
     setExamVisible(false);
     setResultVisible(false);
 
@@ -427,14 +427,14 @@ function renderExamState() {
     }
 
     if (!attemptsController.isReady()) {
-        setGateVisible(true, 'Loading today exam...');
+        setGateVisible(true, 'Loading today cloze exam...');
         setExamVisible(false);
         setResultVisible(false);
         return;
     }
 
     if (!attemptsController.getUser()) {
-        setGateVisible(true, 'Please sign in to start today exam.');
+        setGateVisible(true, 'Please sign in to start today cloze exam.');
         setExamVisible(false);
         setResultVisible(false);
         return;

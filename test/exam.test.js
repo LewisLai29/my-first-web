@@ -5,7 +5,7 @@ const { fileURLToPath, pathToFileURL } = require('url');
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 let importSequence = 0;
 
-describe('PTE vocabulary exam page', () => {
+describe('PTE cloze exam page', () => {
     let mockVocab;
     let mockAuthUser;
     let authStateListeners;
@@ -140,10 +140,10 @@ describe('PTE vocabulary exam page', () => {
             return Promise.resolve({ ok: false });
         });
 
-        const html = fs.readFileSync(path.resolve(PROJECT_ROOT, 'pages/exam.html'), 'utf8');
+        const html = fs.readFileSync(path.resolve(PROJECT_ROOT, 'pages/cloze-exam.html'), 'utf8');
         document.documentElement.innerHTML = html;
 
-        const scriptPath = path.resolve(PROJECT_ROOT, 'pages', document.querySelector('script[src$="js/exam.js"]').getAttribute('src'));
+        const scriptPath = path.resolve(PROJECT_ROOT, 'pages', document.querySelector('script[src$="js/cloze-exam.js"]').getAttribute('src'));
         importSequence += 1;
         await import(`${pathToFileURL(scriptPath).href}?testRun=${importSequence}`);
         await window.PteExamApp.boot();
@@ -225,15 +225,26 @@ describe('PTE vocabulary exam page', () => {
         delete window.firebase;
     });
 
-    test('opens the exam from the tests popup without replacing the tests entry', async () => {
+    test('opens the cloze exam from the exams popup without replacing the exams entry', async () => {
         await loadHomePage();
 
-        expect(document.getElementById('start-tests').textContent.trim()).toBe('Tests');
-        expect(document.getElementById('start-tests').getAttribute('href')).toBe('pages/quiz.html');
-        expect(document.getElementById('start-daily-quiz').textContent).toContain('Daily Quiz');
-        expect(document.getElementById('start-daily-exam').textContent).toContain('Daily Exam');
+        expect(document.getElementById('start-tests').textContent.trim()).toBe('Exams');
+        expect(document.getElementById('start-tests').getAttribute('href')).toBe('pages/exams.html');
 
         document.getElementById('start-tests').click();
+        for (let i = 0; i < 100; i++) {
+            if (document.getElementById('start-daily-quiz') && document.getElementById('start-daily-exam')) {
+                break;
+            }
+
+            jest.advanceTimersByTime(50);
+            await Promise.resolve();
+            await Promise.resolve();
+        }
+
+        expect(document.getElementById('start-daily-quiz').textContent).toContain('Vocabulary Exam');
+        expect(document.getElementById('start-daily-exam').textContent).toContain('Cloze Exam');
+
         document.getElementById('start-daily-exam').click();
         for (let i = 0; i < 100; i++) {
             const popup = document.getElementById('tests-popup');
@@ -252,7 +263,7 @@ describe('PTE vocabulary exam page', () => {
         expect(document.getElementById('tests-session-view').hidden).toBe(false);
         expect(document.getElementById('exam-popup-content')).not.toBeNull();
         expect(document.getElementById('exam-gate').hidden).toBe(false);
-        expect(document.getElementById('exam-gate-message').innerText).toBe('Please sign in to start today exam.');
+        expect(document.getElementById('exam-gate-message').innerText).toBe('Please sign in to start today cloze exam.');
     });
 
     test('loads exam gate when sign-in is required', async () => {

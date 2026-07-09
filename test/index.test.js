@@ -311,7 +311,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
     };
 
     const loadQuizPage = async (date) => {
-        await loadPage(date, 'pages/quiz.html');
+        await loadPage(date, 'pages/vocab-exam.html');
         jest.runOnlyPendingTimers();
         await Promise.resolve();
         await Promise.resolve();
@@ -371,8 +371,24 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(fetchedProjectPaths()).not.toContain(relativePath);
     };
 
-    const openDailyQuizFromTests = () => {
+    const waitForTestsHome = async () => {
         document.getElementById('start-tests').click();
+
+        for (let i = 0; i < 100; i++) {
+            if (document.getElementById('start-daily-quiz') && document.getElementById('start-daily-exam')) {
+                return;
+            }
+
+            jest.advanceTimersByTime(50);
+            await Promise.resolve();
+            await Promise.resolve();
+        }
+
+        throw new Error('Exams home did not render in time.');
+    };
+
+    const openDailyQuizFromTests = async () => {
+        await waitForTestsHome();
         document.getElementById('start-daily-quiz').click();
     };
 
@@ -407,8 +423,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
         expect(document.getElementById('start-review').textContent.trim()).toBe('Practice');
         expect(document.getElementById('start-review').getAttribute('href')).toBe('pages/practice.html');
-        expect(document.getElementById('start-tests').textContent.trim()).toBe('Tests');
-        expect(document.getElementById('start-tests').getAttribute('href')).toBe('pages/quiz.html');
+        expect(document.getElementById('start-tests').textContent.trim()).toBe('Exams');
+        expect(document.getElementById('start-tests').getAttribute('href')).toBe('pages/exams.html');
         expect(document.getElementById('start-favorites').textContent.trim()).toBe('Favorites');
         expect(document.getElementById('start-favorites').getAttribute('href')).toBe('pages/favorites.html');
         expect(document.getElementById('start-setting').textContent.trim()).toBe('Setting');
@@ -416,8 +432,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('setting-popup').hidden).toBe(true);
         expect(document.getElementById('practice-popup').hidden).toBe(true);
         expect(document.getElementById('tests-popup').hidden).toBe(true);
-        expect(document.getElementById('start-daily-quiz').textContent).toContain('Daily Quiz');
-        expect(document.getElementById('start-daily-exam').textContent).toContain('Daily Exam');
+        expect(document.getElementById('start-daily-quiz')).toBeNull();
+        expect(document.getElementById('start-daily-exam')).toBeNull();
         expect(document.getElementById('favorites-popup').hidden).toBe(true);
         expect(document.getElementById('setting-screen')).toBeNull();
         expect(document.getElementById('header-copy').hidden).toBe(true);
@@ -453,16 +469,16 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('home-screen')).not.toBeNull();
     });
 
-    test('opens quiz from the cover page in a popup without navigating away', async () => {
+    test('opens vocabulary exam from the cover page in a popup without navigating away', async () => {
         mockFirebaseEnabled = true;
         await loadPage();
 
-        expectNotFetchedPath('partials/quiz/quiz.html');
+        expectNotFetchedPath('partials/vocab-exam/vocab-exam.html');
 
-        openDailyQuizFromTests();
+        await openDailyQuizFromTests();
         await waitForQuizUi();
 
-        expectFetchedPath('partials/quiz/quiz.html');
+        expectFetchedPath('partials/vocab-exam/vocab-exam.html');
         expectFetchedPath('partials/review/lookup-popup.html');
         expect(document.getElementById('home-screen')).not.toBeNull();
         expect(document.getElementById('tests-popup').hidden).toBe(false);
@@ -486,7 +502,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('practice-popup').hidden).toBe(false);
         expect(document.getElementById('practice-popup-review-body')).not.toBeNull();
 
-        openDailyQuizFromTests();
+        await openDailyQuizFromTests();
         await waitForQuizUi();
 
         expect(document.getElementById('practice-popup').hidden).toBe(true);
@@ -503,7 +519,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await waitForReviewUi();
         const firstPracticeWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
 
-        openDailyQuizFromTests();
+        await openDailyQuizFromTests();
         for (let i = 0; i < 100; i++) {
             const testsPopup = document.getElementById('tests-popup');
             const quizGate = document.getElementById('quiz-gate');
@@ -660,32 +676,32 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('card-index').innerText).toContain('1 / 30');
     });
 
-    test('asks signed-out users to sign in before starting the quiz', async () => {
+    test('asks signed-out users to sign in before starting the vocabulary exam', async () => {
         mockFirebaseEnabled = true;
         mockAuthUser = null;
 
         await loadQuizPage();
 
-        expectFetchedPath('partials/quiz/quiz.html');
+        expectFetchedPath('partials/vocab-exam/vocab-exam.html');
         expectNotFetchedPath('partials/home/home.html');
         expectNotFetchedPath('partials/review/quiz.html');
         expect(document.getElementById('home-screen')).toBeNull();
         expect(document.getElementById('quiz-gate')).not.toBeNull();
         expect(document.getElementById('quiz-gate').hidden).toBe(false);
-        expect(document.getElementById('quiz-gate-message').innerText).toBe('Please sign in to start today quiz.');
+        expect(document.getElementById('quiz-gate-message').innerText).toBe('Please sign in to start today vocabulary exam.');
         expect(document.getElementById('quiz-box').hidden).toBe(true);
         expect(window.__getDailyWords()).toHaveLength(0);
         expect(document.getElementById('quiz-reset-attempt').disabled).toBe(true);
         expect(quizAttemptSetMock).not.toHaveBeenCalled();
     });
 
-    test('loads quiz.html as a signed-in daily quiz with practice-style card front and simple back', async () => {
+    test('loads vocab-exam.html as a signed-in vocabulary exam with practice-style card front and simple back', async () => {
         mockFirebaseEnabled = true;
 
         await loadQuizPage('2026-06-23T12:00:00+08:00');
         await waitForQuizUi();
 
-        expectFetchedPath('partials/quiz/quiz.html');
+        expectFetchedPath('partials/vocab-exam/vocab-exam.html');
         expect(document.getElementById('quiz-box').hidden).toBe(false);
         expect(document.getElementById('quiz-result-box').hidden).toBe(true);
         expect(window.__getDailyWords()).toHaveLength(15);
@@ -697,7 +713,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.querySelector('.deck-switcher')).toBeNull();
     });
 
-    test('saves the completed daily quiz and shows rounded score with analysis', async () => {
+    test('saves the completed vocabulary exam and shows rounded score with analysis', async () => {
         mockFirebaseEnabled = true;
 
         await loadQuizPage('2026-06-23T12:00:00+08:00');
@@ -728,7 +744,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('review-again')).toBeNull();
     });
 
-    test('shows an existing daily quiz attempt instead of allowing a retake', async () => {
+    test('shows an existing vocabulary exam attempt instead of allowing a retake', async () => {
         mockFirebaseEnabled = true;
         quizAttemptStore.set('2026-06-23', {
             date: '2026-06-23',
@@ -758,7 +774,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(quizAttemptSetMock).not.toHaveBeenCalled();
     });
 
-    test('reset button clears today quiz attempt and starts a new quiz', async () => {
+    test('reset button clears today vocabulary exam attempt and starts a new exam', async () => {
         mockFirebaseEnabled = true;
         quizAttemptStore.set('2026-06-23', {
             date: '2026-06-23',
@@ -790,7 +806,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('quiz-result-box').hidden).toBe(true);
         expect(document.getElementById('quiz-box').hidden).toBe(false);
         expect(window.__getDailyWords()).toHaveLength(15);
-        expect(document.getElementById('quiz-reset-status').innerText).toBe('Today quiz has been reset.');
+        expect(document.getElementById('quiz-reset-status').innerText).toBe('Today vocabulary exam has been reset.');
     });
 
     test('loads practice.html as a separate page without the cover screen', async () => {
