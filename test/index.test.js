@@ -371,6 +371,11 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(fetchedProjectPaths()).not.toContain(relativePath);
     };
 
+    const openDailyQuizFromTests = () => {
+        document.getElementById('start-tests').click();
+        document.getElementById('start-daily-quiz').click();
+    };
+
     afterEach(() => {
         window.PteVocabApp?.dispose?.();
         jest.clearAllTimers();
@@ -402,15 +407,17 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
         expect(document.getElementById('start-review').textContent.trim()).toBe('Practice');
         expect(document.getElementById('start-review').getAttribute('href')).toBe('pages/practice.html');
-        expect(document.getElementById('start-practice').textContent.trim()).toBe('Quiz');
-        expect(document.getElementById('start-practice').getAttribute('href')).toBe('pages/quiz.html');
+        expect(document.getElementById('start-tests').textContent.trim()).toBe('Tests');
+        expect(document.getElementById('start-tests').getAttribute('href')).toBe('pages/quiz.html');
         expect(document.getElementById('start-favorites').textContent.trim()).toBe('Favorites');
         expect(document.getElementById('start-favorites').getAttribute('href')).toBe('pages/favorites.html');
         expect(document.getElementById('start-setting').textContent.trim()).toBe('Setting');
         expect(document.getElementById('start-setting').getAttribute('href')).toBe('pages/setting.html');
         expect(document.getElementById('setting-popup').hidden).toBe(true);
         expect(document.getElementById('practice-popup').hidden).toBe(true);
-        expect(document.getElementById('quiz-popup').hidden).toBe(true);
+        expect(document.getElementById('tests-popup').hidden).toBe(true);
+        expect(document.getElementById('start-daily-quiz').textContent).toContain('Daily Quiz');
+        expect(document.getElementById('start-daily-exam').textContent).toContain('Daily Exam');
         expect(document.getElementById('favorites-popup').hidden).toBe(true);
         expect(document.getElementById('setting-screen')).toBeNull();
         expect(document.getElementById('header-copy').hidden).toBe(true);
@@ -452,21 +459,22 @@ describe('PTE daily vocabulary page (index.html)', () => {
 
         expectNotFetchedPath('partials/quiz/quiz.html');
 
-        document.getElementById('start-practice').click();
+        openDailyQuizFromTests();
         await waitForQuizUi();
 
         expectFetchedPath('partials/quiz/quiz.html');
         expectFetchedPath('partials/review/lookup-popup.html');
         expect(document.getElementById('home-screen')).not.toBeNull();
-        expect(document.getElementById('quiz-popup').hidden).toBe(false);
+        expect(document.getElementById('tests-popup').hidden).toBe(false);
+        expect(document.getElementById('tests-session-view').hidden).toBe(false);
         expect(document.getElementById('quiz-box')).not.toBeNull();
-        expect(document.querySelector('.quiz-popup .deck-switcher').hidden).toBe(true);
+        expect(document.querySelector('.tests-popup .deck-switcher').hidden).toBe(true);
         expect(window.__getDailyWords()).toHaveLength(15);
 
-        document.getElementById('quiz-popup-close').click();
+        document.getElementById('tests-popup-close').click();
         jest.advanceTimersByTime(200);
 
-        expect(document.getElementById('quiz-popup').hidden).toBe(true);
+        expect(document.getElementById('tests-popup').hidden).toBe(true);
     });
 
     test('switches from practice popup to quiz popup without leaking practice UI', async () => {
@@ -478,13 +486,13 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('practice-popup').hidden).toBe(false);
         expect(document.getElementById('practice-popup-review-body')).not.toBeNull();
 
-        document.getElementById('start-practice').click();
+        openDailyQuizFromTests();
         await waitForQuizUi();
 
         expect(document.getElementById('practice-popup').hidden).toBe(true);
         expect(document.getElementById('practice-popup-review-body')).toBeNull();
-        expect(document.getElementById('quiz-popup').hidden).toBe(false);
-        expect(document.querySelector('.quiz-popup .deck-switcher').hidden).toBe(true);
+        expect(document.getElementById('tests-popup').hidden).toBe(false);
+        expect(document.querySelector('.tests-popup .deck-switcher').hidden).toBe(true);
         expect(document.getElementById('word-target').innerText).not.toBe('Error');
     });
 
@@ -495,11 +503,11 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await waitForReviewUi();
         const firstPracticeWordIds = sortIds(window.__getDailyWords().map((word) => word.id));
 
-        document.getElementById('start-practice').click();
+        openDailyQuizFromTests();
         for (let i = 0; i < 100; i++) {
-            const quizPopup = document.getElementById('quiz-popup');
+            const testsPopup = document.getElementById('tests-popup');
             const quizGate = document.getElementById('quiz-gate');
-            if (quizPopup && quizPopup.hidden === false && quizGate && quizGate.hidden === false) {
+            if (testsPopup && testsPopup.hidden === false && quizGate && quizGate.hidden === false) {
                 break;
             }
 
@@ -509,7 +517,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await Promise.resolve();
         await Promise.resolve();
 
-        expect(document.getElementById('quiz-popup').hidden).toBe(false);
+        expect(document.getElementById('tests-popup').hidden).toBe(false);
         expect(document.getElementById('quiz-gate').hidden).toBe(false);
         expect(window.__getDailyWords()).toHaveLength(0);
 
@@ -517,7 +525,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await waitForReviewUi();
 
         expect(document.getElementById('practice-popup').hidden).toBe(false);
-        expect(document.getElementById('quiz-popup').hidden).toBe(true);
+        expect(document.getElementById('tests-popup').hidden).toBe(true);
         expect(document.getElementById('quiz-box').hidden).toBe(false);
         expect(document.getElementById('result-box').hidden).toBe(true);
         expect(window.__getDailyWords()).toHaveLength(15);

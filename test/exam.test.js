@@ -225,17 +225,18 @@ describe('PTE vocabulary exam page', () => {
         delete window.firebase;
     });
 
-    test('opens the exam from the home page in a popup without replacing the quiz entry', async () => {
+    test('opens the exam from the tests popup without replacing the tests entry', async () => {
         await loadHomePage();
 
-        expect(document.getElementById('start-practice').textContent.trim()).toBe('Quiz');
-        expect(document.getElementById('start-practice').getAttribute('href')).toBe('pages/quiz.html');
-        expect(document.getElementById('start-exam').textContent.trim()).toBe('Exam');
-        expect(document.getElementById('start-exam').getAttribute('href')).toBe('pages/exam.html');
+        expect(document.getElementById('start-tests').textContent.trim()).toBe('Tests');
+        expect(document.getElementById('start-tests').getAttribute('href')).toBe('pages/quiz.html');
+        expect(document.getElementById('start-daily-quiz').textContent).toContain('Daily Quiz');
+        expect(document.getElementById('start-daily-exam').textContent).toContain('Daily Exam');
 
-        document.getElementById('start-exam').click();
+        document.getElementById('start-tests').click();
+        document.getElementById('start-daily-exam').click();
         for (let i = 0; i < 100; i++) {
-            const popup = document.getElementById('exam-popup');
+            const popup = document.getElementById('tests-popup');
             const gate = document.getElementById('exam-gate');
             if (popup && popup.hidden === false && gate && gate.hidden === false) {
                 break;
@@ -247,11 +248,11 @@ describe('PTE vocabulary exam page', () => {
         }
 
         expect(document.getElementById('home-screen')).not.toBeNull();
-        expect(document.getElementById('exam-popup').hidden).toBe(false);
+        expect(document.getElementById('tests-popup').hidden).toBe(false);
+        expect(document.getElementById('tests-session-view').hidden).toBe(false);
         expect(document.getElementById('exam-popup-content')).not.toBeNull();
         expect(document.getElementById('exam-gate').hidden).toBe(false);
         expect(document.getElementById('exam-gate-message').innerText).toBe('Please sign in to start today exam.');
-        expect(document.getElementById('quiz-popup').hidden).toBe(true);
     });
 
     test('loads exam gate when sign-in is required', async () => {

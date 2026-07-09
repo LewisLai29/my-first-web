@@ -57,6 +57,7 @@ let quizIsSaving = false;
 let quizIsLoading = false;
 let quizIsResetting = false;
 let activeRuntimeMode = '';
+let testsPopupMode = 'home';
 
 const favoritesController = createFavoritesController(() => {
     updateFavoriteButton();
@@ -88,9 +89,8 @@ const homePopupController = createHomePopupController({
     popupIds: {
         setting: 'setting-popup',
         practice: 'practice-popup',
-        quiz: 'quiz-popup',
         favorites: 'favorites-popup',
-        exam: 'exam-popup',
+        tests: 'tests-popup',
     },
 });
 
@@ -149,6 +149,7 @@ function resetRuntimeState() {
     quizIsSaving = false;
     quizIsLoading = false;
     quizIsResetting = false;
+    testsPopupMode = 'home';
     activeLoadToken++;
     clearPendingWordRender();
     hideLookupPopup();
@@ -160,7 +161,7 @@ function isAppShellMounted() {
     const pageMode = getPageMode();
 
     if (pageMode === 'home') {
-        return Boolean(getElement('home-screen') && getElement('start-review') && getElement('start-practice'));
+        return Boolean(getElement('home-screen') && getElement('start-review') && getElement('start-tests'));
     }
 
     if (pageMode === 'feature') {
@@ -882,7 +883,7 @@ function isPracticePopupOpen() {
 }
 
 function isQuizPopupOpen() {
-    return homePopupController.isModeOpen('quiz');
+    return homePopupController.isModeOpen('tests') && testsPopupMode === 'quiz';
 }
 
 function isFavoritesPopupOpen() {
@@ -890,7 +891,7 @@ function isFavoritesPopupOpen() {
 }
 
 function isExamPopupOpen() {
-    return homePopupController.isModeOpen('exam');
+    return homePopupController.isModeOpen('tests') && testsPopupMode === 'exam';
 }
 
 function isHomePopupOpen() {
@@ -922,7 +923,7 @@ function wireReviewSessionEvents() {
 }
 
 function cancelPopupWork(mode) {
-    if (mode === 'practice' || mode === 'quiz') {
+    if (mode === 'practice' || mode === 'tests') {
         activeLoadToken++;
         hideLookupPopup();
         clearPendingWordRender();
@@ -934,12 +935,8 @@ function unloadPopupContent(mode) {
         unloadPracticePopupContent();
     }
 
-    if (mode === 'quiz') {
-        unloadQuizPopupContent();
-    }
-
-    if (mode === 'exam') {
-        unloadExamPopupContent();
+    if (mode === 'tests') {
+        unloadTestsSessionContent();
     }
 }
 
@@ -952,7 +949,7 @@ function closePracticePopup() {
 }
 
 function closeQuizPopup() {
-    homePopupController.close('quiz');
+    closeTestsPopup();
 }
 
 function closeFavoritesPopup() {
@@ -960,7 +957,16 @@ function closeFavoritesPopup() {
 }
 
 function closeExamPopup() {
-    homePopupController.close('exam');
+    closeTestsPopup();
+}
+
+function closeTestsPopup() {
+    homePopupController.close('tests');
+    window.setTimeout(() => {
+        if (!homePopupController.isModeOpen('tests')) {
+            showTestsHome({ unloadSession: true });
+        }
+    }, 180);
 }
 
 function removePopupContent(contentId, popupBodyId, loadedDatasetKey = 'loaded') {
@@ -999,6 +1005,25 @@ function unloadExamPopupContent() {
     removePopupContent('exam-popup-content', 'exam-popup-body');
 }
 
+function unloadTestsSessionContent() {
+    if (testsPopupMode === 'exam') {
+        unloadExamPopupContent();
+    }
+
+    removePopupContent('quiz-popup-content', 'tests-session-body');
+    removePopupContent('exam-popup-content', 'tests-session-body');
+
+    const sessionBody = getElement('tests-session-body');
+    if (sessionBody) {
+        delete sessionBody.dataset.quizWired;
+        delete sessionBody.dataset.loaded;
+    }
+
+    if (testsPopupMode !== 'exam' && window.PteExamApp && typeof window.PteExamApp.dispose === 'function') {
+        window.PteExamApp.dispose();
+    }
+}
+
 function moveHeaderCopyToPopup(popupBody) {
     const headerCopy = getElement('header-copy');
     if (!headerCopy || !popupBody || popupBody.contains(headerCopy)) return;
@@ -1009,6 +1034,67 @@ function moveHeaderCopyToPopup(popupBody) {
     if (homeLink) {
         homeLink.remove();
     }
+}
+
+function getTestsPopupBody() {
+    return getElement('tests-popup-body');
+}
+
+function getTestsSessionBody() {
+    return getElement('tests-session-body');
+}
+
+function setTestsView(mode) {
+    testsPopupMode = mode;
+
+    const popupBody = getTestsPopupBody();
+    const homeView = getElement('tests-home-view');
+    const sessionView = getElement('tests-session-view');
+    const headerCopy = getElement('header-copy');
+
+    if (popupBody) {
+        popupBody.dataset.testsState = mode;
+    }
+
+    if (homeView) {
+        homeView.hidden = mode !== 'home';
+    }
+
+    if (sessionView) {
+        sessionView.hidden = mode === 'home';
+    }
+
+    if (headerCopy) {
+        headerCopy.hidden = mode === 'home';
+    }
+}
+
+function showTestsHome({ unloadSession = true } = {}) {
+    if (unloadSession) {
+        unloadTestsSessionContent();
+    }
+
+    setTestsView('home');
+    popupScrollbarController.refresh();
+}
+
+function transitionTestsView(nextMode, renderNextView) {
+    const popupBody = getTestsPopupBody();
+    const reduceMotion = typeof window.matchMedia === 'function'
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!popupBody || reduceMotion) {
+        renderNextView();
+        return Promise.resolve();
+    }
+
+    popupBody.classList.add('is-switching');
+    return new Promise((resolve) => {
+        window.setTimeout(() => {
+            renderNextView();
+            popupBody.classList.remove('is-switching');
+            resolve();
+        }, 120);
+    });
 }
 
 async function ensurePracticePopupLoaded() {
@@ -1033,7 +1119,7 @@ async function ensurePracticePopupLoaded() {
 }
 
 function wireQuizSessionEvents() {
-    const popupBody = getElement('quiz-popup-body');
+    const popupBody = getTestsSessionBody();
     if (!popupBody || popupBody.dataset.quizWired === 'true') return;
 
     popupBody.dataset.quizWired = 'true';
@@ -1045,10 +1131,10 @@ function wireQuizSessionEvents() {
 }
 
 async function ensureQuizPopupLoaded() {
-    const popupBody = getElement('quiz-popup-body');
+    const popupBody = getTestsSessionBody();
     if (!popupBody) return false;
 
-    moveHeaderCopyToPopup(popupBody);
+    moveHeaderCopyToPopup(getTestsPopupBody());
 
     if (popupBody.dataset.loaded !== 'true') {
         const htmlParts = await fetchHtmlParts(QUIZ_POPUP_PARTIALS);
@@ -1083,10 +1169,10 @@ async function ensureFavoritesPopupLoaded() {
 }
 
 async function ensureExamPopupLoaded() {
-    const popupBody = getElement('exam-popup-body');
+    const popupBody = getTestsSessionBody();
     if (!popupBody) return false;
 
-    moveHeaderCopyToPopup(popupBody);
+    moveHeaderCopyToPopup(getTestsPopupBody());
     setExamHeader();
 
     if (popupBody.dataset.loaded !== 'true') {
@@ -1124,13 +1210,66 @@ async function openPracticePopup() {
     }
 }
 
-async function openQuizPopup() {
-    const popup = getElement('quiz-popup');
-    const closeButton = getElement('quiz-popup-close');
+function wireTestsHomeEvents() {
+    const popupBody = getTestsPopupBody();
+    if (!popupBody || popupBody.dataset.testsWired === 'true') return;
+
+    popupBody.dataset.testsWired = 'true';
+
+    const quizButton = getElement('start-daily-quiz');
+    const examButton = getElement('start-daily-exam');
+    const backButton = getElement('tests-back');
+
+    if (quizButton) {
+        quizButton.addEventListener('click', openQuizPopup);
+    }
+
+    if (examButton) {
+        examButton.addEventListener('click', openExamPopup);
+    }
+
+    if (backButton) {
+        backButton.addEventListener('click', () => showTestsHome({ unloadSession: true }));
+    }
+}
+
+async function openTestsPopup() {
+    const popup = getElement('tests-popup');
+    const closeButton = getElement('tests-popup-close');
     if (!popup) return;
 
     try {
-        homePopupController.prepareExclusive('quiz');
+        homePopupController.prepareExclusive('tests');
+        wireTestsHomeEvents();
+        showTestsHome({ unloadSession: true });
+        homePopupController.show('tests');
+        if (closeButton) {
+            closeButton.focus();
+        }
+        popupScrollbarController.refresh();
+    } catch (error) {
+        console.error('Failed to open tests popup.', error);
+        window.location.href = 'pages/quiz.html';
+    }
+}
+
+async function openQuizPopup() {
+    const popup = getElement('tests-popup');
+    if (!popup) {
+        window.location.href = 'pages/quiz.html';
+        return;
+    }
+
+    try {
+        if (!homePopupController.isModeOpen('tests')) {
+            homePopupController.prepareExclusive('tests');
+            homePopupController.show('tests');
+        }
+
+        await transitionTestsView('quiz', () => {
+            unloadTestsSessionContent();
+            setTestsView('quiz');
+        });
         persistActiveSession();
         activeRuntimeMode = 'quiz';
         dailyWords = [];
@@ -1141,11 +1280,6 @@ async function openQuizPopup() {
         quizIsLoading = false;
         const loaded = await ensureQuizPopupLoaded();
         if (!loaded) return;
-
-        homePopupController.show('quiz');
-        if (closeButton) {
-            closeButton.focus();
-        }
 
         quizDateString = getDateStringWithOffset(0);
         setQuizHeader();
@@ -1181,19 +1315,25 @@ async function openFavoritesPopup() {
 }
 
 async function openExamPopup() {
-    const popup = getElement('exam-popup');
-    const closeButton = getElement('exam-popup-close');
-    if (!popup) return;
+    const popup = getElement('tests-popup');
+    if (!popup) {
+        window.location.href = 'pages/exam.html';
+        return;
+    }
 
     try {
-        homePopupController.prepareExclusive('exam');
+        if (!homePopupController.isModeOpen('tests')) {
+            homePopupController.prepareExclusive('tests');
+            homePopupController.show('tests');
+        }
+
+        await transitionTestsView('exam', () => {
+            unloadTestsSessionContent();
+            setTestsView('exam');
+        });
         const loaded = await ensureExamPopupLoaded();
         if (!loaded) return;
 
-        homePopupController.show('exam');
-        if (closeButton) {
-            closeButton.focus();
-        }
         popupScrollbarController.refresh();
     } catch (error) {
         console.error('Failed to open exam popup.', error);
@@ -1246,20 +1386,17 @@ function wireHomeEvents() {
     resetHomeShellState();
 
     const practiceTile = getElement('start-review');
-    const quizTile = getElement('start-practice');
+    const testsTile = getElement('start-tests');
     const favoritesTile = getElement('start-favorites');
-    const examTile = getElement('start-exam');
     const settingTile = getElement('start-setting');
     const settingPopup = getElement('setting-popup');
     const settingCloseButton = getElement('setting-popup-close');
     const practicePopup = getElement('practice-popup');
     const practiceCloseButton = getElement('practice-popup-close');
-    const quizPopup = getElement('quiz-popup');
-    const quizCloseButton = getElement('quiz-popup-close');
     const favoritesPopup = getElement('favorites-popup');
     const favoritesCloseButton = getElement('favorites-popup-close');
-    const examPopup = getElement('exam-popup');
-    const examCloseButton = getElement('exam-popup-close');
+    const testsPopup = getElement('tests-popup');
+    const testsCloseButton = getElement('tests-popup-close');
 
     if (practiceTile) {
         practiceTile.addEventListener('click', (event) => {
@@ -1268,10 +1405,10 @@ function wireHomeEvents() {
         });
     }
 
-    if (quizTile) {
-        quizTile.addEventListener('click', (event) => {
+    if (testsTile) {
+        testsTile.addEventListener('click', (event) => {
             event.preventDefault();
-            openQuizPopup();
+            openTestsPopup();
         });
     }
 
@@ -1279,13 +1416,6 @@ function wireHomeEvents() {
         favoritesTile.addEventListener('click', (event) => {
             event.preventDefault();
             openFavoritesPopup();
-        });
-    }
-
-    if (examTile) {
-        examTile.addEventListener('click', (event) => {
-            event.preventDefault();
-            openExamPopup();
         });
     }
 
@@ -1304,16 +1434,12 @@ function wireHomeEvents() {
         practiceCloseButton.addEventListener('click', closePracticePopup);
     }
 
-    if (quizCloseButton) {
-        quizCloseButton.addEventListener('click', closeQuizPopup);
-    }
-
     if (favoritesCloseButton) {
         favoritesCloseButton.addEventListener('click', closeFavoritesPopup);
     }
 
-    if (examCloseButton) {
-        examCloseButton.addEventListener('click', closeExamPopup);
+    if (testsCloseButton) {
+        testsCloseButton.addEventListener('click', closeTestsPopup);
     }
 
     if (settingPopup) {
@@ -1332,14 +1458,6 @@ function wireHomeEvents() {
         });
     }
 
-    if (quizPopup) {
-        quizPopup.addEventListener('click', (event) => {
-            if (event.target === quizPopup) {
-                closeQuizPopup();
-            }
-        });
-    }
-
     if (favoritesPopup) {
         favoritesPopup.addEventListener('click', (event) => {
             if (event.target === favoritesPopup) {
@@ -1348,10 +1466,10 @@ function wireHomeEvents() {
         });
     }
 
-    if (examPopup) {
-        examPopup.addEventListener('click', (event) => {
-            if (event.target === examPopup) {
-                closeExamPopup();
+    if (testsPopup) {
+        testsPopup.addEventListener('click', (event) => {
+            if (event.target === testsPopup) {
+                closeTestsPopup();
             }
         });
     }
@@ -1365,9 +1483,8 @@ function wireHomeEvents() {
         if (event.key === 'Escape') {
             closeSettingPopup();
             closePracticePopup();
-            closeQuizPopup();
             closeFavoritesPopup();
-            closeExamPopup();
+            closeTestsPopup();
         }
     });
 }
