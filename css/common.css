@@ -96,13 +96,7 @@ body::before {
 }
 
 .custom-scrollbar {
-    position: absolute;
-    top: 48px;
-    right: 8px;
-    bottom: 20px;
-    z-index: 4;
-    width: 8px;
-    pointer-events: none;
+    display: none;
 }
 
 .custom-scrollbar[hidden] {

@@ -240,6 +240,8 @@ function renderCurrentReviewList() {
     renderReviewList(reviewedWords, dailyWords, currentIndex, jumpToWord);
 }
 
+document.addEventListener('pte:review-filter-change', renderCurrentReviewList);
+
 function calculateScore(correctCount, totalCount) {
     return totalCount > 0 ? Math.round((correctCount * 100) / totalCount) : 0;
 }

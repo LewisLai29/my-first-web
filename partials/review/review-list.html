@@ -1,6 +1,31 @@
 <section id="review-list-section" class="review-list-section" aria-labelledby="review-list-title" hidden>
-    <h2 id="review-list-title">Reviewed words</h2>
+    <div class="review-list-heading">
+        <div>
+            <span class="review-list-eyebrow">Learning trail</span>
+            <h2 id="review-list-title">Review words</h2>
+        </div>
+        <div class="review-list-score" aria-label="Review accuracy">
+            <strong id="review-accuracy">0%</strong>
+            <span>accuracy</span>
+        </div>
+    </div>
+
+    <div class="review-list-summary" aria-live="polite">
+        <span><strong id="reviewed-count">0</strong> completed</span>
+        <span><strong id="review-right-count">0</strong> remembered</span>
+    </div>
+
+    <div class="review-list-filters" role="group" aria-label="Filter reviewed words">
+        <button class="review-filter active" type="button" data-review-filter="all" aria-pressed="true">All</button>
+        <button class="review-filter" type="button" data-review-filter="right" aria-pressed="false">Remembered</button>
+        <button class="review-filter" type="button" data-review-filter="wrong" aria-pressed="false">Review again</button>
+    </div>
+
     <ul id="review-list" class="review-list">
-        <li class="review-list-empty">No reviewed words yet.</li>
+        <li class="review-list-empty">
+            <span class="review-list-empty-icon" aria-hidden="true">01</span>
+            <strong>Your learning trail starts here</strong>
+            <span>Answer a card and it will appear here.</span>
+        </li>
     </ul>
 </section>

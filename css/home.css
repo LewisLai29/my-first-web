@@ -410,11 +410,11 @@ body[data-page="home"] .auth-button {
 }
 
 .practice-popup-window {
-    max-width: 680px;
+    max-width: 1120px;
 }
 
 .practice-popup-body {
-    max-width: 600px;
+    max-width: 1040px;
     margin: 0 auto;
 }
 
