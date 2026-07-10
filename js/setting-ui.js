@@ -57,8 +57,14 @@ export function wireSettingEvents() {
     });
 
     applyButton.addEventListener('click', () => {
-        setSelectedValue(setDailyWordCount(countSelect.dataset.value || getDailyWordCount()));
+        const dailyWordCount = setDailyWordCount(countSelect.dataset.value || getDailyWordCount());
+        setSelectedValue(dailyWordCount);
         setOpen(false);
         status.innerText = 'Applied.';
+        window.dispatchEvent(new CustomEvent('pte:daily-word-count-change', {
+            detail: {
+                dailyWordCount,
+            },
+        }));
     });
 }

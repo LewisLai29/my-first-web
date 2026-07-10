@@ -421,13 +421,13 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(document.getElementById('home-screen').hidden).toBe(false);
         expect(document.querySelector('.home-features')).not.toBeNull();
         expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
-        expect(document.getElementById('start-review').textContent.trim()).toBe('Practice');
+        expect(document.querySelector('#start-review .feature-tile-label').textContent.trim()).toBe('Practice');
         expect(document.getElementById('start-review').getAttribute('href')).toBe('pages/practice.html');
-        expect(document.getElementById('start-tests').textContent.trim()).toBe('Exams');
+        expect(document.querySelector('#start-tests .feature-tile-label').textContent.trim()).toBe('Exams');
         expect(document.getElementById('start-tests').getAttribute('href')).toBe('pages/exams.html');
-        expect(document.getElementById('start-favorites').textContent.trim()).toBe('Favorites');
+        expect(document.querySelector('#start-favorites .feature-tile-label').textContent.trim()).toBe('Favorites');
         expect(document.getElementById('start-favorites').getAttribute('href')).toBe('pages/favorites.html');
-        expect(document.getElementById('start-setting').textContent.trim()).toBe('Setting');
+        expect(document.querySelector('#start-setting .feature-tile-label').textContent.trim()).toBe('Setting');
         expect(document.getElementById('start-setting').getAttribute('href')).toBe('pages/setting.html');
         expect(document.getElementById('setting-popup').hidden).toBe(true);
         expect(document.getElementById('practice-popup').hidden).toBe(true);
@@ -604,6 +604,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         document.getElementById('setting-apply').click();
 
         expect(window.localStorage.getItem('pte.dailyWordCount')).toBe('30');
+        expect(document.getElementById('home-daily-word-count').innerText).toBe('30');
         expect(document.getElementById('setting-status').innerText).toBe('Applied.');
 
         document.getElementById('setting-popup-close').click();

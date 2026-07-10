@@ -123,6 +123,13 @@ function setHidden(id, hidden) {
     }
 }
 
+function syncHomeDailyWordCount(count = getDailyWordCount()) {
+    const dailyWordCount = getElement('home-daily-word-count');
+    if (dailyWordCount) {
+        dailyWordCount.innerText = String(count);
+    }
+}
+
 function setHomeVisible(visible) {
     if (!visible && isHomePopupOpen()) {
         return;
@@ -1342,6 +1349,11 @@ async function openSettingPopup() {
 
 function wireHomeEvents() {
     resetHomeShellState();
+
+    syncHomeDailyWordCount();
+    window.addEventListener('pte:daily-word-count-change', (event) => {
+        syncHomeDailyWordCount(event.detail?.dailyWordCount);
+    });
 
     const practiceTile = getElement('start-review');
     const testsTile = getElement('start-tests');
