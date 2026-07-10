@@ -1,7 +1,7 @@
 import { getDateStringWithOffset, seededRandom } from './date-utils.js';
 import { setupAuthUI } from './auth.js';
 import { createQuizAttemptsController } from './exam-attempts.js';
-import { getDailyWordCount } from './settings.js';
+import { getClozeEndlessMode, getDailyWordCount } from './settings.js';
 import { normalizeVocabItems, pickDailyWords } from './vocab.js';
 import { VOCAB_SOURCE } from './config.js';
 
@@ -22,6 +22,8 @@ let isLoading = false;
 let isSaving = false;
 let bootPromise = null;
 let eventsWired = false;
+let endlessMode = false;
+let endlessCycle = 0;
 
 const attemptsController = createQuizAttemptsController(renderExamState, 'examAttempts');
 
@@ -67,6 +69,8 @@ function resetRuntimeState() {
     examDateString = '';
     isLoading = false;
     isSaving = false;
+    endlessMode = false;
+    endlessCycle = 0;
 }
 
 function shuffle(items, randomFn) {
@@ -154,23 +158,32 @@ function buildQuestionOptions(item, questionIndex) {
     return shuffle(options, randomFn);
 }
 
+function createQuestion(item, index) {
+    const parsedExample = parseExampleText(item.e || '');
+    const exampleEnglish = parsedExample.english || '';
+    return {
+        id: item.id,
+        w: item.w,
+        pos: item.pos || '',
+        m: item.m || '',
+        e: item.e || '',
+        exampleEnglish,
+        exampleTranslation: parsedExample.translation || '',
+        blankedExample: blankExampleText(exampleEnglish, item.w),
+        options: buildQuestionOptions(item, index),
+        correctWord: item.w,
+    };
+}
+
 function buildQuestions() {
-    questions = examWords.map((item, index) => {
-        const parsedExample = parseExampleText(item.e || '');
-        const exampleEnglish = parsedExample.english || '';
-        return {
-            id: item.id,
-            w: item.w,
-            pos: item.pos || '',
-            m: item.m || '',
-            e: item.e || '',
-            exampleEnglish,
-            exampleTranslation: parsedExample.translation || '',
-            blankedExample: blankExampleText(exampleEnglish, item.w),
-            options: buildQuestionOptions(item, index),
-            correctWord: item.w,
-        };
-    });
+    questions = examWords.map((item, index) => createQuestion(item, index));
+}
+
+function appendEndlessCycle() {
+    const cycleWords = shuffle(allVocab, Math.random);
+    const startIndex = questions.length;
+    questions.push(...cycleWords.map((item, index) => createQuestion(item, startIndex + index)));
+    endlessCycle++;
 }
 
 function renderInlineLine(element, text, translation = '') {
@@ -222,12 +235,16 @@ function renderQuestion() {
     setExamVisible(true);
     setResultVisible(false);
 
-    getElement('exam-index').innerText = `Question: ${currentIndex + 1} / ${questions.length}`;
+    getElement('exam-index').innerText = endlessMode
+        ? `Question: ${currentIndex + 1} / ∞`
+        : `Question: ${currentIndex + 1} / ${questions.length}`;
     getElement('exam-score-count').innerText = `Correct: ${score}`;
-    getElement('exam-progress').style.width = `${(currentIndex / questions.length) * 100}%`;
+    const progressTotal = endlessMode ? allVocab.length : questions.length;
+    const progressIndex = endlessMode ? currentIndex % Math.max(progressTotal, 1) : currentIndex;
+    getElement('exam-progress').style.width = `${(progressIndex / Math.max(progressTotal, 1)) * 100}%`;
     renderExample(question, false);
     getElement('exam-next').disabled = true;
-    getElement('exam-next').innerText = currentIndex === questions.length - 1 ? 'Finish' : 'Next';
+    getElement('exam-next').innerText = !endlessMode && currentIndex === questions.length - 1 ? 'Finish' : 'Next';
 
     const optionsElement = getElement('exam-options');
     optionsElement.innerHTML = '';
@@ -267,7 +284,7 @@ function updateOptionsAfterAnswer(question, selectedWord) {
 }
 
 function selectOption(word) {
-    if (selectedAnswer || (EXAM_REQUIRES_SIGN_IN && attemptsController.getAttempt()) || isSaving) return;
+    if (selectedAnswer || (EXAM_REQUIRES_SIGN_IN && !endlessMode && attemptsController.getAttempt()) || isSaving) return;
 
     const question = questions[currentIndex];
     const isRight = normalizeWordForCompare(word) === normalizeWordForCompare(question.correctWord);
@@ -290,6 +307,9 @@ function goNextQuestion() {
     if (!selectedAnswer) return;
 
     currentIndex++;
+    if (endlessMode && currentIndex >= questions.length) {
+        appendEndlessCycle();
+    }
     if (currentIndex >= questions.length) {
         submitExamAttempt();
         return;
@@ -396,7 +416,11 @@ async function loadExamDeck() {
         if (!response.ok) throw new Error('Failed to load vocabulary JSON.');
         const vocabData = await response.json();
         allVocab = normalizeVocabItems(vocabData);
-        examWords = pickDailyWords(allVocab, examDateString, getDailyWordCount());
+        endlessMode = getClozeEndlessMode();
+        examWords = endlessMode
+            ? shuffle(allVocab, Math.random)
+            : pickDailyWords(allVocab, examDateString, getDailyWordCount());
+        endlessCycle = endlessMode ? 1 : 0;
         currentIndex = 0;
         selectedAnswer = null;
         score = 0;
@@ -440,7 +464,7 @@ function renderExamState() {
         return;
     }
 
-    const attempt = attemptsController.getAttempt();
+    const attempt = endlessMode ? null : attemptsController.getAttempt();
     if (attempt) {
         renderResult(attempt);
         return;
@@ -461,6 +485,7 @@ export async function boot() {
 
     bootPromise = (async () => {
         examDateString = getDateStringWithOffset(0);
+        endlessMode = getClozeEndlessMode();
         const dateElement = getElement('today-date');
         if (dateElement) {
             dateElement.innerText = examDateString;
@@ -487,6 +512,8 @@ window.PteExamApp = {
     getQuestions: () => questions,
     getCurrentIndex: () => currentIndex,
     getScore: () => score,
+    isEndlessMode: () => endlessMode,
+    getEndlessCycle: () => endlessCycle,
     getAttempt: attemptsController.getAttempt,
     dispose: () => {
         attemptsController.dispose();

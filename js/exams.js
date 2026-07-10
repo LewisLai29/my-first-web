@@ -1,3 +1,5 @@
+import { getClozeEndlessMode, setClozeEndlessMode } from './settings.js';
+
 export function createExamsController({
     getElement,
     onRefresh = () => {},
@@ -80,7 +82,15 @@ export function createExamsController({
 
         const vocabExamButton = getElement('start-daily-quiz');
         const clozeExamButton = getElement('start-daily-exam');
+        const endlessModeToggle = getElement('cloze-endless-mode');
         const backButton = getElement('tests-back');
+
+        if (endlessModeToggle) {
+            endlessModeToggle.checked = getClozeEndlessMode();
+            endlessModeToggle.addEventListener('change', () => {
+                setClozeEndlessMode(endlessModeToggle.checked);
+            });
+        }
 
         if (vocabExamButton) {
             vocabExamButton.addEventListener('click', onOpenVocabExam);

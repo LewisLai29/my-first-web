@@ -305,14 +305,26 @@ body[data-page="home"] .auth-button {
     color: #7c3aed;
 }
 
+#home-screen .feature-tile-exams .feature-tile-image-icon {
+    background: transparent;
+}
+
 #home-screen .feature-tile-favorites .feature-tile-icon {
     background: #fdf2f8;
     color: #db2777;
 }
 
+#home-screen .feature-tile-favorites .feature-tile-image-icon {
+    background: transparent;
+}
+
 #home-screen .feature-tile-setting .feature-tile-icon {
     background: #ecfeff;
     color: #0891b2;
+}
+
+#home-screen .feature-tile-setting .feature-tile-image-icon {
+    background: transparent;
 }
 
 #home-screen .feature-tile .feature-tile-label,

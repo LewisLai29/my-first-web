@@ -292,6 +292,35 @@ describe('PTE cloze exam page', () => {
         expect(new Set(optionWords).size).toBe(4);
     });
 
+    test('keeps drawing randomized cloze questions from the full vocabulary in endless mode', async () => {
+        window.localStorage.setItem('pte.clozeEndlessMode', 'true');
+        await loadExamPage('2026-06-23T12:00:00+08:00', { user: { uid: 'user-123', email: 'test@example.com' } });
+
+        for (let i = 0; i < 100 && window.PteExamApp.getQuestions().length !== mockVocab.items.length; i++) {
+            jest.advanceTimersByTime(50);
+            await Promise.resolve();
+            await Promise.resolve();
+        }
+
+        expect(window.PteExamApp.isEndlessMode()).toBe(true);
+        expect(window.PteExamApp.getQuestions()).toHaveLength(mockVocab.items.length);
+        expect(new Set(window.PteExamApp.getQuestions().map((question) => question.id))).toHaveSize(mockVocab.items.length);
+        expect(document.getElementById('exam-index').innerText).toBe('Question: 1 / ∞');
+        expect(document.getElementById('exam-next').innerText).toBe('Next');
+
+        for (let i = 0; i < mockVocab.items.length; i++) {
+            const question = window.PteExamApp.getQuestions()[i];
+            document.querySelector(`.exam-option[data-word="${question.correctWord}"]`).click();
+            document.getElementById('exam-next').click();
+        }
+
+        expect(window.PteExamApp.getCurrentIndex()).toBe(mockVocab.items.length);
+        expect(window.PteExamApp.getEndlessCycle()).toBe(2);
+        expect(window.PteExamApp.getQuestions()).toHaveLength(mockVocab.items.length * 2);
+        expect(document.getElementById('exam-result-box').hidden).toBe(true);
+        expect(document.getElementById('exam-index').innerText).toBe(`Question: ${mockVocab.items.length + 1} / ∞`);
+    });
+
     test('strips translated text from multiline example sentences', async () => {
         mockVocab = {
             items: Array.from({ length: 15 }, (_, i) => ({
