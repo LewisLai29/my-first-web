@@ -1,55 +1,89 @@
 proj: my-first-web
-desc: Static PTE vocab daily review app
+desc: Static multi-page PTE vocabulary learning, daily review, favorites, and exam app
 v: 1.0
-ts: 2026-06-25T08:35:00Z
-split: none
+ts: 2026-07-10T16:08:11Z
+split: pages|partials|modules
 tech:
-  lang: JavaScript|HTML|CSS|Python|PowerShell
-  fw: Browser ES modules|Jest jsdom
-  db: JSON file
-entry: index.html
-r[4]{route,handler,tables,tpl}:
-  GET /,js/app.js,pte_vocab.json,index.html|functions/*.html
-  GET functions/*.html,loadHtmlFunctions,,header|quiz|review-list|result|lookup-popup
-  GET pte_vocab.json,loadAndInitQuiz,pte_vocab.json,
-  GET https://api.mymemory.translated.net/get,fetchOnlineMeaning,,lookup-popup
-m.ctrl[1]{name,path,desc,deps}:
-  PteVocabApp,js/app.js,boot and quiz state,config|date-utils|html-functions|lookup|review-list|speech|terms|vocab
-m.svc[8]{name,path,desc,deps}:
-  loadAndInitQuiz,js/app.js,fetch vocab and seed daily words,vocab|date-utils|config
-  showWord,js/app.js,render current card and progress,lookup|terms|speech|review-list
-  nextWord,js/app.js,mark answer and advance,showWord
-  createLookupController,js/lookup.js,example word popup lookup,vocab|sessionStorage|MyMemory API
-  createSpeechController,js/speech.js,browser speech synthesis,Web Speech API
-  normalizeVocabItems,js/vocab.js,normalize vocab schema,date-utils
-  pickDailyWords,js/vocab.js,seeded daily word selection,date-utils
-  loadHtmlFunctions,js/html-functions.js,fetch and mount HTML fragments,config
-m.cmp[8]{name,path,desc,deps}:
-  AppRoot,index.html,main container and app script,css/app.css|js/app.js
-  Header,functions/header.html,title date and hint,app.js
-  QuizCard,functions/quiz.html,flip card answer controls voice selector,app.js|speech.js|lookup.js|terms.js
-  ReviewList,functions/review-list.html,browsed words list,review-list.js
-  ResultScreen,functions/result.html,final accuracy result,app.js
-  LookupPopup,functions/lookup-popup.html,word meaning popup,lookup.js
-  renderReviewList,js/review-list.js,reviewed word buttons,app.js
-  renderTermList,js/terms.js,word family and collocations,app.js
-m.data[3]{name,path,desc,deps}:
-  pte_vocab,pte_vocab.json,570 vocab items with word pos meaning example family collocations,
-  awl,awl/,AWL source markdown and zh variants,tools
-  testFixtures,test/index.test.js,mocked 2000 item vocab and real json checks,jest
-m.tool[4]{name,path,desc,deps}:
-  Jest tests,test/package.json,jsdom test command,index.test.js
-  run-tests,test/run-tests.bat,Windows test runner,test/package.json
-  add_awl_step2_to_vocab,tools/add_awl_step2_to_vocab.py,upsert AWL entries into pte_vocab.json,awl/*.md
-  translate_awl_zh,tools/translate_awl_zh.py|tools/translate_awl_zh.ps1,translate AWL markdown helpers,awl/*.md
-api[1]{name,url,method,desc}:
-  MyMemory,https://api.mymemory.translated.net/get,GET,en to zh-TW fallback lookup for example words
-cfg[6]: index.html,css/app.css,js/config.js,pte_vocab.json,test/package.json,.gitignore
-patterns[6]: StaticApp,ESModules,DynamicFragments,SeededDailySelection,SessionLookupCache,WebSpeech
-tests[1]{cmd,path,desc}:
-  npm test,test/,Jest jsdom app behavior and real vocab JSON load
+  lang: JavaScript|HTML|CSS|JSON|PowerShell
+  fw: Browser ES modules|Jest jsdom|Firebase compat SDK
+  db: pte_vocab.json|Cloud Firestore|localStorage|sessionStorage
+entry[7]: index.html,pages/practice.html,pages/setting.html,pages/favorites.html,pages/exams.html,pages/vocab-exam.html,pages/cloze-exam.html
+r[10]{route,handler,data,tpl}:
+  GET /,js/app.js,pte_vocab.json,partials/common/*|partials/home/home.html
+  GET pages/practice.html,js/app.js,pte_vocab.json,partials/common/*|partials/review/*
+  GET pages/setting.html,js/app.js,localStorage,partials/common/*|partials/setting/setting.html
+  GET pages/favorites.html,js/app.js,Firestore users/{uid}/favorites,partials/common/*|partials/favorites/favorites.html
+  GET pages/exams.html,js/app.js,localStorage,partials/common/*|partials/exams/exams.html
+  GET pages/vocab-exam.html,js/app.js,pte_vocab.json|Firestore users/{uid}/quizAttempts,partials/common/*|partials/vocab-exam/*|partials/review/lookup-popup.html
+  GET pages/cloze-exam.html,js/cloze-exam.js,pte_vocab.json|Firestore users/{uid}/examAttempts,pages/cloze-exam.html|partials/cloze-exam/cloze-exam.html
+  GET partials/**/*.html,loadHtmlFunctions|fetchHtmlParts,,header|auth|home|practice|review|setting|favorites|exams|vocab-exam|cloze-exam
+  GET pte_vocab.json,loadDeck|loadQuizDeck|loadExamDeck,pte_vocab.json,
+  GET https://api.mymemory.translated.net/get,createLookupController,sessionStorage,partials/review/lookup-popup.html
+m.ctrl[7]{name,path,desc,deps}:
+  PteVocabApp,js/app.js,page boot review sessions popups favorites and vocabulary exam flow,config|auth|exams|favorites|lookup|speech|settings|vocab
+  ClozeExamApp,js/cloze-exam.js,daily or endless multiple-choice cloze exam,date-utils|auth|exam-attempts|settings|vocab|config
+  HomePopupController,js/home-popup-controller.js,open close and switch home feature popups,app.js
+  ExamsController,js/exams.js,exam hub navigation and endless-mode toggle,settings
+  FavoritesController,js/favorites.js,signed-in Firestore favorites subscription and mutation,firebase
+  QuizAttemptsController,js/exam-attempts.js,per-user daily quiz or exam attempt persistence,firebase
+  PopupScrollbarController,js/popup-scrollbar.js,custom popup and card scrollbar lifecycle,DOM
+m.svc[18]{name,path,desc,deps}:
+  boot,js/app.js,select page mode load partials wire auth and initialize page,config|html-functions|auth
+  loadDeck,js/app.js,load seed shuffle and restore daily review deck,vocab|date-utils|settings|config
+  showWord,js/app.js,render review card progress terms lookup speech and favorites,review-list|terms|lookup|speech|favorites
+  loadQuizDeck,js/app.js,load signed-in daily vocabulary exam deck,vocab|exam-attempts|settings
+  loadExamDeck,js/cloze-exam.js,build daily or endless cloze question deck,vocab|date-utils|settings
+  setupAuthUI,js/auth.js,email password Google sign-in and sign-out UI,firebase|auth-modal
+  ensureFirebaseServices,js/firebase.js,lazy-load Firebase app auth and Firestore compat SDK,firebase-config
+  loadHtmlFunctions,js/html-functions.js,fetch and mount configured HTML fragments,config
+  fetchHtmlParts,js/partial-loader.js,fetch partial HTML concurrently,Fetch API
+  createLookupController,js/lookup.js,local-first example word lookup with online fallback,vocab|sessionStorage|MyMemory API
+  createSpeechController,js/speech.js,voice selection and current-word speech,Web Speech API
+  normalizeVocabItems,js/vocab.js,normalize vocabulary schema,date-utils
+  pickDailyWords,js/vocab.js,deterministic daily vocabulary selection,date-utils
+  shuffleWords,js/vocab.js,randomize selected deck order,
+  wireSettingEvents,js/setting-ui.js,apply daily word count setting,settings
+  renderFavoritesScreen,js/favorites-ui.js,render signed-in favorites list and controls,terms|favorites
+  renderQuizResultScreen,js/vocab-exam-ui.js,render score and vocabulary exam answer analysis,
+  renderReviewList,js/review-list.js,render reviewed word trail and jump controls,app.js
+m.cmp[13]{name,path,desc,deps}:
+  Header,partials/common/header.html,page title date home link and auth summary,auth|app
+  AuthModal,partials/common/auth-modal.html,email password and Google authentication dialog,auth
+  HomeScreen,partials/home/home.html,feature dashboard and popup shells,home-popup-controller|app
+  PracticeFeature,partials/practice/feature.html,practice workspace shell,app
+  ReviewQuiz,partials/review/quiz.html,review flip card answer controls and voice selector,app|speech|lookup|terms
+  ReviewList,partials/review/review-list.html,browsed word trail,review-list
+  ResultScreen,partials/review/result.html,review completion screen,app
+  LookupPopup,partials/review/lookup-popup.html,example word meaning popup,lookup
+  SettingScreen,partials/setting/setting.html,daily word count form,setting-ui|settings
+  FavoritesScreen,partials/favorites/favorites.html,favorite word list,favorites-ui|favorites
+  ExamsHub,partials/exams/exams.html,vocabulary and cloze exam chooser,exams
+  VocabExam,partials/vocab-exam/vocab-exam.html,daily vocabulary exam gate cards and result,vocab-exam-ui|exam-attempts
+  ClozeExam,partials/cloze-exam/cloze-exam.html,popup cloze exam gate questions and result,cloze-exam
+m.data[6]{name,path,desc,deps}:
+  pte_vocab,pte_vocab.json,570 vocabulary items with word partOfSpeech definition example wordFamily and collocations,vocab
+  favorites,Firestore users/{uid}/favorites,signed-in user's saved vocabulary,firebase|auth
+  quizAttempts,Firestore users/{uid}/quizAttempts/{date},daily vocabulary exam answer and score records,firebase|auth
+  examAttempts,Firestore users/{uid}/examAttempts/{date},daily cloze exam answer and score records,firebase|auth
+  settings,localStorage pte.dailyWordCount|pte.clozeEndlessMode,daily deck size and cloze endless-mode preference,settings
+  lookupCache,sessionStorage pte.lookup.*,cached online example word meanings,lookup
+m.tool[3]{name,path,desc,deps}:
+  Jest tests,test/package.json,Jest 30 jsdom ES-module test command,index.test.js|exam.test.js|terms.test.js
+  run-tests,test/run-tests.bat,Windows test launcher,test/package.json
+  start-server,start-server.bat,untracked local Python HTTP server launcher,Python
+api[3]{name,url,method,desc}:
+  MyMemory,https://api.mymemory.translated.net/get,GET,en to zh-TW fallback example word lookup
+  FirebaseSDK,https://www.gstatic.com/firebasejs/10.12.5/*,GET,lazy-loaded compat SDK for app auth and Firestore
+  FirebaseServices,firebase project configured by js/firebase-config.js,SDK,EmailPassword and Google auth plus favorites and attempt persistence
+cfg[15]: index.html,pages/*.html,css/common.css,css/home.css,css/practice.css,css/setting.css,css/favorites.css,css/exams.css,css/vocab-exam.css,css/cloze-exam.css,js/config.js,js/firebase-config.js,pte_vocab.json,test/package.json,.gitignore
+assets[6]: assets/background.png,assets/background-optimized.jpg,assets/anvi.png,assets/pig.png,assets/diamand.png,assets/sword.png
+patterns[12]: StaticApp|MultiPageEntries|ESModules|DynamicPartials|PopupWorkspaces|SeededDailySelection|SessionDeckState|FirebaseAuth|FirestorePerUserData|LocalSettings|SessionLookupCache|WebSpeech
+tests[3]{cmd,path,desc}:
+  npm test -- --runInBand index.test.js,test/index.test.js,home popups review settings favorites vocabulary exam lookup speech and real vocabulary JSON
+  npm test -- --runInBand exam.test.js,test/exam.test.js,cloze exam navigation daily and endless questions translations scoring and attempts
+  npm test -- --runInBand terms.test.js,test/terms.test.js,word-family part-of-speech rendering
 notes[4]:
-  dirty_worktree_existing_deletes_not_touched
-  no_AGENTS_or_CLAUDE_file_found_for_snapshot_link
-  TTS_Main+Emotion.html_present_as_untracked_legacy_or_reference_page
-  tool_python_files_show_encoding_artifacts_in_current_checkout
+  partial_and_vocab_urls_resolve_with_import.meta.url_for_root_and_pages_entries
+  vocabulary_exam_requires_sign_in_and_uses_daily_Firestore_attempt_lock
+  cloze_exam_allows_signed_out_play_and_supports_local_endless_mode
+  start-server.bat_is_present_as_an_untracked_local_helper
