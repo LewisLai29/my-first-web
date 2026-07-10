@@ -130,6 +130,7 @@ export async function setupAuthUI() {
         openButton.disabled = true;
         openButton.innerText = 'Sign in unavailable';
         signOutButton.hidden = true;
+        summaryStatus.hidden = false;
         setStatus('Firebase is not available in this runtime.', true);
         return;
     }
@@ -139,6 +140,7 @@ export async function setupAuthUI() {
 
     const onSignedOut = () => {
         setStatus('Not signed in');
+        summaryStatus.hidden = true;
         openButton.hidden = false;
         openButton.disabled = false;
         signOutButton.hidden = true;
@@ -147,6 +149,7 @@ export async function setupAuthUI() {
 
     const onSignedIn = (user) => {
         setStatus(`Signed in as ${user.displayName || user.email || 'Signed in user'}`);
+        summaryStatus.hidden = false;
         openButton.hidden = true;
         signOutButton.hidden = false;
         signOutButton.innerText = 'Sign out';
