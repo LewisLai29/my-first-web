@@ -200,8 +200,7 @@ body[data-page="home"] .auth-button {
 #home-screen .feature-tile-top {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    justify-content: flex-start;
     position: relative;
     z-index: 1;
 }
@@ -239,19 +238,6 @@ body[data-page="home"] .auth-button {
     justify-content: center;
 }
 
-#home-screen .feature-tile-status {
-    max-width: 92px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.06);
-    color: #334155;
-    font-size: 0.74rem;
-    font-weight: 850;
-    line-height: 1;
-    text-align: center;
-    white-space: nowrap;
-}
-
 #home-screen .feature-tile-icon svg {
     width: 25px;
     height: 25px;
@@ -261,6 +247,18 @@ body[data-page="home"] .auth-button {
     stroke-width: 1.7;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+#home-screen .feature-tile-image {
+    width: 54px;
+    height: 54px;
+    display: block;
+    object-fit: contain;
+}
+
+#home-screen .feature-tile-image-icon {
+    background: transparent;
+    overflow: visible;
 }
 
 #home-screen .feature-tile-copy {
@@ -318,8 +316,7 @@ body[data-page="home"] .auth-button {
 }
 
 #home-screen .feature-tile .feature-tile-label,
-#home-screen .feature-tile .feature-tile-description,
-#home-screen .feature-tile .feature-tile-status {
+#home-screen .feature-tile .feature-tile-description {
     color: #0f172a;
 }
 
@@ -548,6 +545,11 @@ body[data-page="home"] .auth-button {
         height: 20px;
     }
 
+    #home-screen .feature-tile-image {
+        width: 46px;
+        height: 46px;
+    }
+
     #home-screen .feature-tile-copy {
         gap: 5px;
         padding-right: 12px;
@@ -560,12 +562,6 @@ body[data-page="home"] .auth-button {
     #home-screen .feature-tile-description {
         font-size: 0.76rem;
         line-height: 1.28;
-    }
-
-    #home-screen .feature-tile-status {
-        max-width: 68px;
-        padding: 5px 7px;
-        font-size: 0.66rem;
     }
 
     #home-screen .feature-tile::after {
