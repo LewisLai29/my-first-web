@@ -3,20 +3,6 @@
     justify-self: center;
 }
 
-.feature-screen {
-    margin-top: auto;
-    margin-bottom: auto;
-    padding-top: 0;
-    justify-content: center;
-    align-content: center;
-}
-
-.feature-note {
-    margin: 8px 0 0;
-    color: #475569;
-    font-size: 0.95rem;
-}
-
 .setting-form {
     width: min(100%, 360px);
     margin-top: 32px;
@@ -46,7 +32,6 @@
     padding: 0 10px;
     font: inherit;
     cursor: pointer;
-    box-sizing: border-box;
 }
 
 .setting-select::after {

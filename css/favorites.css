@@ -95,20 +95,20 @@
     background: #fecaca;
 }
 
-.favorite-meaning,
-.favorite-example {
+.favorite-meaning {
     margin: 0;
     color: #334155;
     line-height: 1.45;
 }
 
 .favorite-example {
-    margin-bottom: 12px;
+    margin: 0 0 12px;
     padding: 10px;
     border-radius: 8px;
     background: #f8fafc;
     color: #475569;
     font-style: italic;
+    line-height: 1.45;
 }
 
 .favorite-item h3 {
@@ -120,4 +120,3 @@
 .favorite-term-empty {
     color: #94a3b8;
 }
-

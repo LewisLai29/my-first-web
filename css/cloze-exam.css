@@ -1,32 +1,3 @@
-.date-badge {
-    background-color: #e2e8f0;
-    padding: 5px 14px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    color: #475569;
-    font-weight: bold;
-}
-
-body[data-page="exam"] .header-copy {
-    display: grid;
-    gap: 10px;
-    justify-items: center;
-}
-
-body[data-page="exam"] .header-copy-row {
-    width: 100%;
-}
-
-body[data-page="exam"] .header-home-link {
-    justify-self: end;
-}
-
-.hint-text {
-    text-align: center;
-    font-size: 0.85rem;
-    color: #64748b;
-}
-
 .exam-gate {
     margin-top: 24px;
     padding: 32px 24px;
@@ -75,16 +46,6 @@ body[data-page="exam"] .header-home-link {
     color: #475569;
     font-style: normal;
     margin-top: 4px;
-}
-
-.exam-blank {
-    display: inline-block;
-    min-width: 86px;
-    padding: 0 6px;
-    color: #2563eb;
-    font-style: normal;
-    font-weight: 800;
-    letter-spacing: 0;
 }
 
 .exam-options {
