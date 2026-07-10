@@ -24,6 +24,13 @@ body {
     isolation: isolate;
 }
 
+a,
+button,
+.card,
+[role="button"] {
+    -webkit-tap-highlight-color: transparent;
+}
+
 body::before {
     content: '';
     position: fixed;

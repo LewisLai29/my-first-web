@@ -323,18 +323,28 @@ body[data-page="home"] .auth-button {
     }
 
     body[data-page="home"] .auth-panel {
-        width: 100%;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        justify-content: space-between;
+        width: auto;
+        max-width: min(100%, 310px);
+        margin-left: auto;
+        display: inline-flex;
+        justify-content: flex-end;
+        gap: 6px;
         box-sizing: border-box;
     }
 
     body[data-page="home"] .auth-status {
         min-width: 0;
+        max-width: 150px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        font-size: 0.82rem;
+    }
+
+    body[data-page="home"] .auth-button {
+        min-height: 32px;
+        padding: 7px 11px;
+        font-size: 0.84rem;
     }
 
     #home-screen {
@@ -357,23 +367,64 @@ body[data-page="home"] .auth-button {
 
     #home-screen > .home-features {
         grid-template-columns: 1fr;
+        justify-items: center;
         gap: 12px;
     }
 
     #home-screen .feature-tile {
-        min-height: 118px;
-        padding: 18px;
+        width: min(72%, 310px);
+        min-height: 84px;
+        padding: 12px 14px;
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
+        gap: 14px;
+        background: rgba(255, 255, 255, 0.88);
+    }
+
+    #home-screen .feature-tile:nth-child(odd) {
+        justify-self: start;
+    }
+
+    #home-screen .feature-tile:nth-child(even) {
+        justify-self: end;
     }
 
     #home-screen .feature-tile-icon {
+        width: 42px;
+        height: 42px;
         flex: 0 0 auto;
     }
 
+    #home-screen .feature-tile-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
     #home-screen .feature-tile-copy {
-        padding-right: 24px;
+        gap: 4px;
+        padding-right: 18px;
+    }
+
+    #home-screen .feature-tile-label {
+        font-size: 1rem;
+    }
+
+    #home-screen .feature-tile-description {
+        font-size: 0.84rem;
+        line-height: 1.28;
+    }
+
+    #home-screen .feature-tile::after {
+        right: 14px;
+        bottom: 50%;
+        width: 14px;
+        height: 14px;
+        transform: translateY(50%) rotate(45deg);
+    }
+
+    #home-screen .feature-tile:hover::after {
+        transform: translate(3px, 50%) rotate(45deg);
     }
 
     .setting-popup {
