@@ -405,7 +405,7 @@ function setCollocationPracticeHeader() {
 
     const deckSwitcher = document.querySelector('.deck-switcher');
     if (deckSwitcher) {
-        deckSwitcher.hidden = true;
+        deckSwitcher.hidden = false;
     }
 
     const dateBadge = getElement('today-date');
@@ -431,6 +431,14 @@ function wirePracticeMenuLinks() {
     if (collocationLink) {
         collocationLink.href = isStandaloneMenu ? 'colloca_practice.html' : 'pages/colloca_practice.html';
     }
+}
+
+function switchPracticeDeck(offset) {
+    if (isPracticePopupOpen() && activePracticeMode === 'collocation') {
+        return;
+    }
+
+    loadAndInitQuiz(offset).catch((error) => console.error('Failed to switch vocabulary deck.', error));
 }
 
 function setPracticePopupView(mode) {
@@ -1080,8 +1088,8 @@ function wireReviewSessionEvents() {
 
     getElement('mark-wrong').addEventListener('click', () => nextWord(false));
     getElement('mark-right').addEventListener('click', () => nextWord(true));
-    getElement('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
-    getElement('deck-yesterday').addEventListener('click', () => loadAndInitQuiz(-1));
+    getElement('deck-today').addEventListener('click', () => switchPracticeDeck(0));
+    getElement('deck-yesterday').addEventListener('click', () => switchPracticeDeck(-1));
     getElement('review-again').addEventListener('click', restartActiveDeck);
     getElement('favorite-toggle').addEventListener('click', handleFavoriteToggleClick);
 }
@@ -1689,8 +1697,8 @@ function wireEvents() {
 
     getElement('mark-wrong').addEventListener('click', () => nextWord(false));
     getElement('mark-right').addEventListener('click', () => nextWord(true));
-    getElement('deck-today').addEventListener('click', () => loadAndInitQuiz(0));
-    getElement('deck-yesterday').addEventListener('click', () => loadAndInitQuiz(-1));
+    getElement('deck-today').addEventListener('click', () => switchPracticeDeck(0));
+    getElement('deck-yesterday').addEventListener('click', () => switchPracticeDeck(-1));
     getElement('review-again').addEventListener('click', restartActiveDeck);
     getElement('favorite-toggle').addEventListener('click', handleFavoriteToggleClick);
 }

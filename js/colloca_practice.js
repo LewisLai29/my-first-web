@@ -1,3 +1,5 @@
+import { createFavoritesController } from './favorites.js';
+
 const COLLOCATION_SOURCE = new URL('../pte_collocations.json', import.meta.url).href;
 const DAILY_COUNT = 15;
 
@@ -10,9 +12,68 @@ const state = {
 };
 
 let root = document;
+let favoritesController = null;
 
 function getElement(id) {
     return root.querySelector(`#${id}`);
+}
+
+function getCurrentItem() {
+    return state.deck[state.index] || null;
+}
+
+function getDayButtons() {
+    const localButtons = [...root.querySelectorAll('[data-day-offset]')];
+    if (localButtons.length > 0) return localButtons;
+    return [document.getElementById('deck-today'), document.getElementById('deck-yesterday')].filter(Boolean);
+}
+
+function getButtonDayOffset(button) {
+    return Number(button.dataset.dayOffset ?? button.dataset.offset ?? 0);
+}
+
+function toFavoriteWord(item) {
+    if (!item) return null;
+    return {
+        id: `collocation-${item.id || item.phrase}`,
+        w: item.phrase,
+        pos: item.pattern || `${item.component1_pos || ''} + ${item.component2_pos || ''}`,
+        m: item.chinese || '',
+        e: item.example || '',
+        wordFamily: [],
+        collocations: [],
+    };
+}
+
+function setFavoriteStatus(message, isError = false) {
+    const status = getElement('collocation-favorite-status');
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle('favorite-status-error', isError);
+}
+
+function updateFavoriteButton() {
+    const button = getElement('collocation-favorite-toggle');
+    const card = getElement('collocation-card');
+    if (!button) return;
+
+    const favoriteWord = toFavoriteWord(getCurrentItem());
+    const isSignedIn = Boolean(favoritesController?.getUser());
+    const isFlipped = Boolean(card?.classList.contains('flipped'));
+    button.hidden = !isSignedIn || !favoriteWord || isFlipped;
+
+    if (!isSignedIn || !favoriteWord) {
+        button.classList.remove('active');
+        return;
+    }
+
+    const isFavorite = favoritesController.hasFavorite(favoriteWord);
+    button.innerHTML = isFavorite
+        ? '<svg class="favorite-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 17.3 6.2 20.8l1.6-6.6L2.7 9.7l6.8-.6L12 3l2.5 6.1 6.8.6-5.1 4.5 1.6 6.6z" fill="currentColor"></path></svg><span class="visually-hidden">Remove from favorites</span>'
+        : '<svg class="favorite-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 17.3 6.2 20.8l1.6-6.6L2.7 9.7l6.8-.6L12 3l2.5 6.1 6.8.6-5.1 4.5 1.6 6.6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span class="visually-hidden">Add to favorites</span>';
+    button.classList.toggle('active', isFavorite);
+    button.setAttribute('aria-label', isFavorite ? 'Remove from favorites' : 'Add to favorites');
+    button.setAttribute('aria-pressed', String(isFavorite));
 }
 
 function getDateString(offset = 0) {
@@ -67,6 +128,7 @@ function setCardFlipped(flipped) {
     const card = getElement('collocation-card');
     card.classList.toggle('flipped', flipped);
     card.setAttribute('aria-pressed', String(flipped));
+    updateFavoriteButton();
 }
 
 function showCurrentCard() {
@@ -86,6 +148,8 @@ function showCurrentCard() {
     getElement('card-index').textContent = `Card: ${state.index + 1} / ${state.deck.length}`;
     getElement('score-count').textContent = `Remembered: ${state.remembered}`;
     getElement('progress').style.width = `${(state.index / state.deck.length) * 100}%`;
+    setFavoriteStatus('');
+    updateFavoriteButton();
 }
 
 function showResult() {
@@ -97,19 +161,20 @@ function showResult() {
     getElement('result-score').textContent = `${state.remembered} / ${state.deck.length}`;
 }
 
-function startDeck(offset = state.offset) {
+export function startDeck(offset = state.offset) {
     state.offset = offset;
     state.index = 0;
     state.remembered = 0;
     const dateString = getDateString(offset);
     state.deck = buildDailyDeck(state.allItems, dateString);
 
-    getElement('practice-date').textContent = dateString;
+    const dateElement = getElement('practice-date') || document.getElementById('today-date');
+    if (dateElement) dateElement.textContent = dateString;
     getElement('loading-state').hidden = true;
     getElement('result-state').hidden = true;
     getElement('card-area').hidden = false;
-    root.querySelectorAll('[data-day-offset]').forEach((button) => {
-        const active = Number(button.dataset.dayOffset) === offset;
+    getDayButtons().forEach((button) => {
+        const active = getButtonDayOffset(button) === offset;
         button.classList.toggle('active', active);
         button.setAttribute('aria-pressed', String(active));
     });
@@ -130,6 +195,25 @@ function speakCurrentPhrase() {
     window.speechSynthesis.speak(utterance);
 }
 
+async function toggleCurrentFavorite(event) {
+    event.stopPropagation();
+    const button = event.currentTarget;
+    const favoriteWord = toFavoriteWord(getCurrentItem());
+    if (!favoritesController || !favoriteWord || button.hidden || button.disabled) return;
+
+    button.disabled = true;
+    try {
+        const isFavorite = await favoritesController.toggleFavorite(favoriteWord);
+        setFavoriteStatus(isFavorite ? 'Added to favorites.' : 'Removed from favorites.');
+    } catch (error) {
+        setFavoriteStatus('Favorite update failed. Please check Firebase permissions.', true);
+        console.error('Failed to update collocation favorite.', error);
+    } finally {
+        button.disabled = false;
+        updateFavoriteButton();
+    }
+}
+
 function wireEvents() {
     const card = getElement('collocation-card');
     card.addEventListener('click', () => setCardFlipped(!card.classList.contains('flipped')));
@@ -142,6 +226,7 @@ function wireEvents() {
         event.stopPropagation();
         speakCurrentPhrase();
     });
+    getElement('collocation-favorite-toggle').addEventListener('click', toggleCurrentFavorite);
     getElement('mark-forgot').addEventListener('click', () => markCard(false));
     getElement('mark-remembered').addEventListener('click', () => markCard(true));
     getElement('practice-again').addEventListener('click', () => {
@@ -152,13 +237,30 @@ function wireEvents() {
         getElement('card-area').hidden = false;
         showCurrentCard();
     });
-    root.querySelectorAll('[data-day-offset]').forEach((button) => {
-        button.addEventListener('click', () => startDeck(Number(button.dataset.dayOffset)));
+    const localDayButtons = [...root.querySelectorAll('[data-day-offset]')];
+    localDayButtons.forEach((button) => {
+        button.addEventListener('click', () => startDeck(getButtonDayOffset(button)));
     });
+
+    if (localDayButtons.length === 0) {
+        getDayButtons().forEach((button) => {
+            if (button.dataset.collocationWired === 'true') return;
+            button.dataset.collocationWired = 'true';
+            button.addEventListener('click', () => {
+                if (!root.querySelector('#colloca-practice-content')) return;
+                startDeck(getButtonDayOffset(button));
+            });
+        });
+    }
 }
 
 export async function boot(container = document) {
     root = container;
+    favoritesController?.dispose();
+    favoritesController = createFavoritesController(updateFavoriteButton);
+    favoritesController.init().catch((error) => {
+        console.error('Failed to initialize collocation favorites.', error);
+    });
     wireEvents();
     try {
         const response = await fetch(COLLOCATION_SOURCE);

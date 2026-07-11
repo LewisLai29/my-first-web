@@ -6,20 +6,16 @@
     <title>PTE Collocation Practice</title>
     <link rel="preload" as="image" href="../assets/background-optimized.jpg" fetchpriority="high">
     <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/practice.css">
     <link rel="stylesheet" href="../css/colloca_practice.css">
 </head>
 <body data-page="colloca-practice">
     <main class="collocation-practice-shell">
         <header class="collocation-header">
             <div>
-                <p class="collocation-eyebrow">PTE Academic</p>
-                <h1>Collocation Practice</h1>
-                <p class="collocation-subtitle">每天練習 15 組常見搭配詞，翻面查看中文說明與例句。</p>
+                <h1>PTE collocation daily review</h1>
             </div>
-            <a class="collocation-home-link" href="practice.html">Back</a>
-        </header>
-
-        <section id="practice-panel" class="collocation-workspace" aria-labelledby="practice-title">
+            <a class="collocation-home-link" href="../index.html">Home</a>
             <div class="collocation-toolbar">
                 <div>
                     <h2 id="practice-title" class="visually-hidden">Daily collocation practice</h2>
@@ -30,7 +26,10 @@
                     <button class="day-button" type="button" data-day-offset="-1" aria-pressed="false">Yesterday</button>
                 </div>
             </div>
+            <p class="collocation-subtitle">Tap the card to check the explanation, then mark whether you remembered it.</p>
+        </header>
 
+        <section id="practice-panel" class="collocation-workspace" aria-labelledby="practice-title">
             <div class="collocation-stats" aria-live="polite">
                 <span id="card-index">Card: -- / 15</span>
                 <span id="score-count" class="collocation-score">Remembered: 0</span>
@@ -42,6 +41,12 @@
                 <div id="collocation-card" class="collocation-card" role="button" tabindex="0" aria-label="翻面查看搭配詞解釋" aria-pressed="false">
                     <div class="collocation-card-inner">
                         <article class="collocation-card-face collocation-card-front">
+                            <button id="collocation-favorite-toggle" class="favorite-toggle" type="button" aria-label="Add to favorites" aria-pressed="false" hidden>
+                                <svg class="favorite-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path d="M12 17.3 6.2 20.8l1.6-6.6L2.7 9.7l6.8-.6L12 3l2.5 6.1 6.8.6-5.1 4.5 1.6 6.6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
+                                </svg>
+                                <span class="visually-hidden">Add to favorites</span>
+                            </button>
                             <span id="collocation-pattern" class="pattern-badge"></span>
                             <h2 id="collocation-phrase">Loading...</h2>
                             <p>點擊卡片查看中文說明與例句</p>
@@ -51,7 +56,7 @@
                         </article>
                         <article class="collocation-card-face collocation-card-back">
                             <div class="collocation-card-back-scroll">
-                                <span id="collocation-chinese" class="collocation-meaning"></span>
+                                <h3 id="collocation-chinese" class="collocation-meaning"></h3>
                                 <p id="collocation-explanation" class="collocation-explanation"></p>
                                 <div class="collocation-example-block">
                                     <span>Example</span>
@@ -62,6 +67,7 @@
                         </article>
                     </div>
                 </div>
+                <p id="collocation-favorite-status" class="favorite-status-message" aria-live="polite"></p>
                 <div class="collocation-actions">
                     <button id="mark-forgot" class="action-forgot" type="button">Forgot</button>
                     <button id="mark-remembered" class="action-remembered" type="button">Remembered</button>

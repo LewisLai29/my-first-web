@@ -5,15 +5,12 @@ body[data-page="colloca-practice"] {
 }
 
 .collocation-practice-shell {
-    width: min(100%, 920px);
+    width: min(100%, 832px);
     margin: 0 auto;
 }
 
 .collocation-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
+    position: relative;
     margin-bottom: 24px;
     padding: 26px 30px;
     border: 1px solid rgba(255, 255, 255, 0.75);
@@ -21,6 +18,7 @@ body[data-page="colloca-practice"] {
     background: rgba(255, 255, 255, 0.88);
     box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
     backdrop-filter: blur(18px);
+    text-align: center;
 }
 
 .collocation-eyebrow {
@@ -34,8 +32,8 @@ body[data-page="colloca-practice"] {
 
 .collocation-header h1 {
     margin: 0;
-    font-size: clamp(2rem, 5vw, 3rem);
-    letter-spacing: -0.05em;
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    letter-spacing: -0.045em;
 }
 
 .collocation-subtitle {
@@ -45,28 +43,28 @@ body[data-page="colloca-practice"] {
 }
 
 .collocation-home-link {
-    flex: 0 0 auto;
-    padding: 9px 15px;
-    border-radius: 999px;
-    background: #eef2ff;
-    color: #4338ca;
+    position: absolute;
+    top: 32px;
+    right: 30px;
+    padding: 0;
+    color: var(--primary);
+    font-size: 0.95rem;
     font-weight: 700;
+    line-height: 1;
     text-decoration: none;
 }
 
 .collocation-workspace {
-    padding: 26px;
+    padding: 24px;
     border: 1px solid rgba(226, 232, 240, 0.92);
     border-radius: 24px;
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: none;
 }
 
 #practice-popup-body #practice-session-body .collocation-workspace {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
+    width: min(100%, 716px);
+    margin: 0 auto;
 }
 
 #practice-popup-body #practice-session-body {
@@ -82,6 +80,16 @@ body[data-page="colloca-practice"] {
     gap: 12px;
 }
 
+.collocation-toolbar {
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.collocation-header .collocation-toolbar {
+    margin-top: 10px;
+}
+
 .collocation-date,
 .collocation-stats span {
     display: inline-flex;
@@ -93,32 +101,42 @@ body[data-page="colloca-practice"] {
     font-weight: 700;
 }
 
+.collocation-date {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
 .collocation-day-switcher {
     display: inline-flex;
-    gap: 4px;
-    padding: 3px;
+    gap: 8px;
+    padding: 1px;
     border-radius: 999px;
     background: #e2e8f0;
 }
 
 .day-button {
-    min-width: 92px;
-    padding: 7px 14px;
+    min-width: 88px;
+    padding: 5px 14px;
+    border: 1px solid transparent;
     border-radius: 999px;
     background: transparent;
     color: #64748b;
+    font-size: 0.92rem;
     font-weight: 700;
+    line-height: 1;
 }
 
 .day-button.active {
     background: #fff;
-    color: #3730a3;
+    color: #0f172a;
+    border-color: #cbd5e1;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.09);
 }
 
 .collocation-stats {
-    justify-content: flex-start;
-    margin: 18px 0 10px;
+    justify-content: space-between;
+    margin: 0 0 12px;
 }
 
 .collocation-stats .collocation-score {
@@ -128,7 +146,7 @@ body[data-page="colloca-practice"] {
 
 .collocation-progress {
     height: 7px;
-    margin-bottom: 22px;
+    margin-bottom: 20px;
     overflow: hidden;
     border-radius: 999px;
     background: #e8eef7;
@@ -143,7 +161,7 @@ body[data-page="colloca-practice"] {
 }
 
 .collocation-card {
-    height: 430px;
+    margin-bottom: 18px;
     perspective: 1200px;
     cursor: pointer;
 }
@@ -151,7 +169,6 @@ body[data-page="colloca-practice"] {
 .collocation-card-inner {
     position: relative;
     width: 100%;
-    height: 100%;
     transform-style: preserve-3d;
     transition: transform 0.55s cubic-bezier(0.2, 0.75, 0.25, 1);
 }
@@ -163,29 +180,47 @@ body[data-page="colloca-practice"] {
 .collocation-card-face {
     position: absolute;
     inset: 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 34px;
+    padding: 25px;
     overflow: hidden;
     border: 1px solid #dfe7f3;
-    border-radius: 22px;
-    background: radial-gradient(circle at 90% 10%, rgba(99, 102, 241, 0.11), transparent 34%), #fff;
+    border-radius: 20px;
+    background: radial-gradient(circle at 90% 10%, rgba(99, 102, 241, 0.1), transparent 32%), #fff;
     box-shadow: 0 16px 38px rgba(30, 64, 175, 0.08);
     backface-visibility: hidden;
 }
 
+.collocation-card-front {
+    position: relative;
+    inset: auto;
+}
+
+.collocation-card.flipped .collocation-card-front {
+    position: absolute;
+    inset: 0;
+}
+
+.collocation-card.flipped .collocation-card-back {
+    position: relative;
+    inset: auto;
+}
+
 .collocation-card-front h2 {
     margin: 18px 0 10px;
-    font-size: clamp(2.2rem, 7vw, 4rem);
-    letter-spacing: -0.045em;
+    color: var(--primary);
+    font-size: clamp(2.2rem, 5vw, 3.3rem);
+    letter-spacing: -0.035em;
     text-align: center;
 }
 
 .collocation-card-front p {
-    margin: 0;
+    margin: 20px 0 0;
     color: #64748b;
+    font-size: 1rem;
 }
 
 .pattern-badge {
@@ -199,10 +234,11 @@ body[data-page="colloca-practice"] {
 }
 
 .collocation-speak {
-    width: 46px;
-    height: 46px;
-    margin-top: 24px;
-    padding: 11px;
+    width: 52px;
+    height: 52px;
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid #bfdbfe;
     border-radius: 50%;
     background: #eff6ff;
     color: #2563eb;
@@ -216,30 +252,41 @@ body[data-page="colloca-practice"] {
 
 .collocation-card-back {
     align-items: stretch;
+    justify-content: flex-start;
+    padding: 0;
     transform: rotateY(180deg);
 }
 
 .collocation-card-back-scroll {
-    max-height: 100%;
-    overflow-y: auto;
+    width: 100%;
+    min-height: 0;
+    padding: 25px;
     text-align: left;
 }
 
 .collocation-meaning {
     display: block;
-    color: #3730a3;
-    font-size: clamp(1.65rem, 4vw, 2.35rem);
-    font-weight: 800;
+    margin: 0 0 12px;
+    color: #0f172a;
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-align: center;
 }
 
 .collocation-explanation {
-    margin: 14px 0 22px;
-    color: #334155;
-    font-size: 1.05rem;
-    line-height: 1.75;
+    margin: 0;
+    padding: 10px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.95rem;
+    font-style: italic;
+    line-height: 1.4;
+    text-align: center;
 }
 
 .collocation-example-block {
+    margin-top: 14px;
     padding: 18px 20px;
     border-radius: 17px;
     background: #f8fafc;
@@ -266,28 +313,46 @@ body[data-page="colloca-practice"] {
 }
 
 .collocation-actions {
-    margin-top: 18px;
+    margin-top: 0;
+    gap: 12px;
 }
 
 .collocation-actions button {
     flex: 1 1 0;
-    min-height: 56px;
-    border: 1px solid;
+    min-height: 58px;
+    border: 0;
     border-radius: 16px;
     font-size: 1rem;
-    font-weight: 800;
+    font-weight: 700;
+    box-shadow: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
-.action-forgot {
-    border-color: #fecaca;
+.collocation-actions button:hover {
+    transform: translateY(-2px);
+}
+
+.collocation-actions .action-forgot {
     background: #fff7f7;
-    color: #b91c1c;
+    color: #dc2626;
 }
 
-.action-remembered {
-    border-color: #bbf7d0;
+.collocation-actions .action-remembered {
     background: #f0fdf4;
-    color: #15803d;
+    color: var(--success);
+}
+
+.collocation-workspace .favorite-status-message {
+    min-height: 20px;
+    margin: -12px 0 14px;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.collocation-workspace .favorite-status-error {
+    color: #dc2626;
 }
 
 .collocation-state,
@@ -327,37 +392,46 @@ body[data-page="colloca-practice"] {
 
     .collocation-header,
     .collocation-workspace {
-        padding: 19px 16px;
         border-radius: 20px;
     }
 
+    .collocation-workspace {
+        padding: 16px;
+    }
+
     .collocation-header {
-        gap: 12px;
+        padding: 19px 16px;
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+
+    .collocation-header h1 {
+        padding: 0 38px;
+    }
+
+    .collocation-home-link {
+        top: 25px;
+        right: 16px;
     }
 
     .collocation-subtitle {
         font-size: 0.9rem;
     }
 
-    .collocation-toolbar {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .collocation-day-switcher {
-        width: 100%;
-    }
-
-    .day-button {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .collocation-card {
-        height: 410px;
-    }
-
     .collocation-card-face {
-        padding: 22px 18px;
+        padding: 18px;
+    }
+
+    .collocation-card-back {
+        padding: 0;
+    }
+
+    .collocation-card-back-scroll {
+        padding: 20px;
+    }
+
+    .collocation-actions button {
+        min-height: 54px;
+        padding: 12px 8px;
     }
 }
