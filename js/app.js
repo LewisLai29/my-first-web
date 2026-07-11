@@ -19,6 +19,7 @@ import { createHomePopupController } from './home-popup-controller.js';
 import { loadHtmlFunctions } from './html-functions.js';
 import { setupAuthUI } from './auth.js';
 import { createExamsController } from './exams.js';
+import { createExamHistoryController, renderExamHistory } from './exam-history.js';
 import { createFavoritesController } from './favorites.js';
 import { renderFavoritesScreen } from './favorites-ui.js';
 import { createLookupController, hideLookupPopup } from './lookup.js';
@@ -99,6 +100,11 @@ const homePopupController = createHomePopupController({
 const examsController = createExamsController({
     getElement,
     onRefresh: () => popupScrollbarController.refresh(),
+});
+
+const examHistoryController = createExamHistoryController((state) => {
+    renderExamHistory(state);
+    popupScrollbarController.refresh();
 });
 
 function getElement(id) {
@@ -1184,11 +1190,17 @@ async function ensureTestsPopupLoaded() {
     examsController.wireEvents({
         onOpenVocabExam: openQuizPopup,
         onOpenClozeExam: openExamPopup,
-        onBack: () => examsController.showHome({
-            unloadSession: true,
-            onUnloadSession: unloadTestsSessionContent,
-        }),
+        onBack: () => {
+            examsController.showHome({
+                unloadSession: true,
+                onUnloadSession: unloadTestsSessionContent,
+            });
+            examHistoryController.refresh();
+        },
     });
+
+    await examHistoryController.init();
+    renderExamHistory(examHistoryController.getState());
 
     return true;
 }
@@ -1471,6 +1483,9 @@ function wireExamsPageEvents() {
         },
     });
     examsController.setView('home');
+    examHistoryController.init().then(() => {
+        renderExamHistory(examHistoryController.getState());
+    });
 }
 
 function wireEvents() {
@@ -1650,6 +1665,7 @@ window.PteVocabApp = {
     dispose: () => {
         favoritesController.dispose();
         quizAttemptsController.dispose();
+        examHistoryController.dispose();
         popupScrollbarController.dispose();
         cardScrollbarController.dispose();
     },
