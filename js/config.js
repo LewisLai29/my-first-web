@@ -32,6 +32,15 @@ export const VOCAB_EXAM_POPUP_PARTIALS = [
     new URL('../partials/review/lookup-popup.html', import.meta.url).href,
 ];
 
+export const PRACTICE_MENU_PARTIAL = new URL('../partials/practice/menu.html', import.meta.url).href;
+export const COLLOCA_PRACTICE_PARTIAL = new URL('../partials/colloca-practice/colloca-practice.html', import.meta.url).href;
+
+export const PRACTICE_HTML_FUNCTIONS = [
+    new URL('../partials/common/header.html', import.meta.url).href,
+    new URL('../partials/common/auth-modal.html', import.meta.url).href,
+    PRACTICE_MENU_PARTIAL,
+];
+
 export const FAVORITES_PARTIAL = new URL('../partials/favorites/favorites.html', import.meta.url).href;
 export const CLOZE_EXAM_PARTIAL = new URL('../partials/cloze-exam/cloze-exam.html', import.meta.url).href;
 
@@ -66,6 +75,7 @@ export const REVIEW_HTML_FUNCTIONS = [
 export const HTML_FUNCTIONS = [
     ...HOME_HTML_FUNCTIONS,
     ...FEATURE_HTML_FUNCTIONS,
+    ...PRACTICE_HTML_FUNCTIONS,
     ...SETTING_HTML_FUNCTIONS,
     ...FAVORITES_HTML_FUNCTIONS,
     ...EXAMS_HTML_FUNCTIONS,

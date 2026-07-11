@@ -62,6 +62,22 @@
     transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 
+.practice-option-link {
+    text-decoration: none;
+}
+
+.practice-session-loading,
+.practice-session-error {
+    margin: 32px auto;
+    color: #64748b;
+    font-weight: 700;
+    text-align: center;
+}
+
+.practice-session-error {
+    color: #b91c1c;
+}
+
 .tests-option:hover,
 .tests-option:focus-visible {
     transform: translateY(-2px);

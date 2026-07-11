@@ -1,5 +1,6 @@
 import {
     CLOZE_EXAM_PARTIAL,
+    COLLOCA_PRACTICE_PARTIAL,
     EXAMS_HTML_FUNCTIONS,
     EXAM_HISTORY_PARTIAL,
     EXAMS_PARTIAL,
@@ -8,6 +9,8 @@ import {
     FEATURE_HTML_FUNCTIONS,
     HOME_HTML_FUNCTIONS,
     PRACTICE_POPUP_PARTIALS,
+    PRACTICE_MENU_PARTIAL,
+    PRACTICE_HTML_FUNCTIONS,
     REVIEW_HTML_FUNCTIONS,
     SETTING_HTML_FUNCTIONS,
     SETTING_PARTIAL,
@@ -62,6 +65,7 @@ let quizIsSaving = false;
 let quizIsLoading = false;
 let quizIsResetting = false;
 let activeRuntimeMode = '';
+let activePracticeMode = 'menu';
 
 const favoritesController = createFavoritesController(() => {
     updateFavoriteButton();
@@ -116,7 +120,7 @@ function getPageMode() {
     const appRoot = getElement('app');
     const pageMode = appRoot && appRoot.dataset ? appRoot.dataset.page : '';
 
-    if (pageMode === 'review' || pageMode === 'feature' || pageMode === 'setting' || pageMode === 'favorites' || pageMode === 'quiz' || pageMode === 'exams') {
+    if (pageMode === 'review' || pageMode === 'practice-menu' || pageMode === 'feature' || pageMode === 'setting' || pageMode === 'favorites' || pageMode === 'quiz' || pageMode === 'exams') {
         return pageMode;
     }
 
@@ -158,6 +162,7 @@ function setResultVisible(visible) {
 function resetRuntimeState() {
     activeSession = null;
     activeRuntimeMode = '';
+    activePracticeMode = 'menu';
     activeDeckKey = '';
     dailyWords = [];
     currentIndex = 0;
@@ -195,6 +200,10 @@ function isAppShellMounted() {
 
     if (pageMode === 'favorites') {
         return Boolean(getElement('favorites-screen') && getElement('auth-dialog'));
+    }
+
+    if (pageMode === 'practice-menu') {
+        return Boolean(getElement('practice-menu') && getElement('auth-dialog'));
     }
 
     if (pageMode === 'exams') {
@@ -381,6 +390,134 @@ function setFavoriteStatus(message, isError = false) {
 
     status.innerText = message;
     status.classList.toggle('favorite-status-error', isError);
+}
+
+function setCollocationPracticeHeader() {
+    const headerCopy = getElement('header-copy');
+    if (headerCopy) {
+        headerCopy.hidden = false;
+    }
+
+    const headerTitle = document.querySelector('#header-copy h1');
+    if (headerTitle) {
+        headerTitle.innerText = 'PTE collocation daily review';
+    }
+
+    const deckSwitcher = document.querySelector('.deck-switcher');
+    if (deckSwitcher) {
+        deckSwitcher.hidden = true;
+    }
+
+    const dateBadge = getElement('today-date');
+    if (dateBadge) {
+        dateBadge.innerText = getDateStringWithOffset(0);
+    }
+
+    const hintText = document.querySelector('.hint-text');
+    if (hintText) {
+        hintText.innerText = 'Tap the card to check the explanation, then mark whether you remembered it.';
+    }
+}
+
+function wirePracticeMenuLinks() {
+    const isStandaloneMenu = getPageMode() === 'practice-menu';
+    const vocabLink = getElement('open-vocab-practice');
+    const collocationLink = getElement('open-colloca-practice');
+
+    if (vocabLink) {
+        vocabLink.href = isStandaloneMenu ? 'vocab_practice.html' : 'pages/vocab_practice.html';
+    }
+
+    if (collocationLink) {
+        collocationLink.href = isStandaloneMenu ? 'colloca_practice.html' : 'pages/colloca_practice.html';
+    }
+}
+
+function setPracticePopupView(mode) {
+    activePracticeMode = mode;
+    const menu = getElement('practice-menu');
+    const sessionView = getElement('practice-session-view');
+    const headerCopy = getElement('header-copy');
+
+    if (menu) menu.hidden = mode !== 'menu';
+    if (sessionView) sessionView.hidden = mode === 'menu';
+    if (headerCopy) headerCopy.hidden = mode === 'menu';
+}
+
+function clearPracticePopupSession() {
+    activeLoadToken++;
+    clearPendingWordRender();
+    hideLookupPopup();
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+    }
+
+    const sessionBody = getElement('practice-session-body');
+    if (sessionBody) sessionBody.innerHTML = '';
+
+    const popupBody = getElement('practice-popup-body');
+    if (popupBody) delete popupBody.dataset.reviewWired;
+    setPracticePopupView('menu');
+    popupScrollbarController.refresh();
+}
+
+async function openVocabPracticeSession() {
+    const popupBody = getElement('practice-popup-body');
+    const sessionBody = getElement('practice-session-body');
+    if (!popupBody || !sessionBody) return;
+
+    clearPracticePopupSession();
+    setPracticePopupView('vocab');
+    moveHeaderCopyToPopup(popupBody);
+    setPracticeHeader();
+
+    sessionBody.innerHTML = '<p class="practice-session-loading" role="status">Loading vocabulary practice...</p>';
+    try {
+        const htmlParts = await fetchHtmlParts(PRACTICE_POPUP_PARTIALS);
+        const reviewBody = document.createElement('div');
+        reviewBody.id = 'practice-popup-review-body';
+        reviewBody.innerHTML = htmlParts.join('\n');
+        sessionBody.innerHTML = '';
+        sessionBody.appendChild(reviewBody);
+        wireReviewSessionEvents();
+        await loadDeck(0);
+        popupScrollbarController.refresh();
+    } catch (error) {
+        sessionBody.innerHTML = '<p class="practice-session-error" role="alert">Vocabulary practice could not be loaded. Please try again.</p>';
+        throw error;
+    }
+}
+
+async function openCollocationPracticeSession() {
+    const popupBody = getElement('practice-popup-body');
+    const sessionBody = getElement('practice-session-body');
+    if (!popupBody || !sessionBody) return;
+
+    clearPracticePopupSession();
+    setPracticePopupView('collocation');
+    moveHeaderCopyToPopup(popupBody);
+    setCollocationPracticeHeader();
+    sessionBody.innerHTML = await fetchHtmlPartial(COLLOCA_PRACTICE_PARTIAL, 'Failed to load collocation practice.');
+
+    const collocationModule = await import('./colloca_practice.js');
+    await collocationModule.boot(sessionBody);
+    popupScrollbarController.refresh();
+}
+
+function wirePracticeMenuEvents() {
+    const popupBody = getElement('practice-popup-body');
+    if (!popupBody || popupBody.dataset.practiceMenuWired === 'true') return;
+    popupBody.dataset.practiceMenuWired = 'true';
+
+    getElement('open-vocab-practice')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        openVocabPracticeSession().catch((error) => console.error('Failed to open vocabulary practice.', error));
+    });
+    getElement('open-colloca-practice')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        openCollocationPracticeSession().catch((error) => console.error('Failed to open collocation practice.', error));
+    });
+    getElement('practice-back')?.addEventListener('click', clearPracticePopupSession);
 }
 
 function syncFavoriteButtonVisibility(wordCard = getElement('word-card')) {
@@ -1013,10 +1150,16 @@ function removePopupContent(contentId, popupBodyId, loadedDatasetKey = 'loaded')
 
 function unloadPracticePopupContent() {
     removePopupContent('practice-popup-review-body', 'practice-popup-body');
+    removePopupContent('practice-popup-menu-body', 'practice-popup-body');
     const popupBody = getElement('practice-popup-body');
     if (popupBody) {
         delete popupBody.dataset.reviewWired;
+        delete popupBody.dataset.practiceMenuWired;
     }
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+    }
+    activePracticeMode = 'menu';
 }
 
 function unloadQuizPopupContent() {
@@ -1071,20 +1214,16 @@ async function ensurePracticePopupLoaded() {
     const popupBody = getElement('practice-popup-body');
     if (!popupBody) return false;
 
-    moveHeaderCopyToPopup(popupBody);
-    setPracticeHeader();
-
     if (popupBody.dataset.loaded !== 'true') {
-        const htmlParts = await fetchHtmlParts(PRACTICE_POPUP_PARTIALS);
-
-        const reviewBody = document.createElement('div');
-        reviewBody.id = 'practice-popup-review-body';
-        reviewBody.innerHTML = htmlParts.join('\n');
-        popupBody.appendChild(reviewBody);
+        const menuBody = document.createElement('div');
+        menuBody.id = 'practice-popup-menu-body';
+        menuBody.innerHTML = await fetchHtmlPartial(PRACTICE_MENU_PARTIAL, 'Failed to load practice menu.');
+        popupBody.appendChild(menuBody);
         popupBody.dataset.loaded = 'true';
     }
-
-    wireReviewSessionEvents();
+    wirePracticeMenuLinks();
+    wirePracticeMenuEvents();
+    setPracticePopupView('menu');
     return true;
 }
 
@@ -1172,7 +1311,6 @@ async function openPracticePopup() {
         if (closeButton) {
             closeButton.focus();
         }
-        await loadDeck(0);
         popupScrollbarController.refresh();
     } catch (error) {
         console.error('Failed to open practice popup.', error);
@@ -1622,6 +1760,8 @@ async function boot() {
     bootPromise = (async () => {
         const functionPaths = pageMode === 'review'
             ? REVIEW_HTML_FUNCTIONS
+            : pageMode === 'practice-menu'
+                ? PRACTICE_HTML_FUNCTIONS
             : pageMode === 'quiz'
                 ? VOCAB_EXAM_HTML_FUNCTIONS
                 : pageMode === 'feature'
@@ -1635,6 +1775,9 @@ async function boot() {
                         : HOME_HTML_FUNCTIONS;
 
         await loadHtmlFunctions(functionPaths);
+        if (pageMode === 'practice-menu') {
+            wirePracticeMenuLinks();
+        }
         await setupAuthUI();
         await favoritesController.init();
         renderFavoritesPage();

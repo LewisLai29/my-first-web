@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PTE Collocation Practice</title>
+    <link rel="preload" as="image" href="../assets/background-optimized.jpg" fetchpriority="high">
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/colloca_practice.css">
+</head>
+<body data-page="colloca-practice">
+    <main class="collocation-practice-shell">
+        <header class="collocation-header">
+            <div>
+                <p class="collocation-eyebrow">PTE Academic</p>
+                <h1>Collocation Practice</h1>
+                <p class="collocation-subtitle">每天練習 15 組常見搭配詞，翻面查看中文說明與例句。</p>
+            </div>
+            <a class="collocation-home-link" href="practice.html">Back</a>
+        </header>
+
+        <section id="practice-panel" class="collocation-workspace" aria-labelledby="practice-title">
+            <div class="collocation-toolbar">
+                <div>
+                    <h2 id="practice-title" class="visually-hidden">Daily collocation practice</h2>
+                    <span id="practice-date" class="collocation-date">-----</span>
+                </div>
+                <div class="collocation-day-switcher" role="group" aria-label="選擇練習日期">
+                    <button class="day-button active" type="button" data-day-offset="0" aria-pressed="true">Today</button>
+                    <button class="day-button" type="button" data-day-offset="-1" aria-pressed="false">Yesterday</button>
+                </div>
+            </div>
+
+            <div class="collocation-stats" aria-live="polite">
+                <span id="card-index">Card: -- / 15</span>
+                <span id="score-count" class="collocation-score">Remembered: 0</span>
+            </div>
+            <div class="collocation-progress" aria-hidden="true"><div id="progress" class="collocation-progress-fill"></div></div>
+            <div id="loading-state" class="collocation-state">Loading collocations...</div>
+
+            <div id="card-area" hidden>
+                <div id="collocation-card" class="collocation-card" role="button" tabindex="0" aria-label="翻面查看搭配詞解釋" aria-pressed="false">
+                    <div class="collocation-card-inner">
+                        <article class="collocation-card-face collocation-card-front">
+                            <span id="collocation-pattern" class="pattern-badge"></span>
+                            <h2 id="collocation-phrase">Loading...</h2>
+                            <p>點擊卡片查看中文說明與例句</p>
+                            <button id="speak-phrase" class="collocation-speak" type="button" aria-label="朗讀搭配詞" title="朗讀搭配詞">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3z" fill="currentColor"></path><path d="M16.5 8.5a4.5 4.5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+                            </button>
+                        </article>
+                        <article class="collocation-card-face collocation-card-back">
+                            <div class="collocation-card-back-scroll">
+                                <span id="collocation-chinese" class="collocation-meaning"></span>
+                                <p id="collocation-explanation" class="collocation-explanation"></p>
+                                <div class="collocation-example-block">
+                                    <span>Example</span>
+                                    <p id="collocation-example"></p>
+                                    <p id="collocation-example-zh" class="example-zh"></p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+                <div class="collocation-actions">
+                    <button id="mark-forgot" class="action-forgot" type="button">Forgot</button>
+                    <button id="mark-remembered" class="action-remembered" type="button">Remembered</button>
+                </div>
+            </div>
+
+            <div id="result-state" class="collocation-result" hidden>
+                <p class="collocation-eyebrow">Practice complete</p>
+                <h2 id="result-score">0 / 15</h2>
+                <p>今天的搭配詞練習完成了。</p>
+                <button id="practice-again" type="button">Practice again</button>
+            </div>
+        </section>
+    </main>
+    <script type="module" src="../js/colloca_practice.js"></script>
+</body>
+</html>

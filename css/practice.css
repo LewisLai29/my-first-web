@@ -566,6 +566,16 @@ body[data-page="review"] .btn-right,
         padding: 18px;
     }
 
+    body[data-page="review"] .card-back,
+    #practice-popup-review-body .card-back {
+        padding: 0;
+    }
+
+    body[data-page="review"] .card-back-scroll-content,
+    #practice-popup-review-body .card-back-scroll-content {
+        padding: 20px;
+    }
+
     body[data-page="review"] .btn-group button,
     #practice-popup-review-body .btn-group button {
         min-height: 54px;
