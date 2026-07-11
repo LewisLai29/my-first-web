@@ -18,6 +18,7 @@ export const SETTING_HTML_FUNCTIONS = [
 
 export const SETTING_PARTIAL = new URL('../partials/setting/setting.html', import.meta.url).href;
 export const EXAMS_PARTIAL = new URL('../partials/exams/exams.html', import.meta.url).href;
+export const EXAM_HISTORY_PARTIAL = new URL('../partials/exam-history/exam-history.html', import.meta.url).href;
 
 export const PRACTICE_POPUP_PARTIALS = [
     new URL('../partials/review/quiz.html', import.meta.url).href,

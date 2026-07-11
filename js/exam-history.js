@@ -155,12 +155,88 @@ function createWrongAnswerItem(answer) {
     return item;
 }
 
+function createSvgElement(name, attributes = {}) {
+    const element = document.createElementNS('http://www.w3.org/2000/svg', name);
+    Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value)));
+    return element;
+}
+
+function renderExamHistoryChart(history) {
+    const chart = document.getElementById('exam-history-chart');
+    if (!chart) return;
+
+    chart.replaceChildren();
+    if (!Array.isArray(history) || history.length === 0) {
+        chart.setAttribute('hidden', '');
+        return;
+    }
+
+    chart.removeAttribute('hidden');
+    const attempts = [...history].sort((left, right) => getCompletedTime(left) - getCompletedTime(right));
+    const width = 640;
+    const left = 38;
+    const right = 12;
+    const top = 14;
+    const baseline = 170;
+    const plotHeight = baseline - top;
+    const slotWidth = (width - left - right) / attempts.length;
+    const barWidth = Math.min(38, slotWidth * 0.62);
+
+    [0, 50, 100].forEach((score) => {
+        const y = baseline - ((score / 100) * plotHeight);
+        chart.appendChild(createSvgElement('line', {
+            x1: left,
+            y1: y,
+            x2: width - right,
+            y2: y,
+            class: 'exam-history-chart-grid',
+        }));
+
+        const label = createSvgElement('text', {
+            x: left - 8,
+            y: y + 4,
+            'text-anchor': 'end',
+            class: 'exam-history-chart-axis-label',
+        });
+        label.textContent = score;
+        chart.appendChild(label);
+    });
+
+    attempts.forEach((attempt, index) => {
+        const score = Math.max(0, Math.min(100, Number(attempt.score) || 0));
+        const height = (score / 100) * plotHeight;
+        const centerX = left + (slotWidth * index) + (slotWidth / 2);
+        const bar = createSvgElement('rect', {
+            x: centerX - (barWidth / 2),
+            y: baseline - height,
+            width: barWidth,
+            height,
+            rx: 5,
+            class: `exam-history-chart-bar-${attempt.type === 'cloze' ? 'cloze' : 'vocabulary'}`,
+        });
+        const title = createSvgElement('title');
+        title.textContent = `${attempt.typeLabel}: ${score} points on ${attempt.date || 'unknown date'}`;
+        bar.appendChild(title);
+        chart.appendChild(bar);
+
+        const dateLabel = createSvgElement('text', {
+            x: centerX,
+            y: baseline + 20,
+            'text-anchor': 'middle',
+            class: 'exam-history-chart-date-label',
+        });
+        dateLabel.textContent = String(attempt.date || '').slice(5) || '--';
+        chart.appendChild(dateLabel);
+    });
+}
+
 export function renderExamHistory({ user, history = [], isLoading = false, error = null } = {}) {
     const status = document.getElementById('exam-history-status');
     const list = document.getElementById('exam-history-list');
     if (!status || !list) return;
 
     list.replaceChildren();
+    renderExamHistoryChart(history);
 
     if (isLoading) {
         status.textContent = 'Loading exam history...';

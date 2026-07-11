@@ -8,7 +8,7 @@ import { VOCAB_SOURCE } from './config.js';
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 const BLANK_TEXT = '_____';
 
-export const EXAM_REQUIRES_SIGN_IN = false;
+export const EXAM_REQUIRES_SIGN_IN = true;
 
 let allVocab = [];
 let examWords = [];

@@ -1,0 +1,26 @@
+<section id="exam-history-screen" class="exam-history-screen" aria-labelledby="exam-history-title">
+    <div class="exam-history-page-header">
+        <p class="exam-history-eyebrow">Exams</p>
+        <h2 id="exam-history-title">Exam history</h2>
+        <p>Review your recent vocabulary and cloze exam results.</p>
+    </div>
+
+    <section class="exam-history-chart" aria-labelledby="exam-history-chart-title">
+        <div class="exam-history-chart-header">
+            <h3 id="exam-history-chart-title">Score trend</h3>
+            <div class="exam-history-chart-legend" aria-label="Chart legend">
+                <span><i class="vocabulary" aria-hidden="true"></i>Vocabulary</span>
+                <span><i class="cloze" aria-hidden="true"></i>Cloze</span>
+            </div>
+        </div>
+        <svg id="exam-history-chart" viewBox="0 0 640 210" role="img" aria-label="Recent exam scores" hidden></svg>
+    </section>
+
+    <section class="exam-history exam-history-page-results" aria-labelledby="recent-results-title">
+        <div class="exam-history-heading">
+            <h2 id="recent-results-title">Recent results</h2>
+            <p id="exam-history-status" aria-live="polite">Loading exam history...</p>
+        </div>
+        <ol id="exam-history-list" class="exam-history-list"></ol>
+    </section>
+</section>

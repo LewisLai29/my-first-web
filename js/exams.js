@@ -75,6 +75,7 @@ export function createExamsController({
     function wireEvents({
         onOpenVocabExam = () => {},
         onOpenClozeExam = () => {},
+        onOpenHistory = () => {},
         onBack = () => showHome(),
     } = {}) {
         if (eventsWired) return;
@@ -83,6 +84,7 @@ export function createExamsController({
         const vocabExamButton = getElement('start-daily-quiz');
         const clozeExamButton = getElement('start-daily-exam');
         const endlessModeToggle = getElement('cloze-endless-mode');
+        const historyButton = getElement('open-exam-history');
         const backButton = getElement('tests-back');
 
         if (endlessModeToggle) {
@@ -98,6 +100,10 @@ export function createExamsController({
 
         if (clozeExamButton) {
             clozeExamButton.addEventListener('click', onOpenClozeExam);
+        }
+
+        if (historyButton) {
+            historyButton.addEventListener('click', onOpenHistory);
         }
 
         if (backButton) {

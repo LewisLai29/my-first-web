@@ -1,6 +1,7 @@
 import {
     CLOZE_EXAM_PARTIAL,
     EXAMS_HTML_FUNCTIONS,
+    EXAM_HISTORY_PARTIAL,
     EXAMS_PARTIAL,
     FAVORITES_HTML_FUNCTIONS,
     FAVORITES_PARTIAL,
@@ -1041,6 +1042,7 @@ function unloadTestsSessionContent() {
 
     removePopupContent('quiz-popup-content', 'tests-session-body');
     removePopupContent('exam-popup-content', 'tests-session-body');
+    removePopupContent('exam-history-screen', 'tests-session-body');
 
     const sessionBody = getElement('tests-session-body');
     if (sessionBody) {
@@ -1190,19 +1192,43 @@ async function ensureTestsPopupLoaded() {
     examsController.wireEvents({
         onOpenVocabExam: openQuizPopup,
         onOpenClozeExam: openExamPopup,
+        onOpenHistory: openExamHistoryPopup,
         onBack: () => {
             examsController.showHome({
                 unloadSession: true,
                 onUnloadSession: unloadTestsSessionContent,
             });
-            examHistoryController.refresh();
         },
     });
 
+    return true;
+}
+
+async function ensureExamHistoryLoaded() {
+    const sessionBody = examsController.getSessionBody();
+    if (!sessionBody) return false;
+
+    if (!getElement('exam-history-screen')) {
+        sessionBody.innerHTML = await fetchHtmlPartial(EXAM_HISTORY_PARTIAL, 'Failed to load exam history.');
+    }
+
     await examHistoryController.init();
     renderExamHistory(examHistoryController.getState());
-
+    await examHistoryController.refresh();
+    popupScrollbarController.refresh();
     return true;
+}
+
+async function openExamHistoryPopup() {
+    try {
+        await examsController.transitionView('exam-history', () => {
+            unloadTestsSessionContent();
+            examsController.setView('exam-history');
+        });
+        await ensureExamHistoryLoaded();
+    } catch (error) {
+        console.error('Failed to open exam history.', error);
+    }
 }
 
 async function openTestsPopup() {
@@ -1481,11 +1507,9 @@ function wireExamsPageEvents() {
         onOpenClozeExam: () => {
             window.location.href = 'cloze-exam.html';
         },
+        onOpenHistory: openExamHistoryPopup,
     });
     examsController.setView('home');
-    examHistoryController.init().then(() => {
-        renderExamHistory(examHistoryController.getState());
-    });
 }
 
 function wireEvents() {
