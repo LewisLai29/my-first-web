@@ -1,4 +1,5 @@
 import { createFavoritesController } from './favorites.js';
+import { createSpeechController } from './speech.js';
 
 const COLLOCATION_SOURCE = new URL('../pte_collocations.json', import.meta.url).href;
 const DAILY_COUNT = 15;
@@ -13,6 +14,7 @@ const state = {
 
 let root = document;
 let favoritesController = null;
+let speechController = null;
 
 function getElement(id) {
     return root.querySelector(`#${id}`);
@@ -150,6 +152,7 @@ function showCurrentCard() {
     getElement('progress').style.width = `${(state.index / state.deck.length) * 100}%`;
     setFavoriteStatus('');
     updateFavoriteButton();
+    speechController?.updateSpeakButton();
 }
 
 function showResult() {
@@ -187,14 +190,6 @@ function markCard(remembered) {
     showCurrentCard();
 }
 
-function speakCurrentPhrase() {
-    if (!('speechSynthesis' in window) || state.index >= state.deck.length) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(state.deck[state.index].phrase);
-    utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
-}
-
 async function toggleCurrentFavorite(event) {
     event.stopPropagation();
     const button = event.currentTarget;
@@ -222,9 +217,10 @@ function wireEvents() {
         event.preventDefault();
         setCardFlipped(!card.classList.contains('flipped'));
     });
-    getElement('speak-phrase').addEventListener('click', (event) => {
-        event.stopPropagation();
-        speakCurrentPhrase();
+    getElement('speak-phrase').addEventListener('click', speechController.speakCurrentWord);
+    getElement('collocation-voice-select').addEventListener('click', (event) => event.stopPropagation());
+    getElement('collocation-voice-select').addEventListener('change', (event) => {
+        speechController.setSelectedVoice(event.target.value, event);
     });
     getElement('collocation-favorite-toggle').addEventListener('click', toggleCurrentFavorite);
     getElement('mark-forgot').addEventListener('click', () => markCard(false));
@@ -256,12 +252,20 @@ function wireEvents() {
 
 export async function boot(container = document) {
     root = container;
+    speechController = createSpeechController(() => {
+        const item = getCurrentItem();
+        return item ? { w: item.phrase } : null;
+    }, {
+        voiceSelectId: 'collocation-voice-select',
+        speakButtonId: 'speak-phrase',
+    });
     favoritesController?.dispose();
     favoritesController = createFavoritesController(updateFavoriteButton);
     favoritesController.init().catch((error) => {
         console.error('Failed to initialize collocation favorites.', error);
     });
     wireEvents();
+    speechController.retryLoadVoices();
     try {
         const response = await fetch(COLLOCATION_SOURCE);
         if (!response.ok) throw new Error('Failed to load pte_collocations.json.');

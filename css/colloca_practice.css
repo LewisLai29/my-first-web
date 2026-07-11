@@ -236,8 +236,8 @@ body[data-page="colloca-practice"] {
 .collocation-speak {
     width: 52px;
     height: 52px;
-    margin-top: 16px;
-    padding: 14px;
+    margin-top: 0;
+    padding: 0;
     border: 1px solid #bfdbfe;
     border-radius: 50%;
     background: #eff6ff;
@@ -246,8 +246,8 @@ body[data-page="colloca-practice"] {
 
 .collocation-speak svg {
     display: block;
-    width: 100%;
-    height: 100%;
+    width: 22px;
+    height: 22px;
 }
 
 .collocation-card-back {
@@ -302,14 +302,17 @@ body[data-page="colloca-practice"] {
 
 .collocation-example-block p {
     margin: 8px 0 0;
-    color: #1e293b;
-    font-size: 1.05rem;
-    line-height: 1.65;
+    color: #475569;
+    font-size: 0.95rem;
+    font-style: italic;
+    line-height: 1.4;
 }
 
 .collocation-example-block .example-zh {
     color: #64748b;
     font-size: 0.95rem;
+    font-style: normal;
+    line-height: 1.4;
 }
 
 .collocation-actions {

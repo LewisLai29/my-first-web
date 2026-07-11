@@ -11,7 +11,10 @@ const SPEAK_BUTTON_ICON_HTML = `
     <span class="visually-hidden">Speak word</span>
 `;
 
-export function createSpeechController(getCurrentWord) {
+export function createSpeechController(getCurrentWord, {
+    voiceSelectId = 'voice-select',
+    speakButtonId = 'speak-word',
+} = {}) {
     let availableVoices = [];
     let selectedVoiceName = '';
     let voiceLoadRetryCount = 0;
@@ -50,7 +53,7 @@ export function createSpeechController(getCurrentWord) {
     }
 
     function renderVoiceSelect() {
-        const voiceSelect = document.getElementById('voice-select');
+        const voiceSelect = document.getElementById(voiceSelectId);
         if (!voiceSelect) return;
 
         const voices = loadAvailableVoices();
@@ -118,7 +121,7 @@ export function createSpeechController(getCurrentWord) {
     }
 
     function updateSpeakButton() {
-        const speakButton = document.getElementById('speak-word');
+        const speakButton = document.getElementById(speakButtonId);
         if (!speakButton) return;
 
         if (!speakButton.querySelector('.speak-button-icon')) {

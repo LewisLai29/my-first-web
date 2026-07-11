@@ -50,9 +50,12 @@
                             <span id="collocation-pattern" class="pattern-badge"></span>
                             <h2 id="collocation-phrase">Loading...</h2>
                             <p>點擊卡片查看中文說明與例句</p>
-                            <button id="speak-phrase" class="collocation-speak" type="button" aria-label="朗讀搭配詞" title="朗讀搭配詞">
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3z" fill="currentColor"></path><path d="M16.5 8.5a4.5 4.5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
-                            </button>
+                            <div class="voice-controls">
+                                <button id="speak-phrase" class="speak-button collocation-speak" type="button" aria-label="朗讀搭配詞" title="朗讀搭配詞">
+                                    <svg class="speak-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3z" fill="currentColor"></path><path d="M16.5 8.5a4.5 4.5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+                                </button>
+                                <select id="collocation-voice-select" class="voice-select" aria-label="Voice"></select>
+                            </div>
                         </article>
                         <article class="collocation-card-face collocation-card-back">
                             <div class="collocation-card-back-scroll">
