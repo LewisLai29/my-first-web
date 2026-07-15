@@ -930,7 +930,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
 
         await loadFavoritesPage();
 
-        expect(document.getElementById('favorites-status').innerText).toBe('1 favorite word.');
+        expect(document.getElementById('favorites-status').innerText).toBe('1 favorite.');
         expect(document.querySelector('.favorite-item h2').innerText).toBe('analyze');
         expect(document.querySelector('.favorite-meaning').innerText).toBe('分析');
         expect(document.querySelector('.favorite-details-toggle').open).toBe(false);
@@ -944,7 +944,38 @@ describe('PTE daily vocabulary page (index.html)', () => {
         await Promise.resolve();
 
         expect(favoriteDeleteMock).toHaveBeenCalledWith('7');
-        expect(document.getElementById('favorites-status').innerText).toBe('No favorite words yet.');
+        expect(document.getElementById('favorites-status').innerText).toBe('No favorites yet.');
+    });
+
+    test('separates vocabulary and collocation favorites', async () => {
+        mockFirebaseEnabled = true;
+        favoriteStore.set('7', {
+            id: 7,
+            w: 'analyze',
+            pos: 'verb',
+            m: '分析',
+            e: 'We analyze the result.',
+            wordFamily: [],
+            collocations: [],
+        });
+        favoriteStore.set('collocation-42', {
+            id: 'collocation-42',
+            w: 'academic work',
+            pos: 'adjective + noun',
+            m: '學術工作',
+            e: 'The paper builds on earlier academic work.',
+            wordFamily: [],
+            collocations: [],
+        });
+
+        await loadFavoritesPage();
+
+        expect(document.getElementById('vocab-favorites-count').innerText).toBe('1');
+        expect(document.getElementById('collocation-favorites-count').innerText).toBe('1');
+        expect(document.getElementById('favorites-list').textContent).toContain('analyze');
+        expect(document.getElementById('favorites-list').textContent).not.toContain('academic work');
+        expect(document.getElementById('collocation-favorites-list').textContent).toContain('academic work');
+        expect(document.getElementById('collocation-favorites-list').textContent).not.toContain('analyze');
     });
 
     test('renders bold markers in examples as strong text', async () => {

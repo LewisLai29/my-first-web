@@ -5,5 +5,29 @@
     </div>
 
     <p id="favorites-status" class="favorites-status" aria-live="polite">Loading favorites...</p>
-    <ul id="favorites-list" class="favorites-list"></ul>
+    <div id="favorites-groups" class="favorites-groups" hidden>
+        <section class="favorites-group" aria-labelledby="vocab-favorites-title">
+            <div class="favorites-group-header">
+                <div>
+                    <span class="favorites-group-eyebrow">Words</span>
+                    <h2 id="vocab-favorites-title">Vocabulary</h2>
+                </div>
+                <span id="vocab-favorites-count" class="favorites-group-count">0</span>
+            </div>
+            <p id="vocab-favorites-empty" class="favorites-empty">No favorite vocabulary yet.</p>
+            <ul id="favorites-list" class="favorites-list"></ul>
+        </section>
+
+        <section class="favorites-group" aria-labelledby="collocation-favorites-title">
+            <div class="favorites-group-header">
+                <div>
+                    <span class="favorites-group-eyebrow">Phrases</span>
+                    <h2 id="collocation-favorites-title">Collocations</h2>
+                </div>
+                <span id="collocation-favorites-count" class="favorites-group-count">0</span>
+            </div>
+            <p id="collocation-favorites-empty" class="favorites-empty">No favorite collocations yet.</p>
+            <ul id="collocation-favorites-list" class="favorites-list"></ul>
+        </section>
+    </div>
 </section>
