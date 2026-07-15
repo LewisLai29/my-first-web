@@ -1,15 +1,14 @@
 import { createFavoritesController } from './favorites.js';
+import { renderReviewList, resetReviewFilter } from './review-list.js';
 import { createSpeechController } from './speech.js';
 
 const COLLOCATION_SOURCE = new URL('../pte_collocations.json', import.meta.url).href;
-const DAILY_COUNT = 15;
 
 const state = {
     allItems: [],
-    deck: [],
+    cards: [],
     index: 0,
-    remembered: 0,
-    offset: 0,
+    reviewedCards: [],
 };
 
 let root = document;
@@ -21,17 +20,17 @@ function getElement(id) {
 }
 
 function getCurrentItem() {
-    return state.deck[state.index] || null;
+    return state.cards[state.index] || null;
 }
 
-function getDayButtons() {
-    const localButtons = [...root.querySelectorAll('[data-day-offset]')];
-    if (localButtons.length > 0) return localButtons;
-    return [document.getElementById('deck-today'), document.getElementById('deck-yesterday')].filter(Boolean);
+function getRememberedCount() {
+    return state.reviewedCards.reduce((count, card) => (
+        card.isRight ? count + 1 : count
+    ), 0);
 }
 
-function getButtonDayOffset(button) {
-    return Number(button.dataset.dayOffset ?? button.dataset.offset ?? 0);
+function toReviewWord(item) {
+    return { w: item?.phrase || '' };
 }
 
 function toFavoriteWord(item) {
@@ -78,52 +77,22 @@ function updateFavoriteButton() {
     button.setAttribute('aria-pressed', String(isFavorite));
 }
 
-function getDateString(offset = 0) {
-    const date = new Date();
-    date.setDate(date.getDate() + offset);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+function pickRandomItem(previousItem = null) {
+    if (state.allItems.length === 0) return null;
+    if (state.allItems.length === 1) return state.allItems[0];
+
+    const randomIndex = Math.floor(Math.random() * state.allItems.length);
+    const randomItem = state.allItems[randomIndex];
+    if (randomItem !== previousItem) return randomItem;
+
+    const alternativeOffset = 1 + Math.floor(Math.random() * (state.allItems.length - 1));
+    return state.allItems[(randomIndex + alternativeOffset) % state.allItems.length];
 }
 
-function hashSeed(text) {
-    let hash = 2166136261;
-    for (let index = 0; index < text.length; index++) {
-        hash ^= text.charCodeAt(index);
-        hash = Math.imul(hash, 16777619);
-    }
-    return hash >>> 0;
-}
-
-function seededRandom(seedText) {
-    let seed = hashSeed(seedText) || 1;
-    return () => {
-        seed += 0x6D2B79F5;
-        let value = seed;
-        value = Math.imul(value ^ (value >>> 15), value | 1);
-        value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-        return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
-    };
-}
-
-function buildDailyDeck(items, dateString) {
-    const random = seededRandom(`collocation-${dateString}`);
-    const pool = [...items];
-    for (let index = pool.length - 1; index > 0; index--) {
-        const target = Math.floor(random() * (index + 1));
-        [pool[index], pool[target]] = [pool[target], pool[index]];
-    }
-    return pool.slice(0, Math.min(DAILY_COUNT, pool.length));
-}
-
-function shuffleDeck(items) {
-    const pool = [...items];
-    for (let index = pool.length - 1; index > 0; index--) {
-        const target = Math.floor(Math.random() * (index + 1));
-        [pool[index], pool[target]] = [pool[target], pool[index]];
-    }
-    return pool;
+function appendRandomCard() {
+    const previousItem = state.cards[state.cards.length - 1] || null;
+    const nextItem = pickRandomItem(previousItem);
+    if (nextItem) state.cards.push(nextItem);
 }
 
 function setCardFlipped(flipped) {
@@ -133,13 +102,22 @@ function setCardFlipped(flipped) {
     updateFavoriteButton();
 }
 
-function showCurrentCard() {
-    if (state.index >= state.deck.length) {
-        showResult();
-        return;
-    }
+function renderCurrentReviewList() {
+    if (!getElement('collocation-card') || !getElement('review-list')) return;
 
-    const item = state.deck[state.index];
+    renderReviewList(
+        state.reviewedCards,
+        state.cards.map(toReviewWord),
+        state.index,
+        jumpToCard,
+        { itemName: 'collocation', itemNamePlural: 'collocations' },
+    );
+}
+
+function showCurrentCard() {
+    const item = getCurrentItem();
+    if (!item) return;
+
     setCardFlipped(false);
     getElement('collocation-phrase').textContent = item.phrase;
     getElement('collocation-pattern').textContent = item.pattern || `${item.component1_pos || ''} + ${item.component2_pos || ''}`;
@@ -147,46 +125,45 @@ function showCurrentCard() {
     getElement('collocation-explanation').textContent = item.explanation_zh || '';
     getElement('collocation-example').textContent = item.example || '';
     getElement('collocation-example-zh').textContent = item.example_zh || '';
-    getElement('card-index').textContent = `Card: ${state.index + 1} / ${state.deck.length}`;
-    getElement('score-count').textContent = `Remembered: ${state.remembered}`;
-    getElement('progress').style.width = `${(state.index / state.deck.length) * 100}%`;
+    getElement('card-index').textContent = `Card: ${state.index + 1}`;
+    getElement('score-count').textContent = `Remembered: ${getRememberedCount()}`;
     setFavoriteStatus('');
+    renderCurrentReviewList();
     updateFavoriteButton();
     speechController?.updateSpeakButton();
 }
 
-function showResult() {
-    getElement('card-area').hidden = true;
-    getElement('result-state').hidden = false;
-    getElement('card-index').textContent = `Card: ${state.deck.length} / ${state.deck.length}`;
-    getElement('score-count').textContent = `Remembered: ${state.remembered}`;
-    getElement('progress').style.width = '100%';
-    getElement('result-score').textContent = `${state.remembered} / ${state.deck.length}`;
-}
-
-export function startDeck(offset = state.offset) {
-    state.offset = offset;
+function startPractice() {
+    state.cards = [];
     state.index = 0;
-    state.remembered = 0;
-    const dateString = getDateString(offset);
-    state.deck = buildDailyDeck(state.allItems, dateString);
+    state.reviewedCards = [];
+    resetReviewFilter();
+    appendRandomCard();
 
-    const dateElement = getElement('practice-date') || document.getElementById('today-date');
-    if (dateElement) dateElement.textContent = dateString;
     getElement('loading-state').hidden = true;
-    getElement('result-state').hidden = true;
     getElement('card-area').hidden = false;
-    getDayButtons().forEach((button) => {
-        const active = getButtonDayOffset(button) === offset;
-        button.classList.toggle('active', active);
-        button.setAttribute('aria-pressed', String(active));
-    });
+    getElement('review-list-section').hidden = true;
     showCurrentCard();
 }
 
-function markCard(remembered) {
-    if (remembered) state.remembered++;
+function markCurrentCard(isRight) {
+    const reviewedCard = state.reviewedCards.find((card) => card.index === state.index);
+    if (reviewedCard) {
+        reviewedCard.isRight = isRight;
+    } else {
+        state.reviewedCards.push({ index: state.index, isRight });
+    }
+
+    if (state.index === state.cards.length - 1) {
+        appendRandomCard();
+    }
     state.index++;
+    getElement('review-list-section').hidden = false;
+    showCurrentCard();
+}
+
+function jumpToCard(cardIndex) {
+    state.index = cardIndex;
     showCurrentCard();
 }
 
@@ -223,31 +200,8 @@ function wireEvents() {
         speechController.setSelectedVoice(event.target.value, event);
     });
     getElement('collocation-favorite-toggle').addEventListener('click', toggleCurrentFavorite);
-    getElement('mark-forgot').addEventListener('click', () => markCard(false));
-    getElement('mark-remembered').addEventListener('click', () => markCard(true));
-    getElement('practice-again').addEventListener('click', () => {
-        state.deck = shuffleDeck(state.deck);
-        state.index = 0;
-        state.remembered = 0;
-        getElement('result-state').hidden = true;
-        getElement('card-area').hidden = false;
-        showCurrentCard();
-    });
-    const localDayButtons = [...root.querySelectorAll('[data-day-offset]')];
-    localDayButtons.forEach((button) => {
-        button.addEventListener('click', () => startDeck(getButtonDayOffset(button)));
-    });
-
-    if (localDayButtons.length === 0) {
-        getDayButtons().forEach((button) => {
-            if (button.dataset.collocationWired === 'true') return;
-            button.dataset.collocationWired = 'true';
-            button.addEventListener('click', () => {
-                if (!root.querySelector('#colloca-practice-content')) return;
-                startDeck(getButtonDayOffset(button));
-            });
-        });
-    }
+    getElement('mark-forgot').addEventListener('click', () => markCurrentCard(false));
+    getElement('mark-remembered').addEventListener('click', () => markCurrentCard(true));
 }
 
 export async function boot(container = document) {
@@ -274,13 +228,15 @@ export async function boot(container = document) {
             throw new Error('Invalid collocation data: missing items.');
         }
         state.allItems = data.items.filter((item) => item && item.phrase);
-        startDeck(0);
+        startPractice();
     } catch (error) {
         getElement('loading-state').textContent = '無法載入搭配詞資料，請確認 pte_collocations.json 可以正常存取。';
         getElement('loading-state').classList.add('error');
         console.error(error);
     }
 }
+
+document.addEventListener('pte:review-filter-change', renderCurrentReviewList);
 
 if (document.body.dataset.page === 'colloca-practice') {
     boot();

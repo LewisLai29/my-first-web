@@ -1,5 +1,9 @@
 let activeFilter = 'all';
 
+export function resetReviewFilter() {
+    activeFilter = 'all';
+}
+
 function updateFilterButtons() {
     document.querySelectorAll('[data-review-filter]').forEach((button) => {
         const isActive = button.dataset.reviewFilter === activeFilter;
@@ -16,9 +20,12 @@ function updateFilterButtons() {
     });
 }
 
-export function renderReviewList(reviewedWords, dailyWords, currentIndex, jumpToWord) {
+export function renderReviewList(reviewedWords, dailyWords, currentIndex, jumpToWord, options = {}) {
     const list = document.getElementById('review-list');
     if (!list) return;
+
+    const itemName = options.itemName || '';
+    const itemNamePlural = options.itemNamePlural || 'words';
 
     const rememberedCount = reviewedWords.filter((word) => word.isRight).length;
     const accuracy = reviewedWords.length > 0
@@ -51,11 +58,13 @@ export function renderReviewList(reviewedWords, dailyWords, currentIndex, jumpTo
         const emptyTitle = document.createElement('strong');
         emptyTitle.innerText = reviewedWords.length === 0
             ? 'Your learning trail starts here'
-            : 'No words in this filter';
+            : `No ${itemNamePlural} in this filter`;
         const emptyCopy = document.createElement('span');
         emptyCopy.innerText = reviewedWords.length === 0
-            ? 'Answer a card and it will appear here.'
-            : 'Try another filter to see your reviewed words.';
+            ? (itemName
+                ? `Answer a ${itemName} card and it will appear here.`
+                : 'Answer a card and it will appear here.')
+            : `Try another filter to see your reviewed ${itemNamePlural}.`;
         emptyItem.append(emptyIcon, emptyTitle, emptyCopy);
         list.appendChild(emptyItem);
         return;

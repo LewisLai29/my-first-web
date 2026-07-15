@@ -362,6 +362,11 @@ function setPracticeHeader() {
         deckSwitcher.hidden = false;
     }
 
+    const dateRow = document.querySelector('#header-copy .header-date-row');
+    if (dateRow) {
+        dateRow.hidden = false;
+    }
+
     const hintText = document.querySelector('.hint-text');
     if (hintText) {
         hintText.innerText = 'Tap the card to check the answer, then mark whether you remembered it.';
@@ -400,22 +405,17 @@ function setCollocationPracticeHeader() {
 
     const headerTitle = document.querySelector('#header-copy h1');
     if (headerTitle) {
-        headerTitle.innerText = 'PTE collocation daily review';
+        headerTitle.innerText = 'PTE collocation practice';
     }
 
-    const deckSwitcher = document.querySelector('.deck-switcher');
-    if (deckSwitcher) {
-        deckSwitcher.hidden = false;
-    }
-
-    const dateBadge = getElement('today-date');
-    if (dateBadge) {
-        dateBadge.innerText = getDateStringWithOffset(0);
+    const dateRow = document.querySelector('#header-copy .header-date-row');
+    if (dateRow) {
+        dateRow.hidden = true;
     }
 
     const hintText = document.querySelector('.hint-text');
     if (hintText) {
-        hintText.innerText = 'Tap the card to check the explanation, then mark whether you remembered it.';
+        hintText.innerText = 'Each card is selected at random. Keep practicing for as long as you like.';
     }
 }
 

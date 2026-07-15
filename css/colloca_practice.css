@@ -5,8 +5,15 @@ body[data-page="colloca-practice"] {
 }
 
 .collocation-practice-shell {
-    width: min(100%, 832px);
+    width: min(100%, 1180px);
     margin: 0 auto;
+}
+
+.collocation-practice-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+    gap: 24px 28px;
 }
 
 .collocation-header {
@@ -19,15 +26,6 @@ body[data-page="colloca-practice"] {
     box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
     backdrop-filter: blur(18px);
     text-align: center;
-}
-
-.collocation-eyebrow {
-    margin: 0 0 5px;
-    color: #4f46e5;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
 }
 
 .collocation-header h1 {
@@ -63,15 +61,24 @@ body[data-page="colloca-practice"] {
 }
 
 #practice-popup-body #practice-session-body .collocation-workspace {
-    width: min(100%, 716px);
-    margin: 0 auto;
+    width: auto;
+    margin: 0;
+}
+
+#practice-popup-body #practice-session-body .collocation-practice-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 24px;
+}
+
+.collocation-practice-layout .review-list-section {
+    grid-column: 2;
+    grid-row: 1;
 }
 
 #practice-popup-body #practice-session-body {
     min-width: 0;
 }
 
-.collocation-toolbar,
 .collocation-stats,
 .collocation-actions {
     display: flex;
@@ -80,17 +87,6 @@ body[data-page="colloca-practice"] {
     gap: 12px;
 }
 
-.collocation-toolbar {
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.collocation-header .collocation-toolbar {
-    margin-top: 10px;
-}
-
-.collocation-date,
 .collocation-stats span {
     display: inline-flex;
     padding: 7px 11px;
@@ -101,63 +97,14 @@ body[data-page="colloca-practice"] {
     font-weight: 700;
 }
 
-.collocation-date {
-    padding: 0;
-    border-radius: 0;
-    background: transparent;
-}
-
-.collocation-day-switcher {
-    display: inline-flex;
-    gap: 8px;
-    padding: 1px;
-    border-radius: 999px;
-    background: #e2e8f0;
-}
-
-.day-button {
-    min-width: 88px;
-    padding: 5px 14px;
-    border: 1px solid transparent;
-    border-radius: 999px;
-    background: transparent;
-    color: #64748b;
-    font-size: 0.92rem;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.day-button.active {
-    background: #fff;
-    color: #0f172a;
-    border-color: #cbd5e1;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.09);
-}
-
 .collocation-stats {
     justify-content: space-between;
-    margin: 0 0 12px;
+    margin: 0 0 20px;
 }
 
 .collocation-stats .collocation-score {
     background: #ecfdf5;
     color: #15803d;
-}
-
-.collocation-progress {
-    height: 7px;
-    margin-bottom: 20px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: #e8eef7;
-}
-
-.collocation-progress-fill {
-    width: 0;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, #2563eb, #7c3aed);
-    transition: width 0.25s ease;
 }
 
 .collocation-card {
@@ -358,8 +305,7 @@ body[data-page="colloca-practice"] {
     color: #dc2626;
 }
 
-.collocation-state,
-.collocation-result {
+.collocation-state {
     min-height: 430px;
     display: flex;
     flex-direction: column;
@@ -373,19 +319,16 @@ body[data-page="colloca-practice"] {
     color: #b91c1c;
 }
 
-.collocation-result h2 {
-    margin: 6px 0;
-    color: #0f172a;
-    font-size: clamp(3rem, 8vw, 5rem);
-}
+@media (max-width: 900px) {
+    .collocation-practice-layout,
+    #practice-popup-body #practice-session-body .collocation-practice-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
 
-.collocation-result button {
-    margin-top: 18px;
-    padding: 12px 22px;
-    border-radius: 14px;
-    background: #4f46e5;
-    color: #fff;
-    font-weight: 800;
+    .collocation-practice-layout .review-list-section {
+        grid-column: 1;
+        grid-row: auto;
+    }
 }
 
 @media (max-width: 600px) {
@@ -396,6 +339,10 @@ body[data-page="colloca-practice"] {
     .collocation-header,
     .collocation-workspace {
         border-radius: 20px;
+    }
+
+    .collocation-practice-layout {
+        gap: 16px;
     }
 
     .collocation-workspace {
