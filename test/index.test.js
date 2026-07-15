@@ -235,6 +235,13 @@ describe('PTE daily vocabulary page (index.html)', () => {
                 : path.resolve(PROJECT_ROOT, urlString);
             const relativeLocalPath = path.relative(PROJECT_ROOT, localPath).replace(/\\/g, '/');
 
+            if (relativeLocalPath === 'plugins.json') {
+                return Promise.resolve({
+                    ok: true,
+                    json: jest.fn().mockResolvedValue({ plugins: [] }),
+                });
+            }
+
             if (relativeLocalPath.startsWith('partials/')) {
                 return Promise.resolve({
                     ok: true,
@@ -411,6 +418,7 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expectFetchedPath('partials/common/header.html');
         expectFetchedPath('partials/common/auth-modal.html');
         expectFetchedPath('partials/home/home.html');
+        expectFetchedPath('plugins.json');
         expectNotFetchedPath('partials/review/quiz.html');
         expectNotFetchedPath('partials/review/review-list.html');
         expectNotFetchedPath('partials/review/result.html');
@@ -420,6 +428,8 @@ describe('PTE daily vocabulary page (index.html)', () => {
         expect(window.__getDailyWords()).toHaveLength(0);
         expect(document.getElementById('home-screen').hidden).toBe(false);
         expect(document.querySelector('.home-features')).not.toBeNull();
+        expect(document.querySelectorAll('.home-features .feature-tile')).toHaveLength(4);
+        expect(document.getElementById('home-quick-tools-count').textContent).toBe('4');
         expect(document.getElementById('auth-open-sign-in')).not.toBeNull();
         expect(document.querySelector('#start-review .feature-tile-label').textContent.trim()).toBe('Practice');
         expect(document.getElementById('start-review').getAttribute('href')).toBe('pages/practice.html');

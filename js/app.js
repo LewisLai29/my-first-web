@@ -21,6 +21,7 @@ import {
 import { getDateStringWithOffset } from './date-utils.js';
 import { createHomePopupController } from './home-popup-controller.js';
 import { loadHtmlFunctions } from './html-functions.js';
+import { loadOptionalPlugins } from './optional-plugin-loader.js';
 import { setupAuthUI } from './auth.js';
 import { createExamsController } from './exams.js';
 import { createExamHistoryController, renderExamHistory } from './exam-history.js';
@@ -66,6 +67,15 @@ let quizIsLoading = false;
 let quizIsResetting = false;
 let activeRuntimeMode = '';
 let activePracticeMode = 'menu';
+let activeOptionalPlugins = [];
+
+const homePopupIds = {
+    setting: 'setting-popup',
+    practice: 'practice-popup',
+    favorites: 'favorites-popup',
+    tests: 'tests-popup',
+};
+const optionalPopupLifecycles = new Map();
 
 const favoritesController = createFavoritesController(() => {
     updateFavoriteButton();
@@ -94,12 +104,7 @@ const homePopupController = createHomePopupController({
     getElement,
     onCancelMode: cancelPopupWork,
     onUnloadMode: unloadPopupContent,
-    popupIds: {
-        setting: 'setting-popup',
-        practice: 'practice-popup',
-        favorites: 'favorites-popup',
-        tests: 'tests-popup',
-    },
+    popupIds: homePopupIds,
 });
 
 const examsController = createExamsController({
@@ -114,6 +119,42 @@ const examHistoryController = createExamHistoryController((state) => {
 
 function getElement(id) {
     return document.getElementById(id);
+}
+
+function registerOptionalPopupMode(mode, popupId, lifecycle = {}) {
+    homePopupIds[mode] = popupId;
+    optionalPopupLifecycles.set(mode, lifecycle);
+    return () => {
+        homePopupController.close(mode);
+        optionalPopupLifecycles.delete(mode);
+        delete homePopupIds[mode];
+    };
+}
+
+function disposeOptionalPlugins() {
+    activeOptionalPlugins.splice(0).reverse().forEach((plugin) => plugin.dispose());
+}
+
+async function loadHomeOptionalPlugins() {
+    const root = getElement('home-screen');
+    const features = root?.querySelector('.home-features');
+    if (!root || !features) return;
+
+    disposeOptionalPlugins();
+    activeOptionalPlugins = await loadOptionalPlugins(
+        new URL('../plugins.json', import.meta.url),
+        {
+            document,
+            getElement,
+            vocabularyUrl: VOCAB_SOURCE,
+            home: {
+                root,
+                features,
+                popupController: homePopupController,
+                registerPopupMode: registerOptionalPopupMode,
+            },
+        },
+    );
 }
 
 function getPageMode() {
@@ -160,6 +201,7 @@ function setResultVisible(visible) {
 }
 
 function resetRuntimeState() {
+    disposeOptionalPlugins();
     activeSession = null;
     activeRuntimeMode = '';
     activePracticeMode = 'menu';
@@ -1100,6 +1142,8 @@ function cancelPopupWork(mode) {
         hideLookupPopup();
         clearPendingWordRender();
     }
+
+    optionalPopupLifecycles.get(mode)?.cancel?.();
 }
 
 function unloadPopupContent(mode) {
@@ -1110,6 +1154,8 @@ function unloadPopupContent(mode) {
     if (mode === 'tests') {
         unloadTestsSessionContent();
     }
+
+    optionalPopupLifecycles.get(mode)?.unload?.();
 }
 
 function closeSettingPopup() {
@@ -1641,6 +1687,7 @@ function wireHomeEvents() {
             closePracticePopup();
             closeFavoritesPopup();
             closeTestsPopup();
+            optionalPopupLifecycles.forEach((_lifecycle, mode) => homePopupController.close(mode));
         }
     });
 }
@@ -1783,6 +1830,9 @@ async function boot() {
                         : HOME_HTML_FUNCTIONS;
 
         await loadHtmlFunctions(functionPaths);
+        if (pageMode === 'home') {
+            await loadHomeOptionalPlugins();
+        }
         if (pageMode === 'practice-menu') {
             wirePracticeMenuLinks();
         }
@@ -1843,6 +1893,7 @@ window.PteVocabApp = {
         examHistoryController.dispose();
         popupScrollbarController.dispose();
         cardScrollbarController.dispose();
+        disposeOptionalPlugins();
     },
 };
 
