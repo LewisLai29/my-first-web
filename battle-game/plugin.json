@@ -1,0 +1,7 @@
+{
+  "name": "wordfront",
+  "entry": "dist/plugin.js",
+  "styles": [
+    "wordfront.css"
+  ]
+}
