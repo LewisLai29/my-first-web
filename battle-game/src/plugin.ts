@@ -65,7 +65,26 @@ export function activate(context: WordfrontPluginContext) {
     let controllerPromise: Promise<WordfrontController> | null = null;
     const root = getElement('wordfront-root') as HTMLElement;
 
-    const close = (): void => home.popupController.close(mode);
+    const requestFullscreen = (): void => {
+        if (document.fullscreenElement || typeof overlay.requestFullscreen !== 'function') return;
+        void overlay.requestFullscreen()
+            .then(() => {
+                if (!home.popupController.isModeOpen(mode)) exitFullscreen();
+            })
+            .catch(() => {
+                // Fullscreen can be denied by browser or embedding policy; the game still works as a modal.
+            });
+    };
+    const exitFullscreen = (): void => {
+        if (document.fullscreenElement !== overlay || typeof document.exitFullscreen !== 'function') return;
+        void document.exitFullscreen().catch(() => {
+            // The browser may already be leaving fullscreen (for example after pressing Escape).
+        });
+    };
+    const close = (): void => {
+        exitFullscreen();
+        home.popupController.close(mode);
+    };
     const getController = async (): Promise<WordfrontController> => {
         if (controller) return controller;
         if (!controllerPromise) {
@@ -83,6 +102,7 @@ export function activate(context: WordfrontPluginContext) {
     const open = (): void => {
         home.popupController.prepareExclusive(mode);
         home.popupController.show(mode);
+        requestFullscreen();
         void getController().then((instance) => instance.open()).catch((error: unknown) => {
             root.innerHTML = '<div class="wordfront-load-state" role="alert"><div><p>Wordfront unavailable</p><h2>The game module could not be loaded.</h2></div></div>';
             console.error('Failed to open Wordfront.', error);
@@ -90,8 +110,14 @@ export function activate(context: WordfrontPluginContext) {
     };
 
     const unregister = home.registerPopupMode(mode, 'wordfront-overlay', {
-        cancel: () => controller?.destroySession(),
-        unload: () => controller?.destroySession(),
+        cancel: () => {
+            exitFullscreen();
+            controller?.destroySession();
+        },
+        unload: () => {
+            exitFullscreen();
+            controller?.destroySession();
+        },
     });
 
     const onTileClick = (event: Event): void => {
@@ -111,6 +137,7 @@ export function activate(context: WordfrontPluginContext) {
 
     return {
         dispose: () => {
+            exitFullscreen();
             controller?.destroy();
             unregister();
             tile.removeEventListener('click', onTileClick);

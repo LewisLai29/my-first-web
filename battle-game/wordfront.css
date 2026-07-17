@@ -28,6 +28,22 @@
     background: rgba(2, 6, 23, 0.82);
 }
 
+.wordfront-overlay:fullscreen {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    background: #020617;
+}
+
+.wordfront-overlay:fullscreen .wordfront-overlay-window {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+}
+
 .wordfront-overlay-window {
     position: relative;
     width: min(1440px, 100%);

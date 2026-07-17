@@ -34,7 +34,29 @@ export function activate(context) {
     let controller = null;
     let controllerPromise = null;
     const root = getElement('wordfront-root');
-    const close = () => home.popupController.close(mode);
+    const requestFullscreen = () => {
+        if (document.fullscreenElement || typeof overlay.requestFullscreen !== 'function')
+            return;
+        void overlay.requestFullscreen()
+            .then(() => {
+            if (!home.popupController.isModeOpen(mode))
+                exitFullscreen();
+        })
+            .catch(() => {
+            // Fullscreen can be denied by browser or embedding policy; the game still works as a modal.
+        });
+    };
+    const exitFullscreen = () => {
+        if (document.fullscreenElement !== overlay || typeof document.exitFullscreen !== 'function')
+            return;
+        void document.exitFullscreen().catch(() => {
+            // The browser may already be leaving fullscreen (for example after pressing Escape).
+        });
+    };
+    const close = () => {
+        exitFullscreen();
+        home.popupController.close(mode);
+    };
     const getController = async () => {
         if (controller)
             return controller;
@@ -52,14 +74,21 @@ export function activate(context) {
     const open = () => {
         home.popupController.prepareExclusive(mode);
         home.popupController.show(mode);
+        requestFullscreen();
         void getController().then((instance) => instance.open()).catch((error) => {
             root.innerHTML = '<div class="wordfront-load-state" role="alert"><div><p>Wordfront unavailable</p><h2>The game module could not be loaded.</h2></div></div>';
             console.error('Failed to open Wordfront.', error);
         });
     };
     const unregister = home.registerPopupMode(mode, 'wordfront-overlay', {
-        cancel: () => controller?.destroySession(),
-        unload: () => controller?.destroySession(),
+        cancel: () => {
+            exitFullscreen();
+            controller?.destroySession();
+        },
+        unload: () => {
+            exitFullscreen();
+            controller?.destroySession();
+        },
     });
     const onTileClick = (event) => {
         event.preventDefault();
@@ -78,6 +107,7 @@ export function activate(context) {
         quickTools.textContent = String((Number(quickTools.textContent) || 4) + 1);
     return {
         dispose: () => {
+            exitFullscreen();
             controller?.destroy();
             unregister();
             tile.removeEventListener('click', onTileClick);
