@@ -1,7 +1,0 @@
-{
-  "name": "memory-game",
-  "entry": "dist/plugin.js",
-  "styles": [
-    "game.css"
-  ]
-}
