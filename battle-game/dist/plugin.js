@@ -26,6 +26,9 @@ export function activate(context) {
     overlay.hidden = true;
     overlay.innerHTML = `
         <div class="wordfront-overlay-window">
+            <button id="wordfront-overlay-fullscreen" class="wordfront-overlay-fullscreen" type="button" aria-label="Enter fullscreen" title="Enter fullscreen" hidden>
+                <span aria-hidden="true">&#x26F6;</span>
+            </button>
             <button id="wordfront-overlay-close" class="wordfront-overlay-close" type="button" aria-label="Close Wordfront">×</button>
             <div id="wordfront-root" class="wordfront-root"></div>
         </div>`;
@@ -34,6 +37,16 @@ export function activate(context) {
     let controller = null;
     let controllerPromise = null;
     const root = getElement('wordfront-root');
+    const fullscreenButton = getElement('wordfront-overlay-fullscreen');
+    const syncFullscreenButton = () => {
+        const canFullscreen = typeof overlay.requestFullscreen === 'function';
+        const isFullscreen = document.fullscreenElement === overlay;
+        const label = isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
+        fullscreenButton.hidden = !canFullscreen;
+        fullscreenButton.setAttribute('aria-label', label);
+        fullscreenButton.title = label;
+        fullscreenButton.classList.toggle('is-fullscreen', isFullscreen);
+    };
     const requestFullscreen = () => {
         if (document.fullscreenElement || typeof overlay.requestFullscreen !== 'function')
             return;
@@ -52,6 +65,12 @@ export function activate(context) {
         void document.exitFullscreen().catch(() => {
             // The browser may already be leaving fullscreen (for example after pressing Escape).
         });
+    };
+    const toggleFullscreen = () => {
+        if (document.fullscreenElement === overlay)
+            exitFullscreen();
+        else
+            requestFullscreen();
     };
     const close = () => {
         exitFullscreen();
@@ -94,14 +113,18 @@ export function activate(context) {
         event.preventDefault();
         open();
     };
+    const onFullscreenClick = () => toggleFullscreen();
     const onCloseClick = () => close();
     const onBackdropClick = (event) => {
         if (event.target === overlay)
             close();
     };
     tile.addEventListener('click', onTileClick);
+    fullscreenButton.addEventListener('click', onFullscreenClick);
     getElement('wordfront-overlay-close')?.addEventListener('click', onCloseClick);
     overlay.addEventListener('click', onBackdropClick);
+    document.addEventListener('fullscreenchange', syncFullscreenButton);
+    syncFullscreenButton();
     const quickTools = getElement('home-quick-tools-count');
     if (quickTools)
         quickTools.textContent = String((Number(quickTools.textContent) || 4) + 1);
@@ -111,8 +134,10 @@ export function activate(context) {
             controller?.destroy();
             unregister();
             tile.removeEventListener('click', onTileClick);
+            fullscreenButton.removeEventListener('click', onFullscreenClick);
             getElement('wordfront-overlay-close')?.removeEventListener('click', onCloseClick);
             overlay.removeEventListener('click', onBackdropClick);
+            document.removeEventListener('fullscreenchange', syncFullscreenButton);
             tile.remove();
             overlay.remove();
             if (quickTools)

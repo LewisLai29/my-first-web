@@ -107,6 +107,8 @@ test('registers Wordfront as an independent home tile and removes it on dispose'
         const plugin = activate(context);
         assert.ok(document.getElementById('start-wordfront'));
         assert.ok(document.getElementById('wordfront-overlay'));
+        assert.ok(document.getElementById('wordfront-overlay-fullscreen'));
+        assert.equal(document.getElementById('wordfront-overlay-fullscreen').hidden, true);
         assert.equal(modes.get('wordfront').popupId, 'wordfront-overlay');
         assert.equal(document.getElementById('home-quick-tools-count').textContent, '5');
 
@@ -116,6 +118,78 @@ test('registers Wordfront as an independent home tile and removes it on dispose'
         assert.equal(modes.size, 0);
         assert.equal(document.getElementById('home-quick-tools-count').textContent, '4');
     } finally {
+        cleanup();
+    }
+});
+
+test('offers a fullscreen toggle when the browser supports element fullscreen', async () => {
+    const cleanup = installDom(`
+        <main id="home-root">
+            <div id="home-features"></div>
+        </main>`);
+    let fullscreenElement = null;
+    let requestCount = 0;
+    let exitCount = 0;
+    Object.defineProperty(document, 'fullscreenElement', {
+        configurable: true,
+        get: () => fullscreenElement,
+    });
+    Element.prototype.requestFullscreen = function requestFullscreen() {
+        requestCount += 1;
+        fullscreenElement = this;
+        document.dispatchEvent(new window.Event('fullscreenchange'));
+        return Promise.resolve();
+    };
+    document.exitFullscreen = function exitFullscreen() {
+        exitCount += 1;
+        fullscreenElement = null;
+        document.dispatchEvent(new window.Event('fullscreenchange'));
+        return Promise.resolve();
+    };
+    try {
+        const context = {
+            document,
+            getElement: (id) => document.getElementById(id),
+            vocabularyUrl: '/pte_vocab.json',
+            home: {
+                root: document.getElementById('home-root'),
+                features: document.getElementById('home-features'),
+                popupController: {
+                    close() {},
+                    isModeOpen() { return true; },
+                    prepareExclusive() {},
+                    show() { return true; },
+                },
+                registerPopupMode() { return () => {}; },
+            },
+        };
+
+        const plugin = activate(context);
+        const button = document.getElementById('wordfront-overlay-fullscreen');
+        assert.equal(button.hidden, false);
+        assert.equal(button.getAttribute('aria-label'), 'Enter fullscreen');
+
+        button.click();
+        await Promise.resolve();
+        assert.equal(requestCount, 1);
+        assert.equal(button.getAttribute('aria-label'), 'Exit fullscreen');
+
+        fullscreenElement = null;
+        document.dispatchEvent(new window.Event('fullscreenchange'));
+        assert.equal(button.getAttribute('aria-label'), 'Enter fullscreen');
+
+        button.click();
+        await Promise.resolve();
+        assert.equal(requestCount, 2);
+        assert.equal(button.getAttribute('aria-label'), 'Exit fullscreen');
+
+        button.click();
+        await Promise.resolve();
+        assert.equal(exitCount, 1);
+
+        plugin.dispose();
+    } finally {
+        delete Element.prototype.requestFullscreen;
         cleanup();
     }
 });
