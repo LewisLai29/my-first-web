@@ -8,7 +8,8 @@ export function createEnemy(kind: EnemyKind, id: string): EnemyState {
         kind,
         hp: definition.hp,
         maxHp: definition.hp,
-        attackDamage: definition.damage,
+        attack: definition.attack,
+        defense: definition.defense,
         advanceStep: 0,
         maxAdvanceStep: definition.maxAdvanceStep,
     };

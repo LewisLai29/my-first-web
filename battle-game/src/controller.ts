@@ -1,9 +1,10 @@
 import { loadVocabulary } from './data/vocabulary.js';
+import { createPlayer } from './entities/player/player.js';
 import { DEFAULT_CONFIG } from './game/config.js';
 import { createEngine, type WordfrontEngine } from './game/engine.js';
 import type { PauseReason, VocabularyEntry } from './game/types.js';
 import { createSessionQuestions } from './features/questions/questions.js';
-import { countWaveHp, createWaves } from './features/waves/waves.js';
+import { countRequiredPlayerAttacks, createWaves } from './features/waves/waves.js';
 import { PausableGameClock } from './platform/clock.js';
 import { bindGameLifecycle } from './platform/lifecycle.js';
 import { DomWordfrontView } from './ui/view.js';
@@ -31,6 +32,7 @@ export function createWordfrontController({
     let cleanupLifecycle: (() => void) | null = null;
     let vocabulary: readonly VocabularyEntry[] | null = null;
     let sessionToken = 0;
+    const questionCount = countRequiredPlayerAttacks(createWaves(DEFAULT_CONFIG.waves), createPlayer().attack);
 
     const destroyRuntime = (): void => {
         cleanupLifecycle?.();
@@ -52,7 +54,6 @@ export function createWordfrontController({
     const mountSession = (entries: readonly VocabularyEntry[]): void => {
         destroyRuntime();
         const token = ++sessionToken;
-        const questionCount = countWaveHp(createWaves(DEFAULT_CONFIG.waves));
         const questions = createSessionQuestions(entries, questionCount);
         const clock = new PausableGameClock();
 
@@ -103,7 +104,7 @@ export function createWordfrontController({
         const request = new AbortController();
         abortController = request;
         try {
-            const entries = await loadVocabulary(vocabularyUrl, request.signal);
+            const entries = await loadVocabulary(vocabularyUrl, questionCount, request.signal);
             if (request.signal.aborted || token !== sessionToken) return false;
             vocabulary = entries;
             abortController = null;

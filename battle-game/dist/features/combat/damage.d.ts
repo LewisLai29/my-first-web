@@ -1,1 +1,1 @@
-export declare function clampDamage(value: number): number;
+export declare function calculateDamage(attack: number, defense: number): number;

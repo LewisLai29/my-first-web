@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizeVocabulary } from '../dist/data/vocabulary.js';
+import { loadVocabulary, normalizeVocabulary } from '../dist/data/vocabulary.js';
 import { createSessionQuestions } from '../dist/features/questions/questions.js';
 
 const vocabulary = Array.from({ length: 40 }, (_, index) => ({
@@ -22,14 +22,30 @@ test('normalizes current and legacy vocabulary fields with stable part-of-speech
     assert.equal(output[0].partOfSpeechKey, output[1].partOfSpeechKey);
 });
 
-test('creates 29 unique questions with four unique options and one answer', () => {
+test('creates 38 unique questions with four unique options and one answer', () => {
     const entries = normalizeVocabulary(vocabulary);
-    const questions = createSessionQuestions(entries, 29, () => 0.42);
-    assert.equal(questions.length, 29);
-    assert.equal(new Set(questions.map((question) => question.targetEntryId)).size, 29);
+    const questions = createSessionQuestions(entries, 38, () => 0.42);
+    assert.equal(questions.length, 38);
+    assert.equal(new Set(questions.map((question) => question.targetEntryId)).size, 38);
     questions.forEach((question) => {
         assert.equal(question.options.length, 4);
         assert.equal(new Set(question.options.map((option) => option.entryId)).size, 4);
         assert.equal(question.options.filter((option) => option.entryId === question.targetEntryId).length, 1);
     });
+});
+
+test('rejects a vocabulary source below the configured session requirement', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => ({
+        ok: true,
+        json: async () => vocabulary.slice(0, 37),
+    });
+    try {
+        await assert.rejects(
+            loadVocabulary('/vocabulary.json', 38),
+            /At least 38 valid vocabulary entries are required/,
+        );
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
 });

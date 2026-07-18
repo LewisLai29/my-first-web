@@ -2,7 +2,8 @@ export type EnemyKind = 'normal' | 'strong' | 'boss';
 export type EnemyDefinition = {
     kind: EnemyKind;
     hp: number;
-    damage: number;
+    attack: number;
+    defense: number;
     maxAdvanceStep: number;
 };
 export type EnemyState = {
@@ -10,7 +11,8 @@ export type EnemyState = {
     kind: EnemyKind;
     hp: number;
     maxHp: number;
-    attackDamage: number;
+    attack: number;
+    defense: number;
     advanceStep: number;
     maxAdvanceStep: number;
 };

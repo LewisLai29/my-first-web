@@ -6,7 +6,8 @@ export function createEnemy(kind, id) {
         kind,
         hp: definition.hp,
         maxHp: definition.hp,
-        attackDamage: definition.damage,
+        attack: definition.attack,
+        defense: definition.defense,
         advanceStep: 0,
         maxAdvanceStep: definition.maxAdvanceStep,
     };

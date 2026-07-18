@@ -43,12 +43,13 @@ export function normalizeVocabulary(input) {
     });
     return entries;
 }
-export async function loadVocabulary(url, signal) {
+export async function loadVocabulary(url, minimumEntries, signal) {
     const response = await fetch(url, { signal });
     if (!response.ok)
         throw new Error('Vocabulary could not be loaded.');
     const entries = normalizeVocabulary(await response.json());
-    if (entries.length < 29)
-        throw new Error('At least 29 valid vocabulary entries are required.');
+    if (entries.length < minimumEntries) {
+        throw new Error(`At least ${minimumEntries} valid vocabulary entries are required.`);
+    }
     return entries;
 }

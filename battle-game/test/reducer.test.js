@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { normalizeVocabulary } from '../dist/data/vocabulary.js';
 import { ENEMY_CATALOG } from '../dist/entities/enemy/enemy-catalog.js';
+import { calculateDamage } from '../dist/features/combat/damage.js';
 import { DEFAULT_CONFIG } from '../dist/game/config.js';
 import { createInitialState, reduceGame } from '../dist/game/reducer.js';
 import { createSessionQuestions } from '../dist/features/questions/questions.js';
-import { countWaveHp, createWaves } from '../dist/features/waves/waves.js';
+import { countRequiredPlayerAttacks, createWaves } from '../dist/features/waves/waves.js';
 
 const entries = normalizeVocabulary(Array.from({ length: 40 }, (_, index) => ({
     id: index + 1,
@@ -16,21 +17,25 @@ const entries = normalizeVocabulary(Array.from({ length: 40 }, (_, index) => ({
 
 const createState = () => createInitialState(
     DEFAULT_CONFIG,
-    createSessionQuestions(entries, 29, () => 0.37),
+    createSessionQuestions(entries, 38, () => 0.37),
 );
 
 const reduce = (state, action) => reduceGame(state, action, DEFAULT_CONFIG).state;
 
-test('builds three waves with ten enemies and 29 total HP', () => {
+test('builds three waves with ten enemies and 38 maximum required attacks', () => {
     const waves = createWaves(DEFAULT_CONFIG.waves);
     assert.equal(waves.length, 3);
     assert.equal(waves.reduce((total, wave) => total + wave.enemies.length, 0), 10);
-    assert.equal(countWaveHp(waves), 29);
-    assert.deepEqual({
-        normal: ENEMY_CATALOG.normal.damage,
-        strong: ENEMY_CATALOG.strong.damage,
-        boss: ENEMY_CATALOG.boss.damage,
-    }, { normal: 10, strong: 15, boss: 20 });
+    assert.equal(countRequiredPlayerAttacks(waves, 5), 38);
+    assert.deepEqual(ENEMY_CATALOG.normal, { kind: 'normal', hp: 8, attack: 15, defense: 1, maxAdvanceStep: 4 });
+    assert.deepEqual(ENEMY_CATALOG.strong, { kind: 'strong', hp: 12, attack: 22, defense: 2, maxAdvanceStep: 4 });
+    assert.deepEqual(ENEMY_CATALOG.boss, { kind: 'boss', hp: 15, attack: 30, defense: 3, maxAdvanceStep: 4 });
+});
+
+test('calculates attack minus defense with a minimum of one damage', () => {
+    assert.equal(calculateDamage(15, 5), 10);
+    assert.equal(calculateDamage(3, 9), 1);
+    assert.equal(calculateDamage(Number.NaN, -4), 1);
 });
 
 test('wrong answer locks input while timeout still damages the player and preserves the question', () => {
@@ -54,7 +59,7 @@ test('wrong answer locks input while timeout still damages the player and preser
     assert.equal(state.questionDeadlineGameMs, 20_500);
 });
 
-test('29 correct answers clear all waves without healing and end in victory', () => {
+test('a perfect streak clears all waves in 21 correct answers', () => {
     let now = 0;
     let state = reduce(createState(), { type: 'START', now });
     while (state.phase !== 'victory') {
@@ -71,9 +76,51 @@ test('29 correct answers clear all waves without healing and end in victory', ()
             assert.fail(`Unexpected phase ${state.phase}`);
         }
     }
-    assert.equal(state.stats.correctSelections, 29);
+    assert.equal(state.stats.correctSelections, 21);
     assert.equal(state.player.hp, 100);
+    assert.equal(state.player.attack, 10);
+    assert.equal(state.player.correctStreak, 21);
     assert.equal(state.currentWaveIndex, 2);
+});
+
+test('the third correct answer raises attack before damage and a wrong answer resets the streak', () => {
+    let now = 0;
+    let state = reduce(createState(), { type: 'START', now });
+    for (let answer = 1; answer <= 3; answer += 1) {
+        now += 100;
+        state = reduce(state, { type: 'SUBMIT_ANSWER', entryId: state.question.targetEntryId, now });
+        assert.equal(state.player.correctStreak, answer);
+        assert.equal(state.player.attack, answer === 3 ? 6 : 5);
+        if (answer === 3) assert.equal(state.waves[0].enemies[1].hp, 3);
+        now += 500;
+        state = reduce(state, { type: 'PLAYER_ATTACK_FINISHED', now });
+    }
+    const wrongOption = state.question.options.find((option) => option.entryId !== state.question.targetEntryId);
+    state = reduce(state, { type: 'SUBMIT_ANSWER', entryId: wrongOption.entryId, now: now + 100 });
+    assert.equal(state.player.correctStreak, 0);
+    assert.equal(state.player.attack, 5);
+});
+
+test('attack bonus caps at five and timeout resets it before enemy damage', () => {
+    let now = 0;
+    let state = reduce(createState(), { type: 'START', now });
+    for (let answer = 0; answer < 9; answer += 1) {
+        now += 100;
+        state = reduce(state, { type: 'SUBMIT_ANSWER', entryId: state.question.targetEntryId, now });
+        now += 500;
+        state = reduce(state, { type: 'PLAYER_ATTACK_FINISHED', now });
+        if (state.phase === 'wave-transition') {
+            now += 3_000;
+            state = reduce(state, { type: 'WAVE_TRANSITION_FINISHED', now });
+        }
+    }
+    assert.equal(state.player.attack, 10);
+    assert.equal(state.player.correctStreak, 9);
+    now = state.questionDeadlineGameMs;
+    state = reduce(state, { type: 'QUESTION_TIMEOUT', now });
+    assert.equal(state.player.attack, 5);
+    assert.equal(state.player.correctStreak, 0);
+    assert.equal(state.player.hp, 83);
 });
 
 test('player HP reaching zero enters defeat', () => {

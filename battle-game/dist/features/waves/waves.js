@@ -1,4 +1,5 @@
 import { createEnemy } from '../../entities/enemy/enemy-factory.js';
+import { calculateDamage } from '../combat/damage.js';
 export function createWaves(configs) {
     return configs.map((config, waveIndex) => {
         let enemySequence = 0;
@@ -12,6 +13,6 @@ export function createWaves(configs) {
         };
     });
 }
-export function countWaveHp(waves) {
-    return waves.reduce((total, wave) => total + wave.enemies.reduce((waveTotal, enemy) => (waveTotal + enemy.maxHp), 0), 0);
+export function countRequiredPlayerAttacks(waves, playerAttack) {
+    return waves.reduce((total, wave) => total + wave.enemies.reduce((waveTotal, enemy) => (waveTotal + Math.ceil(enemy.maxHp / calculateDamage(playerAttack, enemy.defense))), 0), 0);
 }

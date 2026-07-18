@@ -199,6 +199,26 @@
     width: 180px;
 }
 
+.wordfront-player-combat {
+    width: 230px;
+}
+
+.wordfront-player-combat > strong {
+    display: flex;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+.wordfront-player-combat > strong > span {
+    display: inline;
+    color: #475569;
+    font-size: 0.72rem;
+}
+
+.wordfront-player-combat b {
+    color: #0f172a;
+}
+
 .wordfront-health-track,
 .wordfront-enemy-health > span,
 .wordfront-timer-track {
@@ -562,6 +582,23 @@
     display: block;
     margin-top: 3px;
     font-size: 0.64rem;
+}
+
+.wordfront-enemy-stats {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 4px;
+    font-size: 0.62rem;
+    font-weight: 800;
+}
+
+.wordfront-enemy-stats[hidden] {
+    display: none;
+}
+
+.wordfront-enemy-stats b {
+    color: #fde68a;
 }
 
 .wordfront-projectile {
@@ -936,6 +973,14 @@
 
     .wordfront-player-health {
         width: 130px;
+    }
+
+    .wordfront-player-combat {
+        width: 182px;
+    }
+
+    .wordfront-player-combat > strong {
+        gap: 6px;
     }
 
     .wordfront-player-zone {

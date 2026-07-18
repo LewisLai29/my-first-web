@@ -1,4 +1,5 @@
 import type { EngineView } from '../game/engine.js';
+import { PLAYER_BASE_ATTACK } from '../entities/player/player-config.js';
 import type { GameEffect, GamePhase, GameState, VocabularyEntry, WaveState } from '../game/types.js';
 import { ENEMY_ASSET_URLS, PLAYER_ASSET_URL, PLAYER_ATTACK_ASSET_URLS } from './asset-catalog.js';
 import { WordfrontAnimations } from './animations.js';
@@ -40,6 +41,14 @@ export class DomWordfrontView implements EngineView {
                             <span>HP</span><strong data-wordfront-player-hp>100 / 100</strong>
                             <span class="wordfront-health-track" aria-hidden="true"><span data-wordfront-player-health-bar></span></span>
                         </div>
+                        <div class="wordfront-player-combat">
+                            <span>Combat</span>
+                            <strong>
+                                <span>ATK <b data-wordfront-player-attack>5</b></span>
+                                <span>DEF <b data-wordfront-player-defense>5</b></span>
+                                <span>Streak <b data-wordfront-player-streak>0</b></span>
+                            </strong>
+                        </div>
                     </div>
                     <div class="wordfront-hud-actions">
                         <button type="button" data-wordfront-action="pause">Pause</button>
@@ -78,7 +87,7 @@ export class DomWordfrontView implements EngineView {
 
                 <div class="wordfront-screen wordfront-intro" data-wordfront-intro>
                     <div class="wordfront-screen-card">
-                        <p class="wordfront-kicker">Three waves. Twenty-nine words.</p>
+                        <p class="wordfront-kicker">Three waves. Build your streak.</p>
                         <h3>Defend the Wordfront</h3>
                         <div class="wordfront-rules">
                             <span><strong>1</strong> Read the Chinese meaning.</span>
@@ -133,6 +142,12 @@ export class DomWordfrontView implements EngineView {
         required<HTMLElement>(this.root, '[data-wordfront-wave]').textContent = `${state.currentWaveIndex + 1} / ${state.waves.length}`;
         required<HTMLElement>(this.root, '[data-wordfront-player-hp]').textContent = `${state.player.hp} / ${state.player.maxHp}`;
         required<HTMLElement>(this.root, '[data-wordfront-player-health-bar]').style.width = `${state.player.hp / state.player.maxHp * 100}%`;
+        const attackBonus = state.player.attack - PLAYER_BASE_ATTACK;
+        required<HTMLElement>(this.root, '[data-wordfront-player-attack]').textContent = attackBonus > 0
+            ? `${state.player.attack} (+${attackBonus})`
+            : String(state.player.attack);
+        required<HTMLElement>(this.root, '[data-wordfront-player-defense]').textContent = String(state.player.defense);
+        required<HTMLElement>(this.root, '[data-wordfront-player-streak]').textContent = String(state.player.correctStreak);
         this.renderWave(wave);
         this.renderQuestion(state, now, effectivePhase);
         this.renderScreens(state, now, effectivePhase);
@@ -182,6 +197,10 @@ export class DomWordfrontView implements EngineView {
                 element.innerHTML = `
                     <div class="wordfront-enemy-health" aria-label="Enemy health">
                         <span><span data-enemy-health-bar></span></span><strong data-enemy-health></strong>
+                        <div class="wordfront-enemy-stats" data-enemy-stats hidden>
+                            <span>ATK <b data-enemy-attack></b></span>
+                            <span>DEF <b data-enemy-defense></b></span>
+                        </div>
                     </div>
                     <img src="${ENEMY_ASSET_URLS[enemy.kind]}" alt="${enemy.kind === 'boss' ? 'Boss monster' : `${enemy.kind} monster`}">`;
                 return element;
@@ -197,6 +216,10 @@ export class DomWordfrontView implements EngineView {
             element.style.setProperty('--advance-step', String(index === wave.activeEnemyIndex ? enemy.advanceStep : 0));
             required<HTMLElement>(element, '[data-enemy-health]').textContent = `${enemy.hp}/${enemy.maxHp}`;
             required<HTMLElement>(element, '[data-enemy-health-bar]').style.width = `${enemy.hp / enemy.maxHp * 100}%`;
+            const stats = required<HTMLElement>(element, '[data-enemy-stats]');
+            stats.hidden = index !== wave.activeEnemyIndex;
+            required<HTMLElement>(element, '[data-enemy-attack]').textContent = String(enemy.attack);
+            required<HTMLElement>(element, '[data-enemy-defense]').textContent = String(enemy.defense);
         });
     }
 

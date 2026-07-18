@@ -1,5 +1,5 @@
 import { isEnemyDefeated } from '../entities/enemy/enemy.js';
-import { createPlayer } from '../entities/player/player.js';
+import { addCorrectAnswer, createPlayer, resetCorrectStreak } from '../entities/player/player.js';
 import { resolveEnemyAttack } from '../features/combat/enemy-attack.js';
 import { resolvePlayerAttack } from '../features/combat/player-attack.js';
 import { createWaves } from '../features/waves/waves.js';
@@ -154,6 +154,7 @@ export function reduceGame(
                     ? state.stats.wrongEntryIds
                     : [...state.stats.wrongEntryIds, state.question.targetEntryId];
                 return revised(state, {
+                    player: resetCorrectStreak(state.player),
                     question: {
                         ...state.question,
                         eliminatedEntryIds: [...state.question.eliminatedEntryIds, action.entryId],
@@ -164,28 +165,30 @@ export function reduceGame(
                         wrongSelections: state.stats.wrongSelections + 1,
                         wrongEntryIds,
                     },
-                }, [{ type: 'ANNOUNCE', message: 'Wrong answer. Try again in three seconds.' }]);
+                }, [{ type: 'ANNOUNCE', message: 'Wrong answer. Streak lost and attack reset to 5.' }]);
             }
 
             const wave = activeWave(state);
             const enemy = activeEnemy(state);
             if (!wave || !enemy) return unchanged(state);
-            const damagedEnemy = resolvePlayerAttack(enemy, state.player.attackDamage);
+            const player = addCorrectAnswer(state.player);
+            const attack = resolvePlayerAttack(player, enemy);
             const nextWave: WaveState = {
                 ...wave,
                 enemies: wave.enemies.map((candidate, index) => (
-                    index === wave.activeEnemyIndex ? damagedEnemy : candidate
+                    index === wave.activeEnemyIndex ? attack.enemy : candidate
                 )),
             };
             const effects: GameEffect[] = [
                 { type: 'ANIMATE_PLAYER_ATTACK', word: state.question.targetWord, enemyId: enemy.id },
-                { type: 'ANNOUNCE', message: `Correct. ${state.question.targetWord}.` },
+                { type: 'ANNOUNCE', message: `Correct. ${state.question.targetWord}. Streak ${player.correctStreak}. Attack ${player.attack}. ${attack.damage} damage.` },
             ];
-            if (isEnemyDefeated(damagedEnemy)) {
+            if (isEnemyDefeated(attack.enemy)) {
                 effects.push({ type: 'ANIMATE_ENEMY_DEATH', enemyId: enemy.id });
             }
             return revised(state, {
                 phase: 'resolving-player-attack',
+                player,
                 waves: replaceCurrentWave(state, nextWave),
                 questionDeadlineGameMs: null,
                 penaltyDeadlineGameMs: null,
@@ -200,7 +203,7 @@ export function reduceGame(
             const wave = activeWave(state);
             const enemy = activeEnemy(state);
             if (!wave || !enemy) return unchanged(state);
-            const attack = resolveEnemyAttack(enemy, state.player);
+            const attack = resolveEnemyAttack(enemy, resetCorrectStreak(state.player));
             const nextWave: WaveState = {
                 ...wave,
                 enemies: wave.enemies.map((candidate, index) => (
@@ -214,7 +217,7 @@ export function reduceGame(
                 questionDeadlineGameMs: null,
             }, [
                 { type: 'ANIMATE_ENEMY_ATTACK', enemyId: enemy.id, advance: attack.enemy.advanceStep > enemy.advanceStep },
-                { type: 'ANNOUNCE', message: `Monster attack. ${attack.enemy.attackDamage} damage.` },
+                { type: 'ANNOUNCE', message: `Monster attack. ${attack.damage} damage. Streak lost and attack reset to 5.` },
             ]);
         }
         case 'PLAYER_ATTACK_FINISHED': {

@@ -52,7 +52,7 @@ test('renders the battle HUD, current wave, artwork and four answer buttons', ()
             onRestart() {},
             onClose() {},
         }, DEFAULT_CONFIG.questionDurationMs);
-        const questions = createSessionQuestions(entries, 29, () => 0.37);
+        const questions = createSessionQuestions(entries, 38, () => 0.37);
         let state = createInitialState(DEFAULT_CONFIG, questions);
         state = reduceGame(state, { type: 'START', now: 0 }, DEFAULT_CONFIG).state;
 
@@ -67,6 +67,16 @@ test('renders the battle HUD, current wave, artwork and four answer buttons', ()
         assert.equal(root.querySelectorAll('.wordfront-asset-preload img').length, 6);
         assert.match(root.querySelector('.wordfront-player img').src, /mage-base\.png$/);
         assert.match(root.querySelector('.wordfront-enemy img').src, /normal-base\.png$/);
+        assert.equal(root.querySelector('[data-wordfront-player-attack]').textContent, '5');
+        assert.equal(root.querySelector('[data-wordfront-player-defense]').textContent, '5');
+        assert.equal(root.querySelector('[data-wordfront-player-streak]').textContent, '0');
+        assert.equal(root.querySelectorAll('[data-enemy-stats]:not([hidden])').length, 1);
+        assert.equal(root.querySelector('[data-enemy-stats]:not([hidden]) [data-enemy-attack]').textContent, '15');
+
+        state = { ...state, player: { ...state.player, attack: 8, correctStreak: 5 } };
+        view.render(state, 100);
+        assert.equal(root.querySelector('[data-wordfront-player-attack]').textContent, '8 (+3)');
+        assert.equal(root.querySelector('[data-wordfront-player-streak]').textContent, '5');
 
         answers[0].click();
         assert.deepEqual(selected, [answers[0].dataset.entryId]);
